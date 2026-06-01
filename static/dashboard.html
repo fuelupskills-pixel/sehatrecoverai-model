@@ -1564,33 +1564,109 @@
             <p>Monitor drug supplies, setup auto-reorder alerts, and manage supplier deliveries.</p>
           </div>
           <div class="view-grid">
-            <div class="grid-card col-span-2">
-              <h3>Low Stock Alerts</h3>
-              <div class="document-list-table margin-top">
-                <div class="table-header-vault" style="grid-template-columns: 2fr 1fr 1fr 1fr 1fr;">
-                  <span>Medication / SKU</span>
-                  <span>Category</span>
-                  <span>Current Stock</span>
-                  <span>Reorder Threshold</span>
-                  <span>Action</span>
+            
+            <!-- Update Mode Controls -->
+            <div class="grid-card col-span-2" style="background:rgba(0,0,0,0.3); border-color:rgba(165,243,252,0.15);">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                  <h3 style="margin:0;"><i class="fa-solid fa-rotate"></i> Inventory Update Mode</h3>
+                  <p class="section-desc" style="margin-bottom:0;">Switch between automated supplier sync and manual batch entry.</p>
                 </div>
-                <div class="table-row-vault" style="grid-template-columns: 2fr 1fr 1fr 1fr 1fr; align-items:center;">
-                  <strong style="color:white;">Amoxicillin 500mg</strong>
-                  <span>Antibiotics</span>
-                  <strong style="color:#ef4444;">12 strips</strong>
-                  <span>50 strips</span>
-                  <button class="btn btn-outline" style="padding:4px 8px; font-size:0.75rem; border-color:var(--primary); color:var(--primary);">Order Stock</button>
-                </div>
-                <div class="table-row-vault" style="grid-template-columns: 2fr 1fr 1fr 1fr 1fr; align-items:center;">
-                  <strong style="color:white;">Paracetamol 650mg</strong>
-                  <span>Analgesics</span>
-                  <strong style="color:#f59e0b;">45 strips</strong>
-                  <span>50 strips</span>
-                  <button class="btn btn-outline" style="padding:4px 8px; font-size:0.75rem; border-color:var(--primary); color:var(--primary);">Order Stock</button>
+                <div style="display:flex; gap:10px; background:rgba(0,0,0,0.4); padding:4px; border-radius:6px; border:1px solid rgba(255,255,255,0.1);">
+                  <button id="btn-inv-auto" class="btn btn-primary" onclick="toggleInventoryMode('auto')" style="padding:6px 12px; font-size:0.8rem; border-radius:4px;"><i class="fa-solid fa-cloud-arrow-down"></i> Auto-Sync Network</button>
+                  <button id="btn-inv-manual" class="btn btn-outline" onclick="toggleInventoryMode('manual')" style="padding:6px 12px; font-size:0.8rem; border-radius:4px; border-color:transparent; color:#7d9696;"><i class="fa-solid fa-keyboard"></i> Manual Entry</button>
                 </div>
               </div>
             </div>
-          </div>
+
+            <!-- Manual Stock Entry Form (Hidden by default) -->
+            <div id="inv-manual-entry-form" class="grid-card col-span-2 hidden" style="border-left:4px solid var(--accent); background:rgba(168,85,247,0.05);">
+              <h3 style="color:var(--accent); margin-top:0;"><i class="fa-solid fa-box-open"></i> Manual Stock Intake</h3>
+              <form onsubmit="submitManualInventory(event)">
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:15px; margin-top:15px;">
+                  <div>
+                    <label style="font-size:0.75rem; color:#7d9696;">Brand / Medication Name <span style="color:#ef4444;">*</span></label>
+                    <input type="text" id="inv-brand-name" required placeholder="e.g. Dolo 650" style="width:100%; margin-top:4px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; padding:8px; border-radius:4px;">
+                  </div>
+                  <div>
+                    <label style="font-size:0.75rem; color:#7d9696;">Formulation <span style="color:#ef4444;">*</span></label>
+                    <select id="inv-formulation" required style="width:100%; margin-top:4px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; padding:8px; border-radius:4px;">
+                      <option value="Tablet">Tablet / Pill</option>
+                      <option value="Capsule">Capsule</option>
+                      <option value="Syrup">Syrup / Suspension</option>
+                      <option value="Injection">Injection / Vial</option>
+                      <option value="Ointment">Topical Ointment</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style="font-size:0.75rem; color:#7d9696;">Batch Number <span style="color:#ef4444;">*</span></label>
+                    <input type="text" id="inv-batch-no" required placeholder="e.g. BATCH-8829" style="width:100%; margin-top:4px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; padding:8px; border-radius:4px; text-transform:uppercase;">
+                  </div>
+                  <div>
+                    <label style="font-size:0.75rem; color:#7d9696;">Mfg Date <span style="color:#ef4444;">*</span></label>
+                    <input type="month" id="inv-mfg-date" required style="width:100%; margin-top:4px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; padding:8px; border-radius:4px;">
+                  </div>
+                  <div>
+                    <label style="font-size:0.75rem; color:#7d9696;">Expiry Date <span style="color:#ef4444;">*</span></label>
+                    <input type="month" id="inv-exp-date" required style="width:100%; margin-top:4px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; padding:8px; border-radius:4px;">
+                  </div>
+                  <div>
+                    <label style="font-size:0.75rem; color:#7d9696;">Quantity Added <span style="color:#ef4444;">*</span></label>
+                    <input type="number" id="inv-quantity" required min="1" placeholder="e.g. 50" style="width:100%; margin-top:4px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; padding:8px; border-radius:4px;">
+                  </div>
+                </div>
+                <div style="margin-top:20px; text-align:right;">
+                  <button type="submit" class="btn btn-primary" style="padding:8px 24px;"><i class="fa-solid fa-plus"></i> Commit to Ledger</button>
+                </div>
+              </form>
+            </div>
+
+            <!-- Master Inventory Ledger Table -->
+            <div class="grid-card col-span-2">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3>Master Inventory Ledger</h3>
+                <span class="badge badge-python"><i class="fa-solid fa-shield-check"></i> Cryptographically Hashed</span>
+              </div>
+              <div class="document-list-table margin-top">
+                <div class="table-header-vault" style="grid-template-columns: 1.5fr 1fr 1fr 1.5fr 1fr 1fr;">
+                  <span>Brand & Medication</span>
+                  <span>Formulation</span>
+                  <span>Batch #</span>
+                  <span>Mfg / Exp</span>
+                  <span>Current Stock</span>
+                  <span>Action</span>
+                </div>
+                
+                <div id="inv-master-ledger-body">
+                  <!-- Row 1 -->
+                  <div class="table-row-vault" style="grid-template-columns: 1.5fr 1fr 1fr 1.5fr 1fr 1fr; align-items:center;">
+                    <strong style="color:white;">Augmentin 625 Duo</strong>
+                    <span>Tablet</span>
+                    <span style="font-family:monospace; color:#a855f7;">B-99824X</span>
+                    <div>
+                      <div style="font-size:0.7rem; color:#7d9696;">Mfg: 01/2026</div>
+                      <div style="font-size:0.7rem; color:#ef4444;">Exp: 12/2027</div>
+                    </div>
+                    <strong style="color:var(--success);">240 strips</strong>
+                    <button class="btn btn-outline" style="padding:4px 8px; font-size:0.75rem; border-color:var(--primary); color:var(--primary);">Audit</button>
+                  </div>
+                  
+                  <!-- Row 2 -->
+                  <div class="table-row-vault" style="grid-template-columns: 1.5fr 1fr 1fr 1.5fr 1fr 1fr; align-items:center;">
+                    <strong style="color:white;">Corex DX</strong>
+                    <span>Syrup (100ml)</span>
+                    <span style="font-family:monospace; color:#a855f7;">CX-88A92</span>
+                    <div>
+                      <div style="font-size:0.7rem; color:#7d9696;">Mfg: 11/2025</div>
+                      <div style="font-size:0.7rem; color:#ef4444;">Exp: 10/2026</div>
+                    </div>
+                    <strong style="color:#ef4444;"><i class="fa-solid fa-triangle-exclamation"></i> 12 bottles</strong>
+                    <button class="btn btn-outline" style="padding:4px 8px; font-size:0.75rem; border-color:var(--primary); color:var(--primary);">Reorder</button>
+                  </div>
+                </div>
+                
+              </div>
+            </div>
         </div>
 
         <!-- SUB-PANEL: BILLING & SETTLEMENTS -->

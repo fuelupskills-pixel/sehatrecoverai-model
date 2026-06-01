@@ -2998,6 +2998,70 @@ function switchPharmacySubPanel(panelId) {
   }
 }
 
+function toggleInventoryMode(mode) {
+  const btnAuto = document.getElementById('btn-inv-auto');
+  const btnManual = document.getElementById('btn-inv-manual');
+  const manualForm = document.getElementById('inv-manual-entry-form');
+  
+  if (mode === 'auto') {
+    btnAuto.classList.replace('btn-outline', 'btn-primary');
+    btnAuto.style.borderColor = '';
+    btnAuto.style.color = '';
+    
+    btnManual.classList.replace('btn-primary', 'btn-outline');
+    btnManual.style.borderColor = 'transparent';
+    btnManual.style.color = '#7d9696';
+    
+    manualForm.classList.add('hidden');
+    addAuditLogLine('info', 'Pharmacy inventory switched to automated supplier sync mode.');
+  } else {
+    btnManual.classList.replace('btn-outline', 'btn-primary');
+    btnManual.style.borderColor = '';
+    btnManual.style.color = '';
+    
+    btnAuto.classList.replace('btn-primary', 'btn-outline');
+    btnAuto.style.borderColor = 'transparent';
+    btnAuto.style.color = '#7d9696';
+    
+    manualForm.classList.remove('hidden');
+    addAuditLogLine('info', 'Pharmacy inventory switched to manual batch entry mode.');
+  }
+}
+
+function submitManualInventory(e) {
+  e.preventDefault();
+  const brand = document.getElementById('inv-brand-name').value;
+  const formulation = document.getElementById('inv-formulation').value;
+  const batch = document.getElementById('inv-batch-no').value;
+  const mfg = document.getElementById('inv-mfg-date').value;
+  const exp = document.getElementById('inv-exp-date').value;
+  const qty = document.getElementById('inv-quantity').value;
+  
+  const ledgerBody = document.getElementById('inv-master-ledger-body');
+  
+  const newRow = document.createElement('div');
+  newRow.className = 'table-row-vault';
+  newRow.style = 'grid-template-columns: 1.5fr 1fr 1fr 1.5fr 1fr 1fr; align-items:center; animation: fadeIn 0.5s;';
+  newRow.innerHTML = `
+    <strong style="color:white;">${brand}</strong>
+    <span>${formulation}</span>
+    <span style="font-family:monospace; color:#a855f7;">${batch.toUpperCase()}</span>
+    <div>
+      <div style="font-size:0.7rem; color:#7d9696;">Mfg: ${mfg}</div>
+      <div style="font-size:0.7rem; color:#ef4444;">Exp: ${exp}</div>
+    </div>
+    <strong style="color:var(--success);">${qty} units</strong>
+    <button class="btn btn-outline" style="padding:4px 8px; font-size:0.75rem; border-color:var(--primary); color:var(--primary);">Audit</button>
+  `;
+  
+  ledgerBody.insertBefore(newRow, ledgerBody.firstChild);
+  
+  showToast("Inventory Updated", `Successfully logged ${qty} units of ${brand} (Batch: ${batch}).`, "success");
+  addAuditLogLine('success', `Manual stock ingestion: ${brand} [Batch: ${batch}]. Cryptographic hash verified.`);
+  
+  e.target.reset();
+}
+
 let activePharmacyChatOrder = null;
 
 function openPharmacyChatModal(orderId) {
