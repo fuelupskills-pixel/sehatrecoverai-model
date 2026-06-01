@@ -567,8 +567,12 @@ p {
 }
 
 .card-front {
-  background: var(--card-grad);
+  background: linear-gradient(135deg, hsla(186, 100%, 50%, 0.15) 0%, hsla(270, 70%, 65%, 0.25) 100%);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
   color: var(--white);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: inset 0 0 20px rgba(255,255,255,0.05), 0 10px 30px rgba(0,0,0,0.5);
 }
 
 .card-back {
@@ -647,15 +651,21 @@ p {
 }
 
 .qr-border {
-  background-color: var(--white);
-  padding: 8px;
-  border-radius: var(--radius-sm);
+  background-color: rgba(255, 255, 255, 0.05);
+  padding: 6px;
+  border-radius: 12px; /* Smooth rounded shape instead of strict square */
   color: var(--primary);
-  font-size: 2.2rem;
+  width: 64px;
+  height: 64px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  overflow: hidden;
+}
+.qr-border img {
+  border-radius: 8px; /* Inner rounding for the QR graphic */
 }
 
 .card-footer {

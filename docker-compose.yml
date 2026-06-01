@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  web:
+    image: ghcr.io/fuelupskills-pixel/sehatrecoverai-model:latest
+    container_name: sehatrecover_web
+    restart: always
+    ports:
+      - "80:8000"
+    volumes:
+      - sehatrecover_data:/app
+    environment:
+      - ENVIRONMENT=production
+
+volumes:
+  sehatrecover_data:

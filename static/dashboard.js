@@ -143,6 +143,12 @@ function loadUserProfile() {
   document.getElementById('card-contact-db').innerText = currentUser.contact;
   document.getElementById('card-id-num-db').innerText = currentUser.healthId;
 
+  // Generate dynamic unique QR code based on user Health ID
+  const qrImg = document.getElementById('card-dynamic-qr');
+  if (qrImg) {
+    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(currentUser.healthId)}&color=00ccb4&bgcolor=121c1c`;
+  }
+
   // ABHA display sync
   if (currentUser.abhaLinked && currentUser.abhaProfile) {
     document.getElementById('card-abha-badge-db').innerHTML = `<i class="fa-solid fa-circle-check"></i> ${currentUser.abhaProfile.badgeText}`;
