@@ -1,5 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, SafeAreaView, ActivityIndicator, Alert, ScrollView, Switch, Modal, Animated, Dimensions } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, SafeAreaView, ActivityIndicator, Alert, ScrollView, Switch, Modal, Animated, Dimensions, LayoutAnimation, Platform, UIManager } from 'react-native';
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 import { StatusBar } from 'expo-status-bar';
 
 // Mobile screen dimensions
@@ -2392,6 +2396,7 @@ export default function App() {
                   key={tab.key}
                   style={[styles.tabBtn, currentTab === tab.key && styles.tabBtnActive]}
                   onPress={() => {
+                    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
                     setCurrentTab(tab.key);
                     // Close sidecart
                     setCartOpen(false);
@@ -2883,12 +2888,17 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   card: {
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    backgroundColor: 'rgba(18, 28, 36, 0.6)',
     borderRadius: 16,
     padding: 20,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.08)',
     marginBottom: 20,
+    shadowColor: '#00ccb4',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 4,
   },
   cardTitle: {
     fontSize: 20,
@@ -2930,11 +2940,16 @@ const styles = StyleSheet.create({
     color: '#00ccb4',
   },
   button: {
-    backgroundColor: '#008573', // Teal solid color
+    backgroundColor: '#00ccb4', // Bright teal
     borderRadius: 8,
     padding: 15,
     alignItems: 'center',
     marginTop: 8,
+    shadowColor: '#00ccb4',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   buttonText: {
     color: '#fff',
@@ -3005,6 +3020,11 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.15)',
     marginBottom: 20,
     minHeight: 200,
+    shadowColor: '#00ccb4',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 15,
+    elevation: 8,
   },
   cardTeal: { backgroundColor: '#003a32' },
   cardMjpjay: { backgroundColor: '#8a2b00' },

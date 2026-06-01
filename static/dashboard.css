@@ -3,7 +3,8 @@
    ---------------------------------------------------- */
 
 .dashboard-body {
-  background: radial-gradient(circle at top left, #1a1b26 0%, #0a0b10 100%);
+  background: radial-gradient(circle at top left, #121420 0%, #080a0f 100%);
+  background-attachment: fixed;
   color: #f3f7f7;
   font-family: 'Inter', sans-serif;
   margin: 0;
@@ -264,20 +265,32 @@
 
 /* Glassmorphic Widget card */
 .grid-card {
-  background-color: var(--glass-bg, rgba(15, 17, 26, 0.6));
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.05));
-  border-radius: 20px;
+  background: linear-gradient(145deg, rgba(20, 24, 36, 0.7) 0%, rgba(12, 14, 22, 0.8) 100%);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
   padding: 24px;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  animation: slideUpFade 0.6s ease both;
 }
 
+@keyframes slideUpFade {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* Staggered animation delays for grid cards */
+.grid-card:nth-child(1) { animation-delay: 0.1s; }
+.grid-card:nth-child(2) { animation-delay: 0.2s; }
+.grid-card:nth-child(3) { animation-delay: 0.3s; }
+.grid-card:nth-child(4) { animation-delay: 0.4s; }
+
 .grid-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 40px 0 rgba(0, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.1);
+  transform: translateY(-5px) scale(1.01);
+  box-shadow: 0 20px 50px -10px rgba(0, 204, 180, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  border-color: rgba(0, 204, 180, 0.3);
 }
 
 .grid-card h3 {
@@ -2217,3 +2230,73 @@
   transform: scale(1.04);
 }
 
+/* ----------------------------------------------------
+   Dynamic Toast Notification System & Skeletons
+   ---------------------------------------------------- */
+#toast-container {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 9999;
+}
+
+.toast-message {
+  background: rgba(18, 28, 28, 0.95);
+  backdrop-filter: blur(12px);
+  border-left: 4px solid #00ccb4;
+  border-radius: 8px;
+  padding: 16px 20px;
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  transform: translateX(120%);
+  opacity: 0;
+  animation: slideInRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toast-message.error {
+  border-left-color: #ef4444;
+}
+.toast-message.success {
+  border-left-color: #10b981;
+}
+
+.toast-message i {
+  font-size: 1.2rem;
+  color: inherit;
+}
+
+.toast-message.hiding {
+  animation: slideOutRight 0.4s ease forwards;
+}
+
+@keyframes slideInRight {
+  0% { transform: translateX(120%); opacity: 0; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOutRight {
+  0% { transform: translateX(0); opacity: 1; }
+  100% { transform: translateX(120%); opacity: 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%);
+  background-size: 200% 100%;
+  animation: loadingShimmer 1.5s infinite;
+  border-radius: 4px;
+  color: transparent !important;
+}
+
+@keyframes loadingShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

@@ -1492,6 +1492,207 @@
             </div>
           </div>
         </div>
+      <!-- NEW ADMIN PANELS -->
+        
+        <!-- SUB-PANEL: SYSTEM CONTROLS -->
+        <div id="admin-panel-controls" class="admin-sub-panel hidden">
+          <div class="view-header">
+            <h2>System Controls & User Management</h2>
+            <p>Toggle global platform features, manage hospital network routing, and user roles.</p>
+          </div>
+          <div class="view-grid">
+            <div class="grid-card">
+              <h3>Global Emergency Toggles</h3>
+              <p class="section-desc">Enable or disable critical system-wide functions.</p>
+              <div style="display:flex; flex-direction:column; gap:15px; margin-top:20px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(239, 68, 68, 0.05); border:1px solid rgba(239, 68, 68, 0.2); padding:15px; border-radius:8px;">
+                  <div>
+                    <strong style="color:#fff; font-size:1rem;"><i class="fa-solid fa-truck-medical" style="color:#ef4444;"></i> SOS Dispatch Network</strong>
+                    <p style="font-size:0.8rem; color:#7d9696; margin:4px 0 0 0;">Toggle automated emergency ambulance routing.</p>
+                  </div>
+                  <label class="switch-toggle" style="position:relative; display:inline-block; width:50px; height:26px;">
+                    <input type="checkbox" checked style="opacity:0; width:0; height:0;">
+                    <span class="slider-toggle-round" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#ef4444; transition:.4s; border-radius:34px;"></span>
+                  </label>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0, 204, 180, 0.05); border:1px solid rgba(0, 204, 180, 0.2); padding:15px; border-radius:8px;">
+                  <div>
+                    <strong style="color:#fff; font-size:1rem;"><i class="fa-solid fa-server" style="color:var(--primary);"></i> Maintenance Mode</strong>
+                    <p style="font-size:0.8rem; color:#7d9696; margin:4px 0 0 0;">Suspend patient logins for backend upgrades.</p>
+                  </div>
+                  <label class="switch-toggle" style="position:relative; display:inline-block; width:50px; height:26px;">
+                    <input type="checkbox" style="opacity:0; width:0; height:0;">
+                    <span class="slider-toggle-round" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#333; transition:.4s; border-radius:34px;"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+            
+            <div class="grid-card">
+              <h3>Registered Network Nodes</h3>
+              <p class="section-desc">Active entities on the decentralized network.</p>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-top:20px;">
+                <div style="background:rgba(255,255,255,0.02); padding:15px; border-radius:8px; border:1px solid rgba(255,255,255,0.05); text-align:center;">
+                  <h2 style="color:var(--primary); font-size:2rem; margin:0;">142</h2>
+                  <span style="font-size:0.8rem; color:#7d9696;">Active Doctors</span>
+                </div>
+                <div style="background:rgba(255,255,255,0.02); padding:15px; border-radius:8px; border:1px solid rgba(255,255,255,0.05); text-align:center;">
+                  <h2 style="color:var(--accent); font-size:2rem; margin:0;">45</h2>
+                  <span style="font-size:0.8rem; color:#7d9696;">Pharmacies</span>
+                </div>
+                <div style="background:rgba(255,255,255,0.02); padding:15px; border-radius:8px; border:1px solid rgba(255,255,255,0.05); text-align:center; grid-column:span 2;">
+                  <h2 style="color:#a855f7; font-size:2rem; margin:0;">28</h2>
+                  <span style="font-size:0.8rem; color:#7d9696;">Emplanelled Hospitals</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-PANEL: MARKETING CRM -->
+        <div id="admin-panel-crm" class="admin-sub-panel hidden">
+          <div class="view-header">
+            <h2>Marketing CRM & Patient Outreach</h2>
+            <p>Manage health campaigns, promotional broadcasts, and lead generation tracking.</p>
+          </div>
+          <div class="view-grid">
+            <div class="grid-card col-span-2">
+              <h3>Active Outreach Campaigns</h3>
+              <p class="section-desc">Track and trigger marketing blasts to target demographics.</p>
+              
+              <div style="display:flex; flex-direction:column; gap:10px; margin-top:15px;">
+                <!-- Campaign Item -->
+                <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); border-radius:8px; padding:15px; display:flex; justify-content:space-between; align-items:center;">
+                  <div>
+                    <h4 style="margin:0; color:white; font-size:1.05rem;">Monsoon Health Checkup Offer</h4>
+                    <span style="font-size:0.8rem; color:#7d9696; display:block; margin-top:4px;">Target: 1,200 users • Conversions: 4%</span>
+                  </div>
+                  <div style="display:flex; gap:10px;">
+                    <button class="btn btn-outline" style="font-size:0.8rem; padding:6px 12px;" onclick="simulateCustomCommDispatch({preventDefault:()=>{}})"><i class="fa-solid fa-play"></i> Run Campaign Blast</button>
+                    <span class="badge badge-python" style="background:rgba(16, 185, 129, 0.1); color:#10b981; border:1px solid rgba(16, 185, 129, 0.2);">Active</span>
+                  </div>
+                </div>
+                <!-- Campaign Item -->
+                <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); border-radius:8px; padding:15px; display:flex; justify-content:space-between; align-items:center;">
+                  <div>
+                    <h4 style="margin:0; color:white; font-size:1.05rem;">Diabetic Care Program Upsell</h4>
+                    <span style="font-size:0.8rem; color:#7d9696; display:block; margin-top:4px;">Target: 340 High-risk users • Conversions: 12%</span>
+                  </div>
+                  <div style="display:flex; gap:10px;">
+                    <button class="btn btn-outline" style="font-size:0.8rem; padding:6px 12px;"><i class="fa-solid fa-pause"></i> Paused</button>
+                    <span class="badge badge-python" style="background:rgba(245, 158, 11, 0.1); color:#f59e0b; border:1px solid rgba(245, 158, 11, 0.2);">Draft</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-PANEL: BILLING & FINANCE -->
+        <div id="admin-panel-billing" class="admin-sub-panel hidden">
+          <div class="view-header">
+            <h2>Finance, Billing & Insurance Settlements</h2>
+            <p>Overview of network revenue, cashless claim settlements, and direct invoice communication.</p>
+          </div>
+          
+          <div class="view-grid" style="margin-bottom:20px;">
+             <!-- Metric Cards -->
+             <div class="grid-card" style="text-align:center;">
+               <h3 style="color:#7d9696; font-size:0.9rem; font-weight:600; text-transform:uppercase;">Daily Revenue</h3>
+               <div style="font-size:2.2rem; font-weight:700; color:var(--primary); margin:10px 0;">Rs.45,200</div>
+               <span style="font-size:0.8rem; color:var(--success);"><i class="fa-solid fa-arrow-trend-up"></i> +12% from yesterday</span>
+             </div>
+             <div class="grid-card" style="text-align:center;">
+               <h3 style="color:#7d9696; font-size:0.9rem; font-weight:600; text-transform:uppercase;">Pending TPA Claims</h3>
+               <div style="font-size:2.2rem; font-weight:700; color:#f59e0b; margin:10px 0;">Rs.1.2L</div>
+               <span style="font-size:0.8rem; color:#7d9696;"><i class="fa-solid fa-clock"></i> 8 claims pending clearance</span>
+             </div>
+          </div>
+
+          <div class="grid-card">
+            <h3>Recent Financial Transactions</h3>
+            <div class="prescription-list-table" style="margin-top:15px;">
+              <div class="table-header-vault" style="display:grid; grid-template-columns: 1fr 1.5fr 1fr 1fr 2fr; gap:10px; font-weight:600; padding:10px; border-bottom:1px solid rgba(255,255,255,0.05); color:#7d9696; font-size:0.8rem;">
+                <span>Txn ID</span>
+                <span>Patient / Insurer</span>
+                <span>Amount</span>
+                <span>Status</span>
+                <span>Omnichannel Action</span>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:5px; margin-top:5px;">
+                <!-- Row 1 -->
+                <div style="display:grid; grid-template-columns: 1fr 1.5fr 1fr 1fr 2fr; gap:10px; padding:12px 10px; background:rgba(255,255,255,0.01); border-radius:6px; align-items:center; font-size:0.85rem;">
+                  <span style="font-family:monospace; color:var(--accent);">TX-9982</span>
+                  <span>Anna Smith</span>
+                  <span style="font-weight:600; color:white;">Rs.850</span>
+                  <span style="color:var(--success); font-weight:600;">Paid</span>
+                  <div style="display:flex; gap:8px;">
+                    <button class="btn btn-outline" style="padding:4px 8px; font-size:0.75rem; border-color:#25D366; color:#25D366;" onclick="sendWhatsappReceipt('TX-9982')"><i class="fa-brands fa-whatsapp"></i> WhatsApp</button>
+                    <button class="btn btn-outline" style="padding:4px 8px; font-size:0.75rem;" onclick="sendEmailInvoice('Anna Smith')"><i class="fa-solid fa-envelope"></i> Email</button>
+                  </div>
+                </div>
+                <!-- Row 2 -->
+                <div style="display:grid; grid-template-columns: 1fr 1.5fr 1fr 1fr 2fr; gap:10px; padding:12px 10px; background:rgba(255,255,255,0.01); border-radius:6px; align-items:center; font-size:0.85rem;">
+                  <span style="font-family:monospace; color:var(--accent);">CLM-1045</span>
+                  <span>Star Health TPA</span>
+                  <span style="font-weight:600; color:white;">Rs.45,000</span>
+                  <span style="color:#f59e0b; font-weight:600;">Pending</span>
+                  <div style="display:flex; gap:8px;">
+                    <button class="btn btn-outline" style="padding:4px 8px; font-size:0.75rem;" onclick="sendEmailInvoice('Star Health')"><i class="fa-solid fa-envelope"></i> Escalate Mail</button>
+                    <button class="btn btn-outline" style="padding:4px 8px; font-size:0.75rem; border-color:#a855f7; color:#a855f7;" onclick="sendSmsAlert('Claim Reminder')"><i class="fa-solid fa-comment-sms"></i> SMS Alert</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-PANEL: OMNICHANNEL COMMS -->
+        <div id="admin-panel-comms" class="admin-sub-panel hidden">
+          <div class="view-header">
+            <h2>Omnichannel Communication Center</h2>
+            <p>Directly dispatch manual WhatsApp, SMS, or Email notifications to users or groups.</p>
+          </div>
+          
+          <div class="view-grid">
+            <div class="grid-card">
+              <h3>Direct Message Dispatcher</h3>
+              <form onsubmit="simulateCustomCommDispatch(event)" style="display:flex; flex-direction:column; gap:15px; margin-top:15px;">
+                <div class="form-group">
+                  <label style="color:#7d9696; font-size:0.85rem; margin-bottom:5px; display:block;">Select Channel</label>
+                  <select id="comms-channel" style="width:100%; padding:12px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; border-radius:8px;">
+                    <option value="WhatsApp">WhatsApp Business API</option>
+                    <option value="Email">Email (SendGrid)</option>
+                    <option value="SMS">SMS (Twilio)</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label style="color:#7d9696; font-size:0.85rem; margin-bottom:5px; display:block;">Recipient User / Group ID</label>
+                  <input type="text" id="comms-user" placeholder="e.g. SR-9982-1045 or 'All Diabetic Patients'" style="width:100%; padding:12px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; border-radius:8px;">
+                </div>
+                <div class="form-group">
+                  <label style="color:#7d9696; font-size:0.85rem; margin-bottom:5px; display:block;">Message Body</label>
+                  <textarea id="comms-message" rows="4" placeholder="Enter custom message or select template..." style="width:100%; padding:12px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; border-radius:8px; resize:vertical;"></textarea>
+                </div>
+                <button type="submit" id="btn-dispatch-comm" class="btn btn-primary" style="padding:12px; font-weight:600; font-size:1rem;">
+                  Dispatch Message <i class="fa-solid fa-paper-plane"></i>
+                </button>
+              </form>
+            </div>
+            
+            <div class="grid-card">
+              <h3>Delivery Logs (Live)</h3>
+              <p class="section-desc">Recent outgoing transactional messages.</p>
+              <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.05); border-radius:8px; padding:15px; display:flex; flex-direction:column; gap:10px; font-family:monospace; font-size:0.75rem; height:320px; overflow-y:auto;">
+                <div style="color:var(--success); border-left:3px solid var(--success); padding-left:10px;">[10:42 AM] WhatsApp: Delivered to +91 98XXX-XX234 (Txn Receipt)</div>
+                <div style="color:var(--info); border-left:3px solid var(--info); padding-left:10px;">[10:15 AM] Email: Delivered to rahul@example.com (Welcome Mail)</div>
+                <div style="color:var(--success); border-left:3px solid var(--success); padding-left:10px;">[09:30 AM] SMS: Delivered to +91 99XXX-XX111 (OTP Verification)</div>
+                <div style="color:var(--danger); border-left:3px solid var(--danger); padding-left:10px;">[09:12 AM] Email: Bounced - Invalid Address (user123@exmpl)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
 
     </section>

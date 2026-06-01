@@ -30,6 +30,46 @@ let currentUser = {
   rewardPoints: 240 // Initial points balance
 };
 
+// --- DYNAMIC TOAST SYSTEM OVERRIDE ---
+window.alert = function(message) {
+  const msgStr = String(message || "");
+  const isErr = msgStr.toLowerCase().includes("error") || msgStr.toLowerCase().includes("failed") || msgStr.toLowerCase().includes("invalid");
+  showToast("Notification", msgStr, isErr ? "error" : "success");
+};
+
+function showToast(title, message, type = 'success') {
+  let container = document.getElementById('toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toast-container';
+    document.body.appendChild(container);
+  }
+  
+  const toast = document.createElement('div');
+  toast.className = `toast-message ${type}`;
+  
+  const icon = type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check';
+  
+  toast.innerHTML = `
+    <i class="fa-solid ${icon}"></i>
+    <div>
+      <div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 2px;">${title}</div>
+      <div style="opacity: 0.9;">${String(message).replace(/\n/g, '<br>')}</div>
+    </div>
+  `;
+  
+  container.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.classList.add('hiding');
+    setTimeout(() => {
+      if (container.contains(toast)) {
+        container.removeChild(toast);
+      }
+    }, 400);
+  }, 4000);
+}
+
 // Available sidebar menus per role
 const ROLE_SIDEBAR_MENUS = {
   Patient: [
@@ -54,7 +94,11 @@ const ROLE_SIDEBAR_MENUS = {
     { id: 'orders', name: 'Pharmacy Orders', icon: 'fa-prescription' }
   ],
   Admin: [
-    { id: 'security', name: 'Blockchain Explorer', icon: 'fa-cubes' }
+    { id: 'security', name: 'Access & Security', icon: 'fa-shield-halved' },
+    { id: 'controls', name: 'System Controls', icon: 'fa-sliders' },
+    { id: 'crm', name: 'Marketing CRM', icon: 'fa-bullhorn' },
+    { id: 'billing', name: 'Billing & Finance', icon: 'fa-file-invoice-dollar' },
+    { id: 'comms', name: 'Omnichannel Comms', icon: 'fa-paper-plane' }
   ]
 };
 
@@ -230,6 +274,8 @@ function switchDashboardRole(role) {
         
         if (role === 'Patient') {
           switchPatientSubPanel(menu.id);
+        } else if (role === 'Admin') {
+          switchAdminSubPanel(menu.id);
         }
       };
       menuList.appendChild(item);
@@ -247,6 +293,7 @@ function switchDashboardRole(role) {
     loadPharmacyOrdersFeed();
     addAuditLogLine('info', `Pharmacy console connected to network orders feed. Settle claims gateways initialized.`);
   } else if (role === 'Admin') {
+    switchAdminSubPanel('security');
     loadBlockchainBlockRegistry();
     addAuditLogLine('success', `Security Admin console unlocked. Ledger integrity check: VALID.`);
   }
@@ -2852,5 +2899,80 @@ function showMedicationInfoModal(medKey) {
 
 function closeMedInfoModal() {
   document.getElementById('med-info-modal').classList.add('hidden');
+}
+
+// ==========================================
+// ADMIN PANEL: NAVIGATION & COMMS
+// ==========================================
+
+function switchAdminSubPanel(panelId) {
+  const panels = document.querySelectorAll('.admin-sub-panel');
+  panels.forEach(p => p.classList.add('hidden'));
+  
+  const activePanel = document.getElementById(`admin-panel-${panelId}`);
+  if (activePanel) activePanel.classList.remove('hidden');
+
+  // Trigger loads
+  if (panelId === 'security') {
+    // Existing blockchain explorer loads
+  } else if (panelId === 'controls') {
+    // Load system controls if needed
+  } else if (panelId === 'crm') {
+    // Load CRM data if needed
+  } else if (panelId === 'billing') {
+    // Load Billing data if needed
+  } else if (panelId === 'comms') {
+    // Load Comms module if needed
+  }
+  
+  addAuditLogLine('info', `Admin navigating to: ${panelId.toUpperCase()} sub-view.`);
+}
+
+function sendWhatsappReceipt(transactionId, phone = '') {
+  alert(`Sending WhatsApp receipt for ${transactionId} to patient...`);
+  setTimeout(() => {
+    showToast("WhatsApp Message Sent", `Template "Payment Receipt" delivered to user via WhatsApp Business API.`, "success");
+    addAuditLogLine('success', `WhatsApp receipt dispatched for transaction ${transactionId}.`);
+  }, 1200);
+}
+
+function sendEmailInvoice(userId, email = '') {
+  alert(`Preparing Email invoice for ${userId}...`);
+  setTimeout(() => {
+    showToast("Email Dispatched", `Invoice successfully delivered to user's registered email via SendGrid.`, "success");
+    addAuditLogLine('success', `Email invoice routed to ${userId}.`);
+  }, 1500);
+}
+
+function sendSmsAlert(msgType, phone = '') {
+  alert(`Queueing SMS Alert (${msgType})...`);
+  setTimeout(() => {
+    showToast("SMS Alert Delivered", `Transactional SMS sent via Twilio gateway.`, "success");
+    addAuditLogLine('success', `SMS alert (${msgType}) dispatched.`);
+  }, 1000);
+}
+
+function simulateCustomCommDispatch(event) {
+  event.preventDefault();
+  const channel = document.getElementById('comms-channel').value;
+  const user = document.getElementById('comms-user').value;
+  const message = document.getElementById('comms-message').value;
+
+  if (!user || !message) {
+    alert("Please enter a user ID and a message body.");
+    return;
+  }
+
+  const btn = document.getElementById('btn-dispatch-comm');
+  btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Dispatching...`;
+  btn.disabled = true;
+
+  setTimeout(() => {
+    btn.innerHTML = `Dispatch Message <i class="fa-solid fa-paper-plane"></i>`;
+    btn.disabled = false;
+    showToast(`${channel.toUpperCase()} Dispatched`, `Message successfully sent to ${user} via ${channel}.`, "success");
+    addAuditLogLine('success', `Manual Omnichannel dispatch via ${channel} to ${user}.`);
+    document.getElementById('comms-message').value = '';
+  }, 1500);
 }
 
