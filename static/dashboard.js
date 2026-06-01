@@ -88,7 +88,8 @@ const ROLE_SIDEBAR_MENUS = {
     { id: 'emergency', name: 'Emergency Hub', icon: 'fa-truck-medical' }
   ],
   Doctor: [
-    { id: 'consult', name: 'Consulting Desk', icon: 'fa-stethoscope' }
+    { id: 'consult', name: 'Consulting Desk', icon: 'fa-stethoscope' },
+    { id: 'calendar', name: 'Appointments & Calls', icon: 'fa-calendar-days' }
   ],
   Pharmacy: [
     { id: 'orders', name: 'Pharmacy Orders', icon: 'fa-prescription' }
@@ -276,6 +277,8 @@ function switchDashboardRole(role) {
           switchPatientSubPanel(menu.id);
         } else if (role === 'Admin') {
           switchAdminSubPanel(menu.id);
+        } else if (role === 'Doctor') {
+          switchDoctorSubPanel(menu.id);
         }
       };
       menuList.appendChild(item);
@@ -286,6 +289,7 @@ function switchDashboardRole(role) {
   if (role === 'Patient') {
     switchPatientSubPanel('overview');
   } else if (role === 'Doctor') {
+    switchDoctorSubPanel('consult');
     loadDoctorBloodRequestsQueue();
     loadDoctorChatThreads();
     addAuditLogLine('info', `Doctor portal launched. Blood request queue and patient chat threads loaded.`);
@@ -2974,5 +2978,70 @@ function simulateCustomCommDispatch(event) {
     addAuditLogLine('success', `Manual Omnichannel dispatch via ${channel} to ${user}.`);
     document.getElementById('comms-message').value = '';
   }, 1500);
+}
+
+// ==========================================
+// DOCTOR PANEL: TELEHEALTH & APPOINTMENTS
+// ==========================================
+
+function switchDoctorSubPanel(panelId) {
+  const panels = document.querySelectorAll('.doctor-sub-panel');
+  panels.forEach(p => p.classList.add('hidden'));
+  
+  const activePanel = document.getElementById(`doctor-panel-${panelId}`);
+  if (activePanel) activePanel.classList.remove('hidden');
+
+  if (panelId === 'calendar') {
+    addAuditLogLine('info', `Doctor navigating to Appointments Calendar.`);
+  }
+}
+
+function initiateIVRVoiceCall(patientName, phoneNumber) {
+  addAuditLogLine('info', `Initiating IVR voice route to ${patientName} via secure virtual number.`);
+  
+  // Show sequence of toasts to mock the IVR connection
+  showToast("Dialing Patient", `Connecting to Virtual Number +91 8000-000-IVR...`, "info");
+  
+  setTimeout(() => {
+    showToast("IVR Connected", `Call routed to ${patientName}. Your personal number is hidden.`, "success");
+  }, 2500);
+}
+
+function initiateVideoCall(patientName) {
+  addAuditLogLine('info', `Initializing E2E encrypted video bridge for ${patientName}.`);
+  
+  document.getElementById('video-call-patient-name').textContent = patientName;
+  document.getElementById('telehealth-video-modal').classList.remove('hidden');
+  
+  // Simulate connection delay
+  document.getElementById('video-call-status').innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Establishing secure connection...`;
+  
+  setTimeout(() => {
+    document.getElementById('video-call-status').innerHTML = `<i class="fa-solid fa-lock" style="color:var(--success)"></i> Connected (E2E Encrypted)`;
+    document.getElementById('video-call-timer').textContent = "00:00";
+    startVideoTimer();
+  }, 2000);
+}
+
+let videoTimerInterval;
+let videoSeconds = 0;
+
+function startVideoTimer() {
+  videoSeconds = 0;
+  clearInterval(videoTimerInterval);
+  videoTimerInterval = setInterval(() => {
+    videoSeconds++;
+    const m = Math.floor(videoSeconds / 60).toString().padStart(2, '0');
+    const s = (videoSeconds % 60).toString().padStart(2, '0');
+    const timerEl = document.getElementById('video-call-timer');
+    if (timerEl) timerEl.textContent = `${m}:${s}`;
+  }, 1000);
+}
+
+function closeVideoCall() {
+  clearInterval(videoTimerInterval);
+  document.getElementById('telehealth-video-modal').classList.add('hidden');
+  addAuditLogLine('info', `Video consultation ended.`);
+  showToast("Call Ended", `Duration: ${document.getElementById('video-call-timer').textContent}. Call logs saved securely.`, "info");
 }
 
