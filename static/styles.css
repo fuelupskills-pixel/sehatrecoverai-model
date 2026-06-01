@@ -7,15 +7,15 @@
   --font-title: 'Outfit', 'Inter', sans-serif;
   --font-body: 'Inter', sans-serif;
 
-  /* Premium Color Palette (Deep Violet & Cyan Theme) */
-  --primary: hsl(186, 100%, 50%);      /* Neon Cyan */
-  --primary-light: hsla(186, 100%, 50%, 0.1); 
-  --primary-hover: hsl(186, 100%, 40%);
-  --secondary: hsl(270, 70%, 65%);     /* Soft Violet */
-  --accent: hsl(330, 90%, 60%);        /* Neon Pink Accent */
+  /* Premium Color Palette (Glassmorphism Neon Theme) */
+  --primary: #00f2fe;      /* Vibrant Neon Cyan */
+  --primary-light: rgba(0, 242, 254, 0.15); 
+  --primary-hover: #4facfe; /* Electric Blue */
+  --secondary: #c471ed;     /* Neon Purple */
+  --accent: #f64f59;        /* Fiery Pink */
   
-  --dark: #0a0b10;                     /* Very Deep Blue-Black */
-  --light: #f4f6fa;                    /* Soft bluish gray */
+  --dark: #060d13;                     /* Midnight Teal/Black */
+  --light: #f8fafc;                    /* Soft bluish white */
   --white: #ffffff;
   
   /* Feedback Colors */
@@ -25,12 +25,12 @@
   --info: #3b82f6;
 
   /* Card Gradients & Backgrounds (Glassmorphism) */
-  --card-grad: linear-gradient(135deg, hsla(186, 100%, 50%, 0.2) 0%, hsla(270, 70%, 65%, 0.1) 100%);
-  --glass-bg: rgba(10, 11, 16, 0.65);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
-  --shadow-md: 0 12px 30px -3px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 20px 40px -5px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 204, 180, 0.2);
+  --card-grad: linear-gradient(135deg, rgba(0, 242, 254, 0.1) 0%, rgba(196, 113, 237, 0.1) 100%);
+  --glass-bg: rgba(6, 13, 19, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.05);
+  --shadow-sm: 0 4px 10px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 12px 30px -3px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 20px 40px -5px rgba(0, 0, 0, 0.6), 0 0 30px rgba(0, 242, 254, 0.15);
   
   --radius-sm: 8px;
   --radius-md: 16px;
@@ -108,30 +108,34 @@ p {
   padding: 12px 28px;
   border-radius: var(--radius-sm);
   font-family: var(--font-title);
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: 0.95rem;
+  font-weight: 700;
   text-decoration: none;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   border: 2px solid transparent;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .btn-primary {
-  background-color: var(--primary);
-  color: var(--white);
+  background: linear-gradient(90deg, #00f2fe 0%, #4facfe 100%);
+  color: var(--dark);
+  border: none;
+  box-shadow: 0 4px 15px rgba(0, 242, 254, 0.3);
 }
 
 .btn-primary:hover {
-  background-color: var(--primary-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(18, 44, 44, 0.2);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(0, 242, 254, 0.5);
+  color: #000;
 }
 
 .btn-secondary {
   background-color: transparent;
   color: var(--primary);
   border-color: var(--primary);
-  background: hsla(186, 100%, 50%, 0.1);
+  background: rgba(0, 242, 254, 0.1);
   backdrop-filter: blur(8px);
 }
 
@@ -139,19 +143,21 @@ p {
   background-color: var(--primary);
   color: var(--dark);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px hsla(186, 100%, 50%, 0.4);
+  box-shadow: 0 4px 15px rgba(0, 242, 254, 0.4);
 }
 
 .btn-outline {
   background-color: transparent;
-  border-color: var(--primary);
+  border-color: rgba(0, 242, 254, 0.5);
   color: var(--primary);
 }
 
 .btn-outline:hover {
-  background-color: var(--primary);
-  color: var(--white);
+  background-color: rgba(0, 242, 254, 0.15);
+  border-color: var(--primary);
+  color: var(--primary);
   transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 242, 254, 0.2);
 }
 
 .btn-block {

@@ -553,6 +553,24 @@ async function loadPatientPrescriptionsFeed() {
   }
 }
 
+function pharmacyIvrCall(patientId, orderId) {
+  // Use the existing global teleport modal to show an IVR calling screen
+  const modal = document.getElementById('telehealth-video-modal');
+  if (modal) {
+    document.getElementById('tele-patient-name').innerText = patientId;
+    document.getElementById('tele-patient-reason').innerText = `Pharmacy Order Confirmation: ${orderId}`;
+    document.getElementById('tele-remote-video').innerHTML = `
+      <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; color:var(--primary); font-size:1.2rem; text-align:center;">
+        <i class="fa-solid fa-phone-volume fa-shake" style="font-size:4rem; margin-bottom:20px;"></i>
+        <div>Virtual Number Routing Active...</div>
+        <div style="font-size:0.9rem; color:#7d9696; margin-top:10px;">Connecting to Patient (Masked Number)</div>
+      </div>
+    `;
+    modal.classList.remove('hidden');
+    addAuditLogLine('info', `Pharmacy initiating secure IVR dial to ${patientId} for Order ${orderId}.`);
+  }
+}
+
 // --- DOCUMENTS VAULT & ORDER CHECKOUTS ---
 let currentVaultFolder = null;
 
@@ -1313,9 +1331,10 @@ async function loadPharmacyOrdersFeed() {
           <strong style="color:#00ccb4;">${order.id}</strong>
           <div>
             <span>${order.patientId}</span>
-            <div style="display:flex; gap:5px; margin-top:5px;">
+            <div style="display:flex; gap:5px; margin-top:5px; flex-wrap:wrap;">
               <button onclick="downloadPharmacyRx('${order.id}')" class="btn btn-outline" style="padding:2px 6px; font-size:0.65rem;"><i class="fa-solid fa-download"></i> Download Prescription</button>
               <button onclick="openPharmacyChatModal('${order.id}')" class="btn btn-outline" style="padding:2px 6px; font-size:0.65rem; color:#ef4444; border-color:rgba(239,68,68,0.5);"><i class="fa-solid fa-comment-medical"></i> Chat</button>
+              <button onclick="pharmacyIvrCall('${order.patientId}', '${order.id}')" class="btn btn-outline" style="padding:2px 6px; font-size:0.65rem; color:#3b82f6; border-color:rgba(59,130,246,0.5);"><i class="fa-solid fa-phone"></i> IVR Call</button>
             </div>
           </div>
           <span style="color:#7d9696;">${order.medications}</span>
