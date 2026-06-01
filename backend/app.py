@@ -109,6 +109,38 @@ STATE_SCHEMES = {
     }
 }
 
+# Medication Directory Data Store
+MEDICATION_DIRECTORY = {
+    "amoxicillin": {
+        "name": "Amoxicillin 500mg",
+        "category": "Antibiotic (Penicillin class)",
+        "advantage": "Highly effective at destroying broad-spectrum bacteria. Commonly used to treat respiratory infections, strep throat, dental abscesses, and urinary tract infections.",
+        "side_effects": "Mild nausea, diarrhea, abdominal discomfort, skin rashes, or allergic reactions (if sensitive to penicillin).",
+        "precautions": "Complete the full prescribed course even if symptoms disappear. Do not take if you have a known penicillin allergy. Take with meals to reduce gastrointestinal side effects."
+    },
+    "metformin": {
+        "name": "Metformin 500mg",
+        "category": "Antidiabetic (Biguanide class)",
+        "advantage": "Lowers blood glucose levels by improving insulin sensitivity, decreasing hepatic glucose production, and delaying intestinal glucose absorption. Standard first-line treatment for Type 2 Diabetes.",
+        "side_effects": "Metallic taste in mouth, nausea, loss of appetite, bloating, mild abdominal pain, or diarrhea (temporary).",
+        "precautions": "Take with meals (breakfast/dinner) to minimize stomach issues. Limit alcohol consumption to prevent lactic acidosis risks. Monitor kidney functions annually."
+    },
+    "paracetamol": {
+        "name": "Paracetamol 650mg",
+        "category": "Analgesic & Antipyretic",
+        "advantage": "Provides rapid relief for mild-to-moderate physical pain (headaches, muscle aches, toothaches, joint stiffness) and reduces fever by acting on heat-regulating centers in the brain.",
+        "side_effects": "Rare when taken at recommended dosages. Extremely high doses can lead to severe liver toxicity.",
+        "precautions": "Max daily intake is 4,000mg (4g) for adults. Do not combine with other paracetamol-containing OTC remedies. Maintain a gap of 4 to 6 hours between doses."
+    },
+    "atorvastatin": {
+        "name": "Atorvastatin 10mg",
+        "category": "Statin (HMG-CoA Reductase Inhibitor)",
+        "advantage": "Lowers 'bad' LDL cholesterol and triglycerides while increasing 'good' HDL cholesterol. Reduces the risks of heart attacks, angina, and cardiovascular strokes.",
+        "side_effects": "Mild muscle aches (myalgia), headache, nasal congestion, or slight elevations in liver enzymes.",
+        "precautions": "Take once daily, preferably in the evening. Avoid excessive grapefruit juice. Report any unexplained, severe muscle pain or weakness immediately to your doctor."
+    }
+}
+
 # --- DATABASE INITIALIZATION ON STARTUP ---
 @app.on_event("startup")
 def setup_sqlite_database():
@@ -257,6 +289,32 @@ def setup_sqlite_database():
         contact TEXT PRIMARY KEY,
         otp TEXT,
         timestamp REAL
+    )""")
+    
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS blood_requests (
+        id TEXT PRIMARY KEY,
+        patientId TEXT,
+        patientName TEXT,
+        contact TEXT,
+        email TEXT,
+        bloodGroup TEXT,
+        existingIllness TEXT,
+        testReportName TEXT,
+        status TEXT,
+        date TEXT,
+        timestamp REAL
+    )""")
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS chat_messages (
+        id TEXT PRIMARY KEY,
+        patientId TEXT,
+        doctorName TEXT,
+        sender TEXT,
+        message TEXT,
+        timestamp REAL,
+        date TEXT
     )""")
     
     # Dynamic DB Migrations for Bookings (Add video call, voice call, and reminder configurations)
@@ -456,6 +514,21 @@ class AmbulanceBookRequest(BaseModel):
     ambulanceType: str
     pickupAddress: str
 
+class BloodRequestSubmit(BaseModel):
+    patientId: str
+    bloodGroup: str
+    existingIllness: str
+    testReportName: str
+
+class BloodRequestStatusUpdate(BaseModel):
+    status: str
+
+class ChatMessageSend(BaseModel):
+    patientId: str
+    doctorName: str
+    sender: str
+    message: str
+
 # --- AUTH ENDPOINTS ---
 @app.post("/api/auth/send-otp")
 def send_otp(request: OTPSendRequest):
@@ -476,16 +549,15 @@ def send_otp(request: OTPSendRequest):
     conn = get_db_conn()
     cursor = conn.cursor()
 
-    if request.purpose == "login":
-        cursor.execute("SELECT * FROM users WHERE contact = ?", (contact,))
-        if not cursor.fetchone():
-            conn.close()
-            raise HTTPException(status_code=404, detail="Account not found. Please sign up first.")
-    elif request.purpose == "signup":
-        cursor.execute("SELECT * FROM users WHERE contact = ?", (contact,))
-        if cursor.fetchone():
-            conn.close()
-            raise HTTPException(status_code=400, detail="Account already registered. Please log in instead.")
+    # Smart login: if signup mode and account exists, allow login instead
+    # If login mode and account doesn't exist, auto-create (seamless onboarding)
+    cursor.execute("SELECT * FROM users WHERE contact = ?", (contact,))
+    existing_user = cursor.fetchone()
+    
+    if request.purpose == "signup" and existing_user:
+        # Account already exists — treat as login, don't error
+        pass  # Allow OTP to be sent for login
+    # Removed: login rejection for non-existent accounts — now auto-creates on verify
 
     otp = f"{random.randint(100000, 999999)}"
     cursor.execute("INSERT OR REPLACE INTO otps (contact, otp, timestamp) VALUES (?, ?, ?)", (contact, otp, time.time()))
@@ -1350,6 +1422,208 @@ def get_ambulance_status(patient_id: str):
         "booking": latest,
         "progress": progress
     }
+
+# --- AUXILIARY AI DOCTOR RESPONSE HELPER ---
+def generate_ai_doctor_reply(user_msg: str, doctor_name: str) -> str:
+    msg_lower = user_msg.lower()
+    
+    specialty = "General Physician"
+    if "dev kumar" in doctor_name.lower():
+        specialty = "Cardiologist"
+    elif "sarah" in doctor_name.lower():
+        specialty = "Neurologist"
+    elif "clara" in doctor_name.lower():
+        specialty = "Pulmonologist"
+        
+    intro = f"Hello, I am {doctor_name} ({specialty}). "
+    
+    if any(k in msg_lower for k in ["heart", "chest pain", "bp", "cardiac", "pulse"]):
+        if specialty == "Cardiologist":
+            return intro + "Based on your cardiac concern, I recommend keeping track of your daily BP and heart rate. If you have chest tightness, please rest immediately and use the emergency sirens for basic lifesupport dispatch."
+        else:
+            return intro + "For cardiac symptoms like chest pain, please consult my colleague Dr. Dev Kumar (Cardiologist) immediately. I've noted this in your ledger."
+            
+    if any(k in msg_lower for k in ["headache", "migraine", "dizziness"]):
+        if specialty == "Neurologist":
+            return intro + "For migraine or headaches, stay hydrated and keep in dark, quiet spaces. I can prescribe a mild pain reliever if needed, but please schedule a slot to discuss detailed neurological scans."
+        else:
+            return intro + "I recommend consulting Dr. Sarah Johnson (Neurologist) for a complete diagnostic scan on headaches or dizzy spells."
+            
+    if any(k in msg_lower for k in ["cough", "breath", "lungs", "asthma", "wheezing"]):
+        if specialty == "Pulmonologist":
+            return intro + "For cough or respiratory congestion, avoid cold fluids, try steam inhalation, and track your oxygen levels (SpO2). If oxygen falls below 94%, seek emergency oxygen immediately."
+        else:
+            return intro + "Please contact Dr. Clara Barton (Pulmonologist) for chronic respiratory or congestion concerns."
+            
+    if any(k in msg_lower for k in ["blood", "transfusion", "blood group", "donor", "request"]):
+        return intro + "If you are requesting a blood transfusion pack, please submit the official request form with a verified clean pathology test report. I will review and fulfill it instantly from our clinic bank."
+        
+    return intro + "Thank you for reaching out. I have reviewed your clinical records. Keep monitoring your live vitals telemetry in your command center, and let me know if you experience any persistent symptoms."
+
+# --- BLOOD REQUESTS ENDPOINTS ---
+@app.post("/api/dashboard/blood-requests")
+def submit_blood_request(req: BloodRequestSubmit):
+    req_id = f"BLD-{random.randint(1000, 9999)}"
+    req_date = time.strftime("%Y-%m-%d")
+    
+    conn = get_db_conn()
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT contact, fullName FROM users WHERE healthId = ?", (req.patientId,))
+    rows = cursor.fetchall()
+    
+    patient_name = "Valued Patient"
+    contact_phone = "Not Available"
+    contact_email = "Not Available"
+    
+    for row in rows:
+        patient_name = row["fullName"]
+        contact_val = row["contact"]
+        if "@" in contact_val:
+            contact_email = contact_val
+        else:
+            contact_phone = contact_val
+            
+    cursor.execute(
+        "INSERT INTO blood_requests (id, patientId, patientName, contact, email, bloodGroup, existingIllness, testReportName, status, date, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (req_id, req.patientId, patient_name, contact_phone, contact_email, req.bloodGroup, req.existingIllness, req.testReportName, "Pending", req_date, time.time())
+    )
+    conn.commit()
+    conn.close()
+    
+    log_blockchain_txn("BLOOD_REQUEST_SUBMITTED", {
+        "requestId": req_id,
+        "patientId": req.patientId,
+        "bloodGroup": req.bloodGroup
+    })
+    
+    return {
+        "status": "success",
+        "message": "Blood request submitted and securely logged.",
+        "requestId": req_id
+    }
+
+@app.get("/api/dashboard/blood-requests")
+def get_all_blood_requests():
+    conn = get_db_conn()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM blood_requests ORDER BY timestamp DESC")
+    rows = cursor.fetchall()
+    conn.close()
+    return {"status": "success", "requests": [dict(r) for r in rows]}
+
+@app.get("/api/dashboard/blood-requests/patient/{patient_id}")
+def get_patient_blood_requests(patient_id: str):
+    conn = get_db_conn()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM blood_requests WHERE patientId = ? ORDER BY timestamp DESC", (patient_id,))
+    rows = cursor.fetchall()
+    conn.close()
+    return {"status": "success", "requests": [dict(r) for r in rows]}
+
+@app.post("/api/dashboard/blood-requests/{id}/status")
+def update_blood_request_status(id: str, req: BloodRequestStatusUpdate):
+    conn = get_db_conn()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM blood_requests WHERE id = ?", (id,))
+    row = cursor.fetchone()
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Request not found.")
+        
+    cursor.execute("UPDATE blood_requests SET status = ? WHERE id = ?", (req.status, id))
+    conn.commit()
+    conn.close()
+    
+    log_blockchain_txn("BLOOD_REQUEST_STATUS_UPDATED", {
+        "requestId": id,
+        "status": req.status
+    })
+    return {"status": "success", "message": f"Blood request status updated to {req.status}."}
+
+# --- DOCTOR-PATIENT CLINICAL CHAT ENDPOINTS ---
+@app.post("/api/chat/send")
+def send_chat_message(req: ChatMessageSend):
+    msg_id = f"MSG-{uuid.uuid4().hex[:10].upper()}"
+    msg_date = time.strftime("%Y-%m-%d %H:%M:%S")
+    
+    conn = get_db_conn()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO chat_messages (id, patientId, doctorName, sender, message, timestamp, date) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        (msg_id, req.patientId, req.doctorName, req.sender, req.message, time.time(), msg_date)
+    )
+    conn.commit()
+    conn.close()
+    
+    log_blockchain_txn("CHAT_MESSAGE_LOGGED", {
+        "messageId": msg_id,
+        "patientId": req.patientId,
+        "doctor": req.doctorName,
+        "sender": req.sender
+    })
+    
+    if req.sender == "patient":
+        ai_reply = generate_ai_doctor_reply(req.message, req.doctorName)
+        reply_id = f"MSG-{uuid.uuid4().hex[:10].upper()}"
+        reply_date = time.strftime("%Y-%m-%d %H:%M:%S")
+        
+        conn = get_db_conn()
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO chat_messages (id, patientId, doctorName, sender, message, timestamp, date) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (reply_id, req.patientId, req.doctorName, "doctor", ai_reply, time.time() + 1.0, reply_date)
+        )
+        conn.commit()
+        conn.close()
+        
+        log_blockchain_txn("CHAT_MESSAGE_LOGGED", {
+            "messageId": reply_id,
+            "patientId": req.patientId,
+            "doctor": req.doctorName,
+            "sender": "doctor"
+        })
+        
+    return {"status": "success", "message": "Message sent and logged successfully."}
+
+@app.get("/api/chat/history/{patient_id}/{doctor_name}")
+def get_chat_history(patient_id: str, doctor_name: str):
+    conn = get_db_conn()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT * FROM chat_messages WHERE patientId = ? AND doctorName = ? ORDER BY timestamp ASC",
+        (patient_id, doctor_name)
+    )
+    rows = cursor.fetchall()
+    conn.close()
+    return {"status": "success", "history": [dict(r) for r in rows]}
+
+@app.get("/api/chat/active-patients/{doctor_name}")
+def get_active_patients(doctor_name: str):
+    conn = get_db_conn()
+    cursor = conn.cursor()
+    cursor.execute(
+        """SELECT DISTINCT cm.patientId, u.fullName 
+           FROM chat_messages cm 
+           JOIN users u ON cm.patientId = u.healthId 
+           WHERE cm.doctorName = ?""", 
+        (doctor_name,)
+    )
+    rows = cursor.fetchall()
+    conn.close()
+    return {"status": "success", "patients": [dict(r) for r in rows]}
+
+# --- PHARMACEUTICAL DIRECTORY ENDPOINTS ---
+@app.get("/api/directory/medications")
+def get_medications_directory():
+    return {"status": "success", "medications": MEDICATION_DIRECTORY}
+
+@app.get("/api/directory/medications/{name}")
+def get_medication_details(name: str):
+    name_key = name.lower().strip()
+    if name_key in MEDICATION_DIRECTORY:
+        return {"status": "success", "medication": MEDICATION_DIRECTORY[name_key]}
+    raise HTTPException(status_code=404, detail="Medication not found in directory.")
 
 # --- PAGE SERVING ROUTES ---
 @app.get("/")

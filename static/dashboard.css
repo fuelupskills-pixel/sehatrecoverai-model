@@ -3,7 +3,7 @@
    ---------------------------------------------------- */
 
 .dashboard-body {
-  background-color: #121c1c; /* Deep Teal dark background */
+  background: radial-gradient(circle at top left, #1a1b26 0%, #0a0b10 100%);
   color: #f3f7f7;
   font-family: 'Inter', sans-serif;
   margin: 0;
@@ -171,20 +171,40 @@
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
-  border-radius: 8px;
+  border-radius: 12px;
   color: #7d9696;
   text-decoration: none;
   font-weight: 600;
   font-size: 0.9rem;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.menu-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background-color: var(--primary, #00ffff);
+  transform: scaleY(0);
+  transition: transform 0.3s ease;
+  border-radius: 0 4px 4px 0;
 }
 
 .menu-item:hover,
 .menu-item.active {
-  background-color: rgba(0, 204, 180, 0.08);
-  color: #00ccb4;
+  background: linear-gradient(90deg, hsla(186, 100%, 50%, 0.1) 0%, transparent 100%);
+  color: var(--white, #ffffff);
 }
+
+.menu-item.active::before {
+  transform: scaleY(1);
+}
+
 
 .sidebar-help {
   background-color: rgba(0, 204, 180, 0.03);
@@ -244,11 +264,20 @@
 
 /* Glassmorphic Widget card */
 .grid-card {
-  background-color: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 16px;
+  background-color: var(--glass-bg, rgba(15, 17, 26, 0.6));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.05));
+  border-radius: 20px;
   padding: 24px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.grid-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px 0 rgba(0, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .grid-card h3 {
@@ -1902,4 +1931,289 @@
   border-color: rgba(0, 204, 180, 0.4) !important;
 }
 
+/* ====================================================================
+   BLOOD REQUEST PORTAL STYLES
+   ==================================================================== */
+
+.blood-request-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.blood-request-form .form-group label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #7d9696;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.blood-group-selector {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.blood-group-btn {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+  font-weight: 800;
+  font-size: 0.92rem;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: 'Outfit', sans-serif;
+}
+
+.blood-group-btn:hover {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #ef4444;
+  transform: scale(1.04);
+}
+
+.blood-group-btn.active {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: #ef4444;
+  color: #ef4444;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+}
+
+/* ====================================================================
+   DOCTOR-PATIENT CHAT STYLES
+   ==================================================================== */
+
+.doctor-drawer-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid transparent;
+  position: relative;
+}
+
+.doctor-drawer-card:hover {
+  background: rgba(0, 204, 180, 0.06);
+  border-color: rgba(0, 204, 180, 0.12);
+}
+
+.doctor-drawer-card.active-doctor {
+  background: rgba(0, 204, 180, 0.1);
+  border-color: rgba(0, 204, 180, 0.2);
+}
+
+.doctor-avatar-mini {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.online-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.5);
+}
+
+/* Chat Bubbles */
+.chat-bubble {
+  display: flex;
+  flex-direction: column;
+  max-width: 75%;
+}
+
+.patient-bubble {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+
+.doctor-bubble {
+  align-self: flex-start;
+  align-items: flex-start;
+}
+
+.bubble-sender {
+  font-size: 0.7rem;
+  color: #7d9696;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.bubble-text {
+  padding: 10px 14px;
+  border-radius: 16px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: white;
+}
+
+.patient-bubble .bubble-text {
+  background: linear-gradient(135deg, rgba(0, 204, 180, 0.2), rgba(8, 145, 178, 0.15));
+  border: 1px solid rgba(0, 204, 180, 0.2);
+  border-radius: 16px 16px 2px 16px;
+}
+
+.doctor-bubble .bubble-text {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px 16px 16px 2px;
+}
+
+.bubble-time {
+  font-size: 0.68rem;
+  color: #7d9696;
+  margin-top: 4px;
+}
+
+/* Typing Indicator */
+.chat-typing-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px;
+}
+
+.chat-typing-indicator span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #7d9696;
+  animation: typingBounce 1.2s infinite;
+}
+
+.chat-typing-indicator span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.chat-typing-indicator span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+.chat-typing-indicator em {
+  font-size: 0.75rem;
+  color: #7d9696;
+  font-style: italic;
+}
+
+@keyframes typingBounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-6px); }
+}
+
+/* ====================================================================
+   PHARMACEUTICAL DIRECTORY STYLES
+   ==================================================================== */
+
+.med-directory-card {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ====================================================================
+   ENHANCED GLOBAL UI IMPROVEMENTS
+   ==================================================================== */
+
+/* Smoother sidebar menu transitions */
+.menu-item {
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.menu-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 60%;
+  width: 3px;
+  background: linear-gradient(135deg, #00ccb4, #0891b2);
+  border-radius: 0 3px 3px 0;
+}
+
+/* Premium grid card hover effect */
+.grid-card {
+  transition: box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.grid-card:hover {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  border-color: rgba(255, 255, 255, 0.09);
+}
+
+/* View header enhancements */
+.view-header h2 {
+  background: linear-gradient(135deg, #ffffff 60%, rgba(255, 255, 255, 0.7));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Smooth modal zoom animation */
+@keyframes modalZoom {
+  from { opacity: 0; transform: scale(0.9) translateY(-10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* margin-top utility */
+.margin-top {
+  margin-top: 24px;
+}
+
+/* Enhanced btn styles */
+.btn {
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+/* Prescription feed pill info button */
+.btn-med-info {
+  background: rgba(168, 85, 247, 0.12);
+  border: 1px solid rgba(168, 85, 247, 0.25);
+  color: #a855f7;
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.btn-med-info:hover {
+  background: rgba(168, 85, 247, 0.2);
+  border-color: rgba(168, 85, 247, 0.4);
+  transform: scale(1.04);
+}
 

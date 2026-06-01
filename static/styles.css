@@ -7,15 +7,15 @@
   --font-title: 'Outfit', 'Inter', sans-serif;
   --font-body: 'Inter', sans-serif;
 
-  /* Premium Color Palette (Teal & Sky Blue Theme) */
-  --primary: hsl(175, 60%, 28%);       /* Deep Teal */
-  --primary-light: hsl(175, 45%, 93%); /* Soft Teal tint */
-  --primary-hover: hsl(175, 70%, 20%);
-  --secondary: hsl(195, 75%, 65%);     /* Sky Blue */
-  --accent: hsl(24, 90%, 58%);         /* Accent Orange */
+  /* Premium Color Palette (Deep Violet & Cyan Theme) */
+  --primary: hsl(186, 100%, 50%);      /* Neon Cyan */
+  --primary-light: hsla(186, 100%, 50%, 0.1); 
+  --primary-hover: hsl(186, 100%, 40%);
+  --secondary: hsl(270, 70%, 65%);     /* Soft Violet */
+  --accent: hsl(330, 90%, 60%);        /* Neon Pink Accent */
   
-  --dark: #121c1c;                     /* Deep Charcoal */
-  --light: #f3f7f7;                    /* Light Grayish Teal */
+  --dark: #0a0b10;                     /* Very Deep Blue-Black */
+  --light: #f4f6fa;                    /* Soft bluish gray */
   --white: #ffffff;
   
   /* Feedback Colors */
@@ -24,13 +24,13 @@
   --danger: #ef4444;
   --info: #3b82f6;
 
-  /* Card Gradients & Backgrounds */
-  --card-grad: linear-gradient(135deg, hsl(175, 60%, 28%) 0%, hsl(175, 55%, 22%) 100%);
-  --glass-bg: rgba(255, 255, 255, 0.85);
-  --glass-border: rgba(255, 255, 255, 0.5);
-  --shadow-sm: 0 4px 6px -1px rgba(18, 28, 28, 0.05);
-  --shadow-md: 0 12px 20px -3px rgba(18, 28, 28, 0.08);
-  --shadow-lg: 0 20px 25px -5px rgba(18, 28, 28, 0.12), 0 10px 10px -5px rgba(18, 28, 28, 0.04);
+  /* Card Gradients & Backgrounds (Glassmorphism) */
+  --card-grad: linear-gradient(135deg, hsla(186, 100%, 50%, 0.2) 0%, hsla(270, 70%, 65%, 0.1) 100%);
+  --glass-bg: rgba(10, 11, 16, 0.65);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 12px 30px -3px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 20px 40px -5px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 204, 180, 0.2);
   
   --radius-sm: 8px;
   --radius-md: 16px;
@@ -128,14 +128,18 @@ p {
 }
 
 .btn-secondary {
-  background-color: var(--secondary);
+  background-color: transparent;
   color: var(--primary);
+  border-color: var(--primary);
+  background: hsla(186, 100%, 50%, 0.1);
+  backdrop-filter: blur(8px);
 }
 
 .btn-secondary:hover {
-  background-color: hsl(195, 75%, 60%);
+  background-color: var(--primary);
+  color: var(--dark);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+  box-shadow: 0 4px 12px hsla(186, 100%, 50%, 0.4);
 }
 
 .btn-outline {

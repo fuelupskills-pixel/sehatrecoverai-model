@@ -3,171 +3,683 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SehatRecover - Access Your Universal Health Card</title>
-  <meta name="description" content="Secure passwordless access to your SehatRecover Universal Health Card and ABHA account integration.">
-  <!-- Google Fonts -->
+  <title>SehatRecover — Secure Health Login</title>
+  <meta name="description" content="Passwordless secure access to your SehatRecover Universal Health Card and digital health records.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <!-- FontAwesome Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Custom Stylesheets -->
   <link rel="stylesheet" href="/static/styles.css">
-  <link rel="stylesheet" href="/static/auth.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #00ccb4;
+      --primary-dark: #009e8a;
+      --secondary: #a5f3fc;
+      --accent: #a855f7;
+      --danger: #ef4444;
+      --success: #10b981;
+      --bg: #080f10;
+      --card-bg: rgba(255,255,255,0.035);
+      --border: rgba(255,255,255,0.08);
+      --text-muted: #6b8f8f;
+    }
+
+    body {
+      background: var(--bg);
+      min-height: 100vh;
+      font-family: 'Inter', sans-serif;
+      color: white;
+      display: flex;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ── Animated background ── */
+    .bg-gradient-mesh {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background: radial-gradient(ellipse 80% 60% at 10% 20%, rgba(0,204,180,0.12) 0%, transparent 60%),
+                  radial-gradient(ellipse 60% 50% at 85% 75%, rgba(168,85,247,0.1) 0%, transparent 55%),
+                  radial-gradient(ellipse 50% 40% at 50% 50%, rgba(8,145,178,0.06) 0%, transparent 60%);
+    }
+
+    .bg-orb {
+      position: fixed; border-radius: 50%; pointer-events: none; z-index: 0;
+      filter: blur(100px); animation: orbDrift 20s infinite ease-in-out alternate;
+    }
+    .orb-1 { width: 500px; height: 500px; background: rgba(0,204,180,0.08); top: -200px; left: -150px; }
+    .orb-2 { width: 400px; height: 400px; background: rgba(168,85,247,0.07); bottom: -100px; right: -100px; animation-delay: -10s; }
+    .orb-3 { width: 300px; height: 300px; background: rgba(8,145,178,0.06); top: 40%; left: 40%; animation-delay: -5s; }
+    @keyframes orbDrift { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(40px,60px) scale(1.15); } }
+
+    /* ── Grid lines ── */
+    .grid-overlay {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image: linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+
+    /* ── Page layout ── */
+    .auth-page {
+      position: relative; z-index: 1; display: flex;
+      width: 100%; min-height: 100vh;
+    }
+
+    /* ── Left Panel – Branding ── */
+    .auth-left {
+      flex: 1; display: flex; flex-direction: column; justify-content: center;
+      padding: 60px 70px; position: relative; overflow: hidden;
+    }
+
+    .auth-left::after {
+      content: ''; position: absolute; right: 0; top: 10%; bottom: 10%;
+      width: 1px; background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.08), transparent);
+    }
+
+    .brand-logo {
+      display: flex; align-items: center; gap: 14px; margin-bottom: 60px;
+      text-decoration: none;
+    }
+    .brand-icon {
+      width: 50px; height: 50px; border-radius: 14px;
+      background: linear-gradient(135deg, #00ccb4, #0891b2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem; color: white;
+      box-shadow: 0 8px 24px rgba(0,204,180,0.3);
+    }
+    .brand-name { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.5rem; color: white; line-height: 1; }
+    .brand-name span { color: #00ccb4; }
+    .brand-tagline { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-top: 2px; }
+
+    .auth-hero-text { margin-bottom: 50px; }
+    .auth-hero-text h1 {
+      font-family: 'Outfit', sans-serif; font-size: 3rem; font-weight: 800;
+      line-height: 1.1; margin-bottom: 20px;
+      background: linear-gradient(135deg, #ffffff 40%, rgba(0,204,180,0.9));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .auth-hero-text p { font-size: 1.05rem; color: var(--text-muted); line-height: 1.65; max-width: 440px; }
+
+    .feature-pills { display: flex; flex-direction: column; gap: 14px; }
+    .feature-pill {
+      display: flex; align-items: center; gap: 14px; padding: 14px 18px;
+      background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px; transition: all 0.25s;
+    }
+    .feature-pill:hover { background: rgba(0,204,180,0.04); border-color: rgba(0,204,180,0.15); }
+    .pill-icon {
+      width: 38px; height: 38px; border-radius: 10px; display: flex;
+      align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0;
+    }
+    .pill-text strong { font-size: 0.88rem; color: white; display: block; margin-bottom: 2px; }
+    .pill-text span { font-size: 0.78rem; color: var(--text-muted); }
+
+    /* ── Right Panel – Auth Card ── */
+    .auth-right {
+      width: 480px; flex-shrink: 0; display: flex; flex-direction: column;
+      justify-content: center; padding: 40px 48px;
+      background: rgba(255,255,255,0.018);
+      border-left: 1px solid rgba(255,255,255,0.06);
+      backdrop-filter: blur(30px);
+    }
+
+    .auth-card-title {
+      margin-bottom: 32px;
+    }
+    .auth-card-title h2 {
+      font-family: 'Outfit', sans-serif; font-size: 1.75rem; font-weight: 700;
+      color: white; margin-bottom: 6px;
+    }
+    .auth-card-title p { font-size: 0.88rem; color: var(--text-muted); line-height: 1.5; }
+
+    /* ── Tab Switcher ── */
+    .tab-row {
+      display: flex; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 10px; padding: 4px; margin-bottom: 24px; gap: 4px;
+    }
+    .tab-btn {
+      flex: 1; border: none; background: transparent; color: var(--text-muted);
+      font-family: 'Outfit', sans-serif; font-size: 0.9rem; font-weight: 600;
+      padding: 10px 12px; border-radius: 7px; cursor: pointer;
+      transition: all 0.25s; display: flex; align-items: center; justify-content: center; gap: 7px;
+    }
+    .tab-btn:hover:not(.active) { color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.04); }
+    .tab-btn.active {
+      background: linear-gradient(135deg, #00ccb4, #0891b2); color: white;
+      box-shadow: 0 4px 14px rgba(0,204,180,0.25);
+    }
+
+    /* Channel selector */
+    .channel-row {
+      display: flex; gap: 8px; margin-bottom: 22px;
+    }
+    .channel-btn {
+      flex: 1; padding: 9px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px; color: var(--text-muted); font-size: 0.82rem; font-weight: 600;
+      cursor: pointer; transition: all 0.2s; font-family: 'Inter', sans-serif;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .channel-btn:hover:not(.active) { border-color: rgba(255,255,255,0.14); color: white; }
+    .channel-btn.active { border-color: rgba(0,204,180,0.4); color: #00ccb4; background: rgba(0,204,180,0.07); }
+
+    /* ── Form Fields ── */
+    .form-field { margin-bottom: 18px; }
+    .form-field label {
+      display: block; font-size: 0.76rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.7px; color: var(--text-muted); margin-bottom: 7px;
+    }
+    .input-wrap { position: relative; display: flex; align-items: center; }
+    .input-wrap .input-pfx {
+      position: absolute; left: 14px; color: var(--text-muted); font-size: 0.88rem;
+      pointer-events: none; display: flex; align-items: center; gap: 6px;
+    }
+    .input-wrap input {
+      width: 100%; padding: 13px 14px 13px 42px;
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 10px; color: white; font-size: 0.92rem; font-family: 'Inter', sans-serif;
+      outline: none; transition: all 0.25s;
+    }
+    .input-wrap input::placeholder { color: rgba(255,255,255,0.22); }
+    .input-wrap input:focus { border-color: rgba(0,204,180,0.5); background: rgba(0,204,180,0.04); box-shadow: 0 0 0 3px rgba(0,204,180,0.1); }
+    .phone-input-wrap input { padding-left: 54px; }
+    .phone-pfx { font-weight: 700; color: #00ccb4; }
+
+    /* OTP Input */
+    .otp-input {
+      width: 100%; max-width: 100%; padding: 16px 20px !important;
+      font-size: 2rem !important; letter-spacing: 16px; font-weight: 800;
+      text-align: center; font-family: 'Outfit', monospace !important;
+      background: rgba(0,0,0,0.2) !important; border: 1px solid rgba(255,255,255,0.12) !important;
+    }
+    .otp-input:focus { border-color: rgba(0,204,180,0.5) !important; box-shadow: 0 0 0 3px rgba(0,204,180,0.12) !important; }
+
+    /* ── Tip Pill ── */
+    .tip-pill {
+      display: flex; align-items: center; gap: 8px; padding: 10px 14px;
+      background: rgba(168,85,247,0.07); border: 1px solid rgba(168,85,247,0.18);
+      border-radius: 8px; margin-top: 12px;
+      font-size: 0.8rem; color: rgba(255,255,255,0.7);
+    }
+    .tip-pill i { color: #a855f7; flex-shrink: 0; }
+    .tip-pill strong { color: #c084fc; }
+
+    /* ── Error Alert ── */
+    .auth-error {
+      background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25);
+      border-left: 3px solid #ef4444; border-radius: 8px;
+      color: #fca5a5; padding: 11px 14px; font-size: 0.84rem;
+      margin-bottom: 16px; animation: fadeSlideIn 0.3s ease;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .auth-error.hidden { display: none; }
+    @keyframes fadeSlideIn { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+
+    /* ── Primary Button ── */
+    .btn-auth {
+      width: 100%; padding: 14px 20px; border: none; border-radius: 10px;
+      font-family: 'Outfit', sans-serif; font-size: 1rem; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+      background: linear-gradient(135deg, #00ccb4, #0891b2);
+      color: white; transition: all 0.25s; box-shadow: 0 6px 20px rgba(0,204,180,0.2);
+      margin-top: 8px;
+    }
+    .btn-auth:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(0,204,180,0.3); }
+    .btn-auth:active:not(:disabled) { transform: translateY(0); }
+    .btn-auth:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+    .btn-auth i { transition: transform 0.25s; }
+    .btn-auth:hover:not(:disabled) .arrow-icon { transform: translateX(4px); }
+
+    /* ── Back link ── */
+    .btn-back {
+      background: none; border: none; color: var(--text-muted); font-size: 0.85rem;
+      cursor: pointer; margin-top: 14px; font-family: 'Inter', sans-serif;
+      display: flex; align-items: center; gap: 6px; padding: 4px 0;
+      transition: color 0.2s;
+    }
+    .btn-back:hover { color: white; }
+
+    /* ── Success State ── */
+    .success-icon {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: linear-gradient(135deg, rgba(16,185,129,0.2), rgba(5,150,105,0.1));
+      border: 2px solid rgba(16,185,129,0.4); display: flex; align-items: center;
+      justify-content: center; font-size: 2rem; color: #10b981; margin: 0 auto 24px;
+      animation: successPop 0.6s cubic-bezier(0.175,0.885,0.32,1.275);
+    }
+    @keyframes successPop { from { opacity:0; transform:scale(0.4); } 60% { transform:scale(1.1); } to { opacity:1; transform:scale(1); } }
+
+    .success-info {
+      background: rgba(255,255,255,0.025); border: 1px dashed rgba(255,255,255,0.1);
+      border-radius: 10px; padding: 16px 20px; margin: 20px 0;
+    }
+    .success-row { display: flex; justify-content: space-between; padding: 7px 0; font-size: 0.88rem; }
+    .success-row:not(:last-child) { border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .success-row span { color: var(--text-muted); }
+    .success-row strong { color: white; font-family: monospace; }
+
+    .redirect-bar {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      color: #00ccb4; font-size: 0.88rem; font-weight: 600;
+    }
+
+    /* ── Security badges ── */
+    .security-badges {
+      display: flex; gap: 8px; flex-wrap: wrap; margin-top: 28px;
+    }
+    .badge-sec {
+      display: flex; align-items: center; gap: 5px; padding: 5px 10px;
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 20px; font-size: 0.72rem; color: var(--text-muted);
+    }
+    .badge-sec i { color: #00ccb4; font-size: 0.65rem; }
+
+    /* Footer */
+    .auth-footer { margin-top: auto; padding-top: 28px; border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--text-muted); }
+    .auth-footer a { color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+    .auth-footer a:hover { color: white; }
+
+    /* Hidden util */
+    .hidden { display: none !important; }
+
+    /* Steps */
+    .auth-step { animation: stepFade 0.35s ease; }
+    @keyframes stepFade { from { opacity:0; transform:translateX(12px); } to { opacity:1; transform:translateX(0); } }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .auth-left { display: none; }
+      .auth-right { width: 100%; border-left: none; }
+    }
+    @media (max-width: 480px) {
+      .auth-right { padding: 32px 24px; }
+    }
+  </style>
 </head>
-<body class="auth-body">
+<body>
+  <!-- Background -->
+  <div class="bg-gradient-mesh"></div>
+  <div class="grid-overlay"></div>
+  <div class="bg-orb orb-1"></div>
+  <div class="bg-orb orb-2"></div>
+  <div class="bg-orb orb-3"></div>
 
-  <!-- Background Blur Blobs -->
-  <div class="auth-blur-blob blob-1"></div>
-  <div class="auth-blur-blob blob-2"></div>
+  <div class="auth-page">
+    <!-- Left Branding Panel -->
+    <div class="auth-left">
+      <a href="/" class="brand-logo">
+        <div class="brand-icon"><i class="fa-solid fa-heart-pulse"></i></div>
+        <div>
+          <div class="brand-name">sehat<span>recover</span></div>
+          <div class="brand-tagline">Universal Health Platform</div>
+        </div>
+      </a>
 
-  <div class="auth-wrapper">
-    <!-- Top Branding Logo -->
-    <div class="auth-logo" onclick="window.location.href='/'">
-      <span class="logo-main">sehat<span>recover</span></span>
-      <span class="logo-sub">Delivering Health</span>
+      <div class="auth-hero-text">
+        <h1>Your Health,<br>Secured &amp; Smart.</h1>
+        <p>One passwordless login gives you access to your complete digital health records, insurance, prescriptions, and AI-powered care — all in one place.</p>
+      </div>
+
+      <div class="feature-pills">
+        <div class="feature-pill">
+          <div class="pill-icon" style="background:rgba(0,204,180,0.1); border:1px solid rgba(0,204,180,0.2);">
+            <i class="fa-solid fa-lock" style="color:#00ccb4;"></i>
+          </div>
+          <div class="pill-text">
+            <strong>Passwordless OTP Login</strong>
+            <span>No password to remember. Verify in seconds.</span>
+          </div>
+        </div>
+        <div class="feature-pill">
+          <div class="pill-icon" style="background:rgba(168,85,247,0.1); border:1px solid rgba(168,85,247,0.2);">
+            <i class="fa-solid fa-file-medical" style="color:#a855f7;"></i>
+          </div>
+          <div class="pill-text">
+            <strong>Encrypted Records Vault</strong>
+            <span>Blockchain-backed health records, always yours.</span>
+          </div>
+        </div>
+        <div class="feature-pill">
+          <div class="pill-icon" style="background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.2);">
+            <i class="fa-solid fa-brain" style="color:#10b981;"></i>
+          </div>
+          <div class="pill-text">
+            <strong>AI Health Advisor</strong>
+            <span>24/7 symptom analysis and care recommendations.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="security-badges">
+        <span class="badge-sec"><i class="fa-solid fa-shield-halved"></i> HIPAA Compliant</span>
+        <span class="badge-sec"><i class="fa-solid fa-cube"></i> Blockchain Secured</span>
+        <span class="badge-sec"><i class="fa-solid fa-user-shield"></i> ABHA Integrated</span>
+        <span class="badge-sec"><i class="fa-solid fa-lock"></i> End-to-End Encrypted</span>
+      </div>
     </div>
 
-    <!-- Auth Glassmorphic Card Container -->
-    <div class="auth-card" id="auth-main-card">
-      
-      <!-- STEP 1: Details Entry -->
-      <div id="auth-step-entry" class="auth-step-panel">
-        <div class="auth-card-header">
-          <h2 id="auth-title">Passwordless Access</h2>
-          <p id="auth-subtitle">Verify your contact to log in or create a card</p>
+    <!-- Right Auth Panel -->
+    <div class="auth-right">
+      <!-- STEP 1: Entry -->
+      <div id="step-entry" class="auth-step">
+        <div class="auth-card-title">
+          <h2>Welcome Back 👋</h2>
+          <p>Enter your mobile or email — we'll send you a one-time code.</p>
         </div>
 
-        <!-- Tab Selector: Log In vs Sign Up -->
-        <div class="auth-tabs tabs-action">
-          <button class="tab-btn active" id="btn-tab-login" onclick="switchAuthTab('login')">
+        <!-- Login / Signup Tabs -->
+        <div class="tab-row">
+          <button class="tab-btn active" id="tab-login" onclick="switchTab('login')">
             <i class="fa-solid fa-right-to-bracket"></i> Log In
           </button>
-          <button class="tab-btn" id="btn-tab-signup" onclick="switchAuthTab('signup')">
+          <button class="tab-btn" id="tab-signup" onclick="switchTab('signup')">
             <i class="fa-solid fa-user-plus"></i> Sign Up
           </button>
         </div>
 
-        <!-- Contact Method Selector: Mobile vs Email -->
-        <div class="auth-tabs tabs-channel">
-          <button class="tab-btn active" id="btn-channel-mobile" onclick="switchAuthChannel('mobile')">
-            <i class="fa-solid fa-phone"></i> Mobile Number
+        <!-- Name field (signup only) -->
+        <div class="form-field hidden" id="name-field">
+          <label for="auth-name">Full Name</label>
+          <div class="input-wrap">
+            <span class="input-pfx"><i class="fa-solid fa-user"></i></span>
+            <input type="text" id="auth-name" placeholder="e.g. Arjun Sharma" autocomplete="name">
+          </div>
+        </div>
+
+        <!-- Channel Selector -->
+        <div class="channel-row">
+          <button class="channel-btn active" id="ch-mobile" onclick="switchChannel('mobile')">
+            <i class="fa-solid fa-phone"></i> Mobile
           </button>
-          <button class="tab-btn" id="btn-channel-email" onclick="switchAuthChannel('email')">
-            <i class="fa-solid fa-envelope"></i> Email Address
+          <button class="channel-btn" id="ch-email" onclick="switchChannel('email')">
+            <i class="fa-solid fa-envelope"></i> Email
           </button>
         </div>
 
-        <!-- Form Elements -->
-        <div class="auth-form">
-          <!-- Full Name Field (Sign Up Only) -->
-          <div class="form-group hidden" id="field-signup-name">
-            <label for="auth-name">Full Name</label>
-            <div class="input-icon-wrapper">
-              <i class="fa-solid fa-user input-icon"></i>
-              <input type="text" id="auth-name" placeholder="e.g. Anna Smith">
-            </div>
+        <!-- Mobile Field -->
+        <div class="form-field" id="mobile-field">
+          <label for="auth-mobile">Mobile Number</label>
+          <div class="input-wrap phone-input-wrap">
+            <span class="input-pfx phone-pfx">+91</span>
+            <input type="tel" id="auth-mobile" placeholder="9876543210" maxlength="10" autocomplete="tel">
           </div>
+        </div>
 
-          <!-- Mobile Input Group -->
-          <div class="form-group" id="field-group-mobile">
-            <label for="auth-mobile">Mobile Number</label>
-            <div class="input-icon-wrapper prefix-phone">
-              <span class="phone-prefix">+91</span>
-              <input type="tel" id="auth-mobile" placeholder="9876543210" maxlength="10">
-            </div>
+        <!-- Email Field -->
+        <div class="form-field hidden" id="email-field">
+          <label for="auth-email">Email Address</label>
+          <div class="input-wrap">
+            <span class="input-pfx"><i class="fa-solid fa-envelope"></i></span>
+            <input type="email" id="auth-email" placeholder="you@example.com" autocomplete="email">
           </div>
+        </div>
 
-          <!-- Email Input Group -->
-          <div class="form-group hidden" id="field-group-email">
-            <label for="auth-email">Email Address</label>
-            <div class="input-icon-wrapper">
-              <i class="fa-solid fa-envelope input-icon"></i>
-              <input type="email" id="auth-email" placeholder="anna.smith@example.com">
-            </div>
-          </div>
+        <!-- Error -->
+        <div class="auth-error hidden" id="entry-error">
+          <i class="fa-solid fa-circle-exclamation"></i>
+          <span id="entry-error-text"></span>
+        </div>
 
-          <!-- Error Alert Panel -->
-          <div id="entry-error-alert" class="form-error hidden"></div>
+        <button class="btn-auth" id="btn-send" onclick="sendOtp()">
+          <span id="btn-send-text">Send Verification Code</span>
+          <i class="fa-solid fa-arrow-right arrow-icon" id="btn-send-icon"></i>
+        </button>
 
-          <!-- Action Button -->
-          <button class="btn btn-primary btn-block btn-auth" onclick="sendVerificationCode()" id="btn-send-code">
-            <span>Send Verification OTP</span>
-            <i class="fa-solid fa-chevron-right icon-arrow"></i>
-          </button>
+        <div class="tip-pill" style="margin-top: 20px;">
+          <i class="fa-solid fa-lightbulb"></i>
+          <span>Demo: Enter any 10-digit number → use OTP <strong>123456</strong> to bypass</span>
         </div>
       </div>
 
-      <!-- STEP 2: OTP Verification -->
-      <div id="auth-step-otp" class="auth-step-panel hidden">
-        <div class="auth-card-header">
-          <h2>Enter OTP Code</h2>
-          <p>We've sent a 6-digit verification code to <br><strong id="otp-target-display">your contact</strong></p>
+      <!-- STEP 2: OTP -->
+      <div id="step-otp" class="auth-step hidden">
+        <div class="auth-card-title">
+          <h2>Enter OTP Code 🔐</h2>
+          <p>A 6-digit code was sent to <strong id="otp-contact-display" style="color:white;"></strong></p>
         </div>
 
-        <div class="auth-form text-center">
-          <div class="form-group">
-            <label for="auth-otp-code">6-Digit Passcode</label>
-            <input type="text" id="auth-otp-code" placeholder="••••••" maxlength="6" class="otp-input-field">
-            
-            <div class="dev-otp-tip" style="margin-top: 16px;">
-              <i class="fa-solid fa-circle-info"></i> Developer Tip: Enter <strong>123456</strong> or checkout the console/terminal logs.
-            </div>
-          </div>
-
-          <!-- Error Alert Panel -->
-          <div id="otp-error-alert" class="form-error hidden"></div>
-
-          <div class="otp-actions-wrapper">
-            <button class="btn btn-primary btn-block btn-auth" onclick="verifyVerificationCode()" id="btn-verify-otp">
-              <span>Verify & Authenticate</span>
-              <i class="fa-solid fa-circle-check icon-check" style="margin-left: 8px;"></i>
-            </button>
-
-            <button class="btn-link btn-back-details" onclick="backToEntryStep()">
-              <i class="fa-solid fa-arrow-left"></i> Change contact details
-            </button>
+        <div class="form-field">
+          <label>Verification Code</label>
+          <div class="input-wrap">
+            <input type="text" id="auth-otp" class="otp-input" placeholder="••••••" maxlength="6" autocomplete="one-time-code">
           </div>
         </div>
+
+        <div class="tip-pill">
+          <i class="fa-solid fa-info-circle"></i>
+          <span>Developer bypass: enter <strong>123456</strong> or check server terminal logs</span>
+        </div>
+
+        <!-- Error -->
+        <div class="auth-error hidden" id="otp-error">
+          <i class="fa-solid fa-circle-exclamation"></i>
+          <span id="otp-error-text"></span>
+        </div>
+
+        <button class="btn-auth" id="btn-verify" onclick="verifyOtp()" style="margin-top:18px;">
+          <span id="btn-verify-text">Verify &amp; Access Dashboard</span>
+          <i class="fa-solid fa-circle-check" id="btn-verify-icon"></i>
+        </button>
+
+        <button class="btn-back" onclick="backToEntry()">
+          <i class="fa-solid fa-arrow-left"></i> Change contact details
+        </button>
       </div>
 
-      <!-- STEP 3: Success Confirmation -->
-      <div id="auth-step-success" class="auth-step-panel hidden">
-        <div class="success-check-animation">
+      <!-- STEP 3: Success -->
+      <div id="step-success" class="auth-step hidden" style="text-align:center;">
+        <div class="success-icon">
           <i class="fa-solid fa-circle-check"></i>
         </div>
-        <div class="auth-card-header text-center">
-          <h2>Access Granted!</h2>
-          <p>Your passwordless session is active and secure.</p>
-        </div>
+        <h2 style="font-family:'Outfit',sans-serif; font-size:1.6rem; font-weight:700; margin-bottom:8px;">Access Granted!</h2>
+        <p style="color:var(--text-muted); font-size:0.9rem;">Your session is active and secured with end-to-end encryption.</p>
 
-        <div class="success-profile-preview">
+        <div class="success-info">
           <div class="success-row">
-            <span>Health ID Number:</span>
+            <span><i class="fa-solid fa-id-card" style="margin-right:6px;"></i> Health ID</span>
             <strong id="display-health-id">SR-XXXX-XXXX</strong>
           </div>
           <div class="success-row">
-            <span>Linked Account:</span>
-            <strong id="display-account-name">Anna Smith</strong>
+            <span><i class="fa-solid fa-user" style="margin-right:6px;"></i> Account</span>
+            <strong id="display-name">Patient</strong>
           </div>
         </div>
 
-        <div class="redirect-spinner-box">
+        <div class="redirect-bar">
           <i class="fa-solid fa-circle-notch fa-spin"></i>
-          <span>Loading Health Card Dashboard...</span>
+          <span>Loading your health dashboard...</span>
         </div>
       </div>
 
-    </div>
-
-    <!-- Small Footer Note -->
-    <div class="auth-footer-note">
-      <span><i class="fa-solid fa-shield-halved"></i> HIPAA Compliant Secure Gateway</span>
-      <a href="/">Back to Home</a>
+      <!-- Footer -->
+      <div class="auth-footer">
+        <span><i class="fa-solid fa-shield-halved" style="color:#00ccb4; margin-right:5px;"></i> HIPAA Secure Gateway</span>
+        <a href="/">← Back to Home</a>
+      </div>
     </div>
   </div>
 
-  <!-- Custom Authentication Script -->
-  <script src="/static/auth.js"></script>
+  <script>
+    // ── State ──
+    const state = { tab: 'login', channel: 'mobile', contact: '', name: '' };
+
+    // ── Tab switching ──
+    function switchTab(t) {
+      state.tab = t;
+      document.getElementById('tab-login').classList.toggle('active', t === 'login');
+      document.getElementById('tab-signup').classList.toggle('active', t === 'signup');
+      document.getElementById('name-field').classList.toggle('hidden', t === 'login');
+      clearError('entry');
+    }
+
+    // ── Channel switching ──
+    function switchChannel(ch) {
+      state.channel = ch;
+      document.getElementById('ch-mobile').classList.toggle('active', ch === 'mobile');
+      document.getElementById('ch-email').classList.toggle('active', ch === 'email');
+      document.getElementById('mobile-field').classList.toggle('hidden', ch !== 'mobile');
+      document.getElementById('email-field').classList.toggle('hidden', ch !== 'email');
+      clearError('entry');
+    }
+
+    function clearError(which) {
+      document.getElementById(`${which}-error`).classList.add('hidden');
+    }
+
+    function showError(which, msg) {
+      const el = document.getElementById(`${which}-error`);
+      document.getElementById(`${which}-error-text`).textContent = msg;
+      el.classList.remove('hidden');
+    }
+
+    // ── Send OTP ──
+    async function sendOtp() {
+      clearError('entry');
+      const name = document.getElementById('auth-name').value.trim();
+      const mobile = document.getElementById('auth-mobile').value.trim();
+      const email = document.getElementById('auth-email').value.trim();
+
+      if (state.tab === 'signup' && !name) { showError('entry', 'Please enter your full name.'); return; }
+
+      let contact = '';
+      if (state.channel === 'mobile') {
+        if (!mobile) { showError('entry', 'Please enter your mobile number.'); return; }
+        if (!/^\d{10}$/.test(mobile)) { showError('entry', 'Enter a valid 10-digit mobile number.'); return; }
+        contact = mobile;
+      } else {
+        if (!email) { showError('entry', 'Please enter your email address.'); return; }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showError('entry', 'Enter a valid email address.'); return; }
+        contact = email;
+      }
+
+      state.contact = contact;
+      state.name = name;
+
+      // Button loading
+      const btn = document.getElementById('btn-send');
+      const btnText = document.getElementById('btn-send-text');
+      const btnIcon = document.getElementById('btn-send-icon');
+      btn.disabled = true;
+      btnText.textContent = 'Sending Code...';
+      btnIcon.className = 'fa-solid fa-circle-notch fa-spin';
+
+      try {
+        const res = await fetch('/api/auth/send-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contact, channel: state.channel, purpose: state.tab })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          showError('entry', data.detail || 'Could not send verification code.');
+          resetSendBtn();
+          return;
+        }
+
+        console.log(`[DEV] OTP: ${data.devOtp}`);
+        goToStep('otp');
+        document.getElementById('otp-contact-display').textContent = contact;
+        setTimeout(() => document.getElementById('auth-otp').focus(), 100);
+      } catch (err) {
+        // Network fallback — still proceed to OTP step (offline demo)
+        console.warn('[OFFLINE] Backend not reachable — using offline OTP bypass mode.');
+        goToStep('otp');
+        document.getElementById('otp-contact-display').textContent = contact;
+        setTimeout(() => document.getElementById('auth-otp').focus(), 100);
+      }
+    }
+
+    // ── Verify OTP ──
+    async function verifyOtp() {
+      clearError('otp');
+      const otp = document.getElementById('auth-otp').value.trim();
+      if (!otp || otp.length < 6) { showError('otp', 'Enter the 6-digit code.'); return; }
+
+      const btn = document.getElementById('btn-verify');
+      const btnText = document.getElementById('btn-verify-text');
+      const btnIcon = document.getElementById('btn-verify-icon');
+      btn.disabled = true;
+      btnText.textContent = 'Authenticating...';
+      btnIcon.className = 'fa-solid fa-circle-notch fa-spin';
+
+      try {
+        const res = await fetch('/api/auth/verify-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contact: state.contact, otpCode: otp, fullName: state.name || 'Valued Patient' })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          showError('otp', data.detail || 'Incorrect OTP. Please try again.');
+          resetVerifyBtn();
+          return;
+        }
+
+        onAuthSuccess(data.user);
+      } catch (err) {
+        // Offline bypass
+        if (otp === '123456') {
+          const hid = `SR-${Math.floor(1000+Math.random()*8999)}-${Math.floor(1000+Math.random()*8999)}-${Math.floor(10+Math.random()*89)}`;
+          onAuthSuccess({
+            fullName: state.name || 'Valued Patient',
+            contact: state.contact,
+            healthId: hid,
+            token: 'demo-token'
+          });
+        } else {
+          showError('otp', 'Network error. Use bypass OTP: 123456 for demo.');
+          resetVerifyBtn();
+        }
+      }
+    }
+
+    function onAuthSuccess(user) {
+      sessionStorage.setItem('sehatrecover_user', JSON.stringify(user));
+      goToStep('success');
+      document.getElementById('display-health-id').textContent = user.healthId;
+      document.getElementById('display-name').textContent = user.fullName;
+      setTimeout(() => window.location.href = '/dashboard', 2200);
+    }
+
+    function backToEntry() {
+      goToStep('entry');
+      resetSendBtn();
+    }
+
+    function goToStep(step) {
+      ['entry','otp','success'].forEach(s => {
+        const el = document.getElementById(`step-${s}`);
+        if (s === step) el.classList.remove('hidden');
+        else el.classList.add('hidden');
+      });
+    }
+
+    function resetSendBtn() {
+      const btn = document.getElementById('btn-send');
+      btn.disabled = false;
+      document.getElementById('btn-send-text').textContent = 'Send Verification Code';
+      document.getElementById('btn-send-icon').className = 'fa-solid fa-arrow-right arrow-icon';
+    }
+
+    function resetVerifyBtn() {
+      const btn = document.getElementById('btn-verify');
+      btn.disabled = false;
+      document.getElementById('btn-verify-text').textContent = 'Verify & Access Dashboard';
+      document.getElementById('btn-verify-icon').className = 'fa-solid fa-circle-check';
+    }
+
+    // ── Keyboard shortcuts ──
+    document.addEventListener('DOMContentLoaded', () => {
+      ['auth-mobile','auth-email','auth-name'].forEach(id => {
+        document.getElementById(id)?.addEventListener('keydown', e => { if (e.key === 'Enter') sendOtp(); });
+      });
+      document.getElementById('auth-otp')?.addEventListener('keydown', e => { if (e.key === 'Enter') verifyOtp(); });
+      // Auto-detect path
+      if (window.location.pathname.toLowerCase().includes('signup')) switchTab('signup');
+    });
+  </script>
 </body>
 </html>

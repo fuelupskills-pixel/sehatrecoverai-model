@@ -35,7 +35,10 @@ const ROLE_SIDEBAR_MENUS = {
   Patient: [
     { id: 'overview', name: 'Overview Home', icon: 'fa-house' },
     { id: 'vault', name: 'Records Vault', icon: 'fa-folder-open' },
+    { id: 'blood', name: 'Request Blood', icon: 'fa-droplet' },
+    { id: 'chat', name: 'Chat with Doctor', icon: 'fa-comments-medical' },
     { id: 'pharmacy', name: 'Online Pharmacy', icon: 'fa-prescription-bottle-medical' },
+    { id: 'med-dir', name: 'Meds Directory', icon: 'fa-pills' },
     { id: 'fitness', name: 'Fitness Hub', icon: 'fa-heart-pulse' },
     { id: 'insurance', name: 'Insurance Sync', icon: 'fa-shield-heart' },
     { id: 'loans', name: 'Loans & Finance', icon: 'fa-wallet' },
@@ -108,6 +111,7 @@ function initDashboard() {
   switchDashboardRole('Patient'); // Default role view on launch
   startIoMTSync();
   updateFitnessProgressRing();
+  initHealthMetricsChart();
   
   // Schedule simulated Google-like Notification Alert in 10 seconds
   simulatedNotificationTimer = setTimeout(() => {
@@ -230,7 +234,9 @@ function switchDashboardRole(role) {
   if (role === 'Patient') {
     switchPatientSubPanel('overview');
   } else if (role === 'Doctor') {
-    addAuditLogLine('info', `Doctor portal launched. Scanning sensors and handshake nodes loaded.`);
+    loadDoctorBloodRequestsQueue();
+    loadDoctorChatThreads();
+    addAuditLogLine('info', `Doctor portal launched. Blood request queue and patient chat threads loaded.`);
   } else if (role === 'Pharmacy') {
     loadPharmacyOrdersFeed();
     addAuditLogLine('info', `Pharmacy console connected to network orders feed. Settle claims gateways initialized.`);
@@ -270,6 +276,13 @@ function switchPatientSubPanel(panelId) {
     loadPatientConsentSessions();
   } else if (panelId === 'emergency') {
     initAmbulanceTracking();
+  } else if (panelId === 'blood') {
+    loadVaultReportsForBloodRequest();
+    loadPatientBloodRequests();
+  } else if (panelId === 'chat') {
+    loadChatHistory('Dr. Dev Kumar');
+  } else if (panelId === 'med-dir') {
+    loadMedicationDirectory();
   }
   
   addAuditLogLine('info', `Patient navigating to: ${panelId.toUpperCase()} sub-view.`);
@@ -304,6 +317,69 @@ function startIoMTSync() {
     bpVal.innerText = `${bpSystolic}/${bpDiastolic}`;
 
   }, 3000);
+}
+
+// --- HEALTH METRICS CHART ---
+let healthMetricsChartInstance = null;
+function initHealthMetricsChart() {
+  const ctx = document.getElementById('healthMetricsChart');
+  if (!ctx) return;
+  
+  if (healthMetricsChartInstance) {
+    healthMetricsChartInstance.destroy();
+  }
+  
+  const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  
+  Chart.defaults.color = 'rgba(255, 255, 255, 0.7)';
+  Chart.defaults.font.family = "'Inter', sans-serif";
+  
+  healthMetricsChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Heart Rate (bpm)',
+          data: [72, 74, 73, 71, 75, 76, 72],
+          borderColor: '#ef4444',
+          backgroundColor: 'rgba(239, 68, 68, 0.1)',
+          borderWidth: 2,
+          tension: 0.4,
+          fill: true
+        },
+        {
+          label: 'SpO2 (%)',
+          data: [98, 98, 99, 97, 98, 99, 98],
+          borderColor: '#10b981',
+          backgroundColor: 'transparent',
+          borderWidth: 2,
+          borderDash: [5, 5],
+          tension: 0.4
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'top',
+          labels: { boxWidth: 12 }
+        }
+      },
+      scales: {
+        y: {
+          grid: { color: 'rgba(255, 255, 255, 0.05)' },
+          min: 60,
+          max: 100
+        },
+        x: {
+          grid: { display: false }
+        }
+      }
+    }
+  });
 }
 
 // --- FITNESS ACTIVITIES WIDGET LOGIC ---
@@ -2248,3 +2324,527 @@ async function processPaidCheckoutSubmit(e) {
     console.error(err);
   }
 }
+
+// ====================================================================
+// BLOOD REQUEST PORTAL — PATIENT SIDE
+// ====================================================================
+
+let selectedBloodGroup = 'A+';
+
+function selectBloodGroup(group, el) {
+  selectedBloodGroup = group;
+  document.getElementById('blood-req-group').value = group;
+  document.querySelectorAll('.blood-group-btn').forEach(b => b.classList.remove('active'));
+  if (el) el.classList.add('active');
+}
+
+async function loadVaultReportsForBloodRequest() {
+  const select = document.getElementById('blood-req-report');
+  if (!select) return;
+  
+  try {
+    const res = await fetch(`/api/dashboard/documents/${currentUser.healthId}`);
+    const data = await res.json();
+    
+    const labDocs = (data.documents || []).filter(d => d.category === 'Lab Diagnosis');
+    
+    select.innerHTML = '';
+    if (labDocs.length === 0) {
+      select.innerHTML = '<option value="">No lab reports in Vault. Upload one first.</option>';
+    } else {
+      select.innerHTML = '<option value="">Select a clean lab test report...</option>';
+      labDocs.forEach(doc => {
+        const opt = document.createElement('option');
+        opt.value = doc.fileName;
+        opt.textContent = `${doc.fileName} (${doc.date})`;
+        select.appendChild(opt);
+      });
+    }
+  } catch (err) {
+    select.innerHTML = '<option value="">Could not load Vault reports</option>';
+    console.error(err);
+  }
+}
+
+async function submitBloodRequest(e) {
+  e.preventDefault();
+  const bloodGroup = document.getElementById('blood-req-group').value;
+  const illness = document.getElementById('blood-req-illness').value.trim();
+  const report = document.getElementById('blood-req-report').value;
+  
+  if (!bloodGroup || !illness || !report) {
+    alert('Please fill all required fields including selecting a lab report.');
+    return;
+  }
+  
+  const submitBtn = e.target.querySelector('button[type="submit"]');
+  const origText = submitBtn.innerHTML;
+  submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Submitting...';
+  submitBtn.disabled = true;
+  
+  try {
+    const res = await fetch('/api/dashboard/blood-requests', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        patientId: currentUser.healthId,
+        bloodGroup,
+        existingIllness: illness,
+        testReportName: report
+      })
+    });
+    const data = await res.json();
+    
+    if (data.status === 'success') {
+      addAuditLogLine('success', `Blood request submitted: ${bloodGroup}. Request ID: ${data.requestId}`);
+      document.getElementById('blood-req-illness').value = '';
+      document.getElementById('blood-req-report').value = '';
+      loadPatientBloodRequests();
+      
+      submitBtn.innerHTML = '<i class="fa-solid fa-check"></i> Request Submitted!';
+      submitBtn.style.background = 'var(--success)';
+      setTimeout(() => {
+        submitBtn.innerHTML = origText;
+        submitBtn.style.background = '';
+        submitBtn.disabled = false;
+      }, 2500);
+    }
+  } catch (err) {
+    submitBtn.innerHTML = origText;
+    submitBtn.disabled = false;
+    console.error(err);
+  }
+}
+
+async function loadPatientBloodRequests() {
+  const container = document.getElementById('patient-blood-requests-list');
+  if (!container) return;
+  
+  try {
+    const res = await fetch(`/api/dashboard/blood-requests/patient/${currentUser.healthId}`);
+    const data = await res.json();
+    
+    container.innerHTML = '';
+    
+    if (!data.requests || data.requests.length === 0) {
+      container.innerHTML = '<p class="text-center" style="color:#7d9696; padding:20px 0; font-size:0.85rem;">No blood requests submitted yet.</p>';
+      return;
+    }
+    
+    data.requests.forEach(req => {
+      const statusColor = req.status === 'Pending' ? '#f59e0b' : req.status === 'Fulfilled' ? '#10b981' : '#ef4444';
+      const card = document.createElement('div');
+      card.style = 'background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:14px; display:flex; justify-content:space-between; align-items:center; gap:12px;';
+      card.innerHTML = `
+        <div style="display:flex; gap:14px; align-items:center;">
+          <div style="background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.2); border-radius:8px; width:42px; height:42px; display:flex; align-items:center; justify-content:center; font-weight:800; color:#ef4444; font-size:0.85rem; font-family:'Outfit',sans-serif;">${req.bloodGroup}</div>
+          <div>
+            <strong style="font-size:0.88rem; color:white; display:block;">${req.id}</strong>
+            <span style="font-size:0.75rem; color:#7d9696;">${req.date} · ${req.testReportName}</span>
+            <span style="font-size:0.75rem; color:#7d9696; display:block; margin-top:2px;">Condition: ${req.existingIllness || 'None stated'}</span>
+          </div>
+        </div>
+        <span style="background:rgba(${statusColor === '#f59e0b' ? '245,158,11' : statusColor === '#10b981' ? '16,185,129' : '239,68,68'},0.1); color:${statusColor}; border:1px solid ${statusColor}22; padding:4px 12px; border-radius:20px; font-size:0.75rem; font-weight:600; white-space:nowrap;">${req.status}</span>
+      `;
+      container.appendChild(card);
+    });
+  } catch (err) {
+    container.innerHTML = '<p style="color:#ef4444; font-size:0.85rem;">Error loading requests.</p>';
+    console.error(err);
+  }
+}
+
+// ====================================================================
+// BLOOD REQUEST QUEUE — DOCTOR SIDE
+// ====================================================================
+
+async function loadDoctorBloodRequestsQueue() {
+  const container = document.getElementById('doctor-blood-requests-list');
+  if (!container) return;
+  
+  try {
+    const res = await fetch('/api/dashboard/blood-requests');
+    const data = await res.json();
+    
+    container.innerHTML = '';
+    
+    if (!data.requests || data.requests.length === 0) {
+      container.innerHTML = '<p class="text-center" style="color:#7d9696; padding:20px 0; font-size:0.85rem;">No blood requests in the queue.</p>';
+      return;
+    }
+    
+    // Table header
+    const header = document.createElement('div');
+    header.style = 'display:grid; grid-template-columns:0.8fr 1.4fr 1.2fr 1fr 1fr 1.2fr 1fr 1fr; gap:8px; padding:10px 12px; background:rgba(255,255,255,0.03); border-radius:6px; font-size:0.72rem; font-weight:600; color:#7d9696; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px;';
+    header.innerHTML = '<span>Blood</span><span>Patient Name</span><span>Contact</span><span>Email</span><span>Illness</span><span>Lab Report</span><span>Status</span><span>Actions</span>';
+    container.appendChild(header);
+    
+    data.requests.forEach(req => {
+      const row = document.createElement('div');
+      row.style = 'display:grid; grid-template-columns:0.8fr 1.4fr 1.2fr 1fr 1fr 1.2fr 1fr 1fr; gap:8px; padding:12px; border:1px solid rgba(255,255,255,0.05); border-radius:8px; margin-bottom:6px; align-items:center; font-size:0.8rem; background:rgba(255,255,255,0.01); transition:background 0.2s;';
+      row.innerHTML = `
+        <div style="background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.2); border-radius:6px; width:38px; height:38px; display:flex; align-items:center; justify-content:center; font-weight:800; color:#ef4444; font-size:0.78rem; font-family:'Outfit',sans-serif;">${req.bloodGroup}</div>
+        <div>
+          <strong style="color:white; display:block; font-size:0.82rem;">${req.patientName || 'Unknown'}</strong>
+          <span style="color:#7d9696; font-size:0.72rem;">${req.patientId}</span>
+        </div>
+        <div style="color:var(--primary); font-size:0.8rem;"><i class="fa-solid fa-phone" style="font-size:0.65rem; margin-right:4px;"></i>${req.contact || 'N/A'}</div>
+        <div style="color:#7d9696; font-size:0.75rem; word-break:break-all;">${req.email || 'N/A'}</div>
+        <div style="color:rgba(255,255,255,0.7); font-size:0.78rem;">${req.existingIllness || '—'}</div>
+        <div style="color:#a855f7; font-size:0.75rem;"><i class="fa-solid fa-file-medical" style="font-size:0.65rem; margin-right:4px;"></i>${req.testReportName}</div>
+        <span style="background:${req.status === 'Pending' ? 'rgba(245,158,11,0.1)' : 'rgba(16,185,129,0.1)'}; color:${req.status === 'Pending' ? '#f59e0b' : '#10b981'}; border:1px solid ${req.status === 'Pending' ? '#f59e0b33' : '#10b98133'}; padding:3px 8px; border-radius:20px; font-size:0.72rem; font-weight:600;">${req.status}</span>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <button onclick="updateBloodRequestStatus('${req.id}', 'Fulfilled')" class="btn btn-primary" style="padding:4px 8px; font-size:0.72rem; border-radius:6px;"><i class="fa-solid fa-check"></i> Fulfill</button>
+          <button onclick="updateBloodRequestStatus('${req.id}', 'Denied')" class="btn btn-outline" style="padding:4px 8px; font-size:0.72rem; border-radius:6px; color:#ef4444; border-color:#ef444444;"><i class="fa-solid fa-times"></i></button>
+        </div>
+      `;
+      container.appendChild(row);
+    });
+  } catch (err) {
+    container.innerHTML = '<p style="color:#ef4444; font-size:0.85rem;">Error loading blood requests.</p>';
+    console.error(err);
+  }
+}
+
+async function updateBloodRequestStatus(id, status) {
+  try {
+    const res = await fetch(`/api/dashboard/blood-requests/${id}/status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status })
+    });
+    if (res.ok) {
+      addAuditLogLine('success', `Blood request ${id} status updated to: ${status}`);
+      loadDoctorBloodRequestsQueue();
+    }
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+// ====================================================================
+// DOCTOR-PATIENT CHAT — PATIENT SIDE
+// ====================================================================
+
+let activeChatDoctor = 'Dr. Dev Kumar';
+
+function selectChatDoctor(doctorName, el) {
+  activeChatDoctor = doctorName;
+  
+  document.querySelectorAll('.doctor-drawer-card').forEach(c => c.classList.remove('active-doctor'));
+  if (el) el.classList.add('active-doctor');
+  
+  const nameEl = document.getElementById('chat-doctor-name');
+  if (nameEl) nameEl.textContent = doctorName;
+  
+  // Clear messages and load history
+  const messages = document.getElementById('patient-chat-messages');
+  if (messages) messages.innerHTML = '';
+  
+  loadChatHistory(doctorName);
+}
+
+async function loadChatHistory(doctorName) {
+  activeChatDoctor = doctorName || activeChatDoctor;
+  const container = document.getElementById('patient-chat-messages');
+  if (!container) return;
+  
+  try {
+    const res = await fetch(`/api/chat/history/${currentUser.healthId}/${encodeURIComponent(activeChatDoctor)}`);
+    const data = await res.json();
+    
+    container.innerHTML = '';
+    
+    if (!data.history || data.history.length === 0) {
+      // Add welcome bubble
+      const welcome = document.createElement('div');
+      welcome.className = 'chat-bubble doctor-bubble';
+      welcome.innerHTML = `
+        <span class="bubble-sender">${activeChatDoctor}</span>
+        <div class="bubble-text">Hello! How are you feeling today? Feel free to share your symptoms or questions with me.</div>
+        <span class="bubble-time">Just now</span>
+      `;
+      container.appendChild(welcome);
+      return;
+    }
+    
+    data.history.forEach(msg => {
+      const bubble = document.createElement('div');
+      bubble.className = `chat-bubble ${msg.sender === 'patient' ? 'patient-bubble' : 'doctor-bubble'}`;
+      bubble.innerHTML = `
+        <span class="bubble-sender">${msg.sender === 'patient' ? currentUser.fullName : activeChatDoctor}</span>
+        <div class="bubble-text">${msg.message}</div>
+        <span class="bubble-time">${msg.date}</span>
+      `;
+      container.appendChild(bubble);
+    });
+    
+    container.scrollTop = container.scrollHeight;
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+async function sendPatientChatMessage() {
+  const input = document.getElementById('patient-chat-input');
+  if (!input) return;
+  
+  const message = input.value.trim();
+  if (!message) return;
+  
+  input.value = '';
+  
+  // Add patient bubble immediately
+  const container = document.getElementById('patient-chat-messages');
+  const patientBubble = document.createElement('div');
+  patientBubble.className = 'chat-bubble patient-bubble';
+  patientBubble.innerHTML = `
+    <span class="bubble-sender">${currentUser.fullName}</span>
+    <div class="bubble-text">${message}</div>
+    <span class="bubble-time">Sending...</span>
+  `;
+  container.appendChild(patientBubble);
+  container.scrollTop = container.scrollHeight;
+  
+  // Show typing indicator
+  const typingIndicator = document.getElementById('chat-typing-indicator');
+  if (typingIndicator) typingIndicator.classList.remove('hidden');
+  
+  try {
+    const res = await fetch('/api/chat/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        patientId: currentUser.healthId,
+        doctorName: activeChatDoctor,
+        sender: 'patient',
+        message
+      })
+    });
+    
+    if (res.ok) {
+      patientBubble.querySelector('.bubble-time').textContent = new Date().toLocaleTimeString();
+      
+      // Wait 1.5s for doctor "typing" effect then reload
+      setTimeout(async () => {
+        if (typingIndicator) typingIndicator.classList.add('hidden');
+        await loadChatHistory(activeChatDoctor);
+        addAuditLogLine('info', `Chat message sent to ${activeChatDoctor}: "${message.substring(0, 50)}..."`);
+      }, 1800);
+    }
+  } catch (err) {
+    if (typingIndicator) typingIndicator.classList.add('hidden');
+    console.error(err);
+  }
+}
+
+// ====================================================================
+// DOCTOR CHAT CONSOLE — DOCTOR SIDE
+// ====================================================================
+
+let doctorChatActivePatient = null;
+
+async function loadDoctorChatThreads() {
+  const threadsList = document.getElementById('doctor-patient-threads-list');
+  if (!threadsList) return;
+  
+  const doctorName = 'Dr. Dev Kumar'; // Default for demo
+  
+  try {
+    const res = await fetch(`/api/chat/active-patients/${encodeURIComponent(doctorName)}`);
+    const data = await res.json();
+    
+    threadsList.innerHTML = '';
+    
+    if (!data.patients || data.patients.length === 0) {
+      threadsList.innerHTML = '<p style="color:#7d9696; font-size:0.78rem; padding:10px;">No active chats.</p>';
+      return;
+    }
+    
+    data.patients.forEach(patient => {
+      const card = document.createElement('div');
+      card.style = 'padding:10px; border-radius:6px; cursor:pointer; transition:background 0.2s; display:flex; align-items:center; gap:8px;';
+      card.innerHTML = `
+        <div style="background:rgba(0,204,180,0.15); width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;"><i class="fa-solid fa-user" style="color:var(--primary); font-size:0.75rem;"></i></div>
+        <div><strong style="font-size:0.8rem; color:white; display:block;">${patient.fullName || patient.patientId}</strong><span style="font-size:0.7rem; color:#7d9696;">${patient.patientId}</span></div>
+      `;
+      card.onmouseenter = () => { card.style.background = 'rgba(0,204,180,0.08)'; };
+      card.onmouseleave = () => { card.style.background = doctorChatActivePatient === patient.patientId ? 'rgba(0,204,180,0.08)' : 'transparent'; };
+      card.onclick = () => loadDoctorChatMessages(patient.patientId, patient.fullName, doctorName, card);
+      threadsList.appendChild(card);
+    });
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+async function loadDoctorChatMessages(patientId, patientName, doctorName, cardEl) {
+  doctorChatActivePatient = patientId;
+  
+  const header = document.getElementById('doctor-chat-view-header');
+  const messagesView = document.getElementById('doctor-chat-messages-view');
+  const replyBar = document.getElementById('doctor-reply-bar');
+  
+  if (header) header.textContent = `Conversation with ${patientName || patientId}`;
+  if (replyBar) replyBar.style.display = 'flex';
+  
+  // Store active patient for reply
+  window._doctorActiveChatContext = { patientId, doctorName };
+  
+  try {
+    const res = await fetch(`/api/chat/history/${patientId}/${encodeURIComponent(doctorName)}`);
+    const data = await res.json();
+    
+    if (!messagesView) return;
+    messagesView.innerHTML = '';
+    
+    (data.history || []).forEach(msg => {
+      const bubble = document.createElement('div');
+      bubble.className = `chat-bubble ${msg.sender === 'patient' ? 'doctor-side-patient-bubble' : 'doctor-side-doctor-bubble'}`;
+      bubble.style = `max-width:85%; padding:8px 12px; border-radius:${msg.sender === 'patient' ? '12px 12px 12px 2px' : '12px 12px 2px 12px'}; font-size:0.82rem; background:${msg.sender === 'patient' ? 'rgba(255,255,255,0.05)' : 'rgba(0,204,180,0.1)'}; color:white; align-self:${msg.sender === 'patient' ? 'flex-start' : 'flex-end'};`;
+      bubble.innerHTML = `<div>${msg.message}</div><small style="color:#7d9696; font-size:0.68rem; display:block; margin-top:4px;">${msg.date}</small>`;
+      messagesView.appendChild(bubble);
+    });
+    
+    messagesView.scrollTop = messagesView.scrollHeight;
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+async function sendDoctorReply() {
+  const input = document.getElementById('doctor-reply-input');
+  if (!input || !window._doctorActiveChatContext) return;
+  
+  const message = input.value.trim();
+  if (!message) return;
+  
+  input.value = '';
+  
+  const { patientId, doctorName } = window._doctorActiveChatContext;
+  
+  try {
+    const res = await fetch('/api/chat/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ patientId, doctorName, sender: 'doctor', message })
+    });
+    
+    if (res.ok) {
+      await loadDoctorChatMessages(patientId, null, doctorName, null);
+      addAuditLogLine('success', `Doctor reply sent to patient ${patientId}: "${message.substring(0, 50)}"`);
+    }
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+// ====================================================================
+// PHARMACEUTICAL MEDICATIONS DIRECTORY
+// ====================================================================
+
+let medicationsCache = {};
+
+async function loadMedicationDirectory() {
+  const grid = document.getElementById('med-directory-grid');
+  if (!grid) return;
+  
+  grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:#7d9696; padding:30px;"><i class="fa-solid fa-spinner fa-spin" style="font-size:2rem; margin-bottom:12px; display:block;"></i>Loading medications directory...</div>';
+  
+  try {
+    const res = await fetch('/api/directory/medications');
+    const data = await res.json();
+    
+    medicationsCache = data.medications || {};
+    renderMedicationCards(Object.values(medicationsCache));
+  } catch (err) {
+    grid.innerHTML = '<p style="color:#ef4444; grid-column:1/-1; text-align:center; padding:20px;">Error loading medications directory.</p>';
+    console.error(err);
+  }
+}
+
+function filterMedicationDirectory(query) {
+  const allMeds = Object.values(medicationsCache);
+  if (!query.trim()) {
+    renderMedicationCards(allMeds);
+    return;
+  }
+  const filtered = allMeds.filter(m => 
+    m.name.toLowerCase().includes(query.toLowerCase()) ||
+    m.category.toLowerCase().includes(query.toLowerCase())
+  );
+  renderMedicationCards(filtered);
+}
+
+function renderMedicationCards(meds) {
+  const grid = document.getElementById('med-directory-grid');
+  if (!grid) return;
+  
+  grid.innerHTML = '';
+  
+  if (meds.length === 0) {
+    grid.innerHTML = '<p style="color:#7d9696; grid-column:1/-1; text-align:center; padding:30px; font-size:0.88rem;">No medications found matching your search.</p>';
+    return;
+  }
+  
+  const categoryColors = {
+    'Antibiotic': { bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.2)', accent: '#10b981', icon: 'fa-bacteria' },
+    'Antidiabetic': { bg: 'rgba(59,130,246,0.08)', border: 'rgba(59,130,246,0.2)', accent: '#3b82f6', icon: 'fa-droplet' },
+    'Analgesic': { bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.2)', accent: '#f59e0b', icon: 'fa-head-side-mask' },
+    'Statin': { bg: 'rgba(239,68,68,0.08)', border: 'rgba(239,68,68,0.2)', accent: '#ef4444', icon: 'fa-heart-pulse' }
+  };
+  
+  meds.forEach(med => {
+    const matchKey = Object.keys(categoryColors).find(k => med.category.includes(k)) || 'Antibiotic';
+    const colors = categoryColors[matchKey];
+    
+    const card = document.createElement('div');
+    card.className = 'med-directory-card';
+    card.style = `background:${colors.bg}; border:1px solid ${colors.border}; border-radius:14px; padding:20px; cursor:pointer; transition:all 0.25s cubic-bezier(0.4,0,0.2,1); position:relative; overflow:hidden;`;
+    card.innerHTML = `
+      <div style="display:flex; align-items:flex-start; gap:14px; margin-bottom:14px;">
+        <div style="background:${colors.border.replace('0.2)', '0.15)')}; width:44px; height:44px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; border:1px solid ${colors.border};">
+          <i class="fa-solid ${colors.icon}" style="color:${colors.accent}; font-size:1.1rem;"></i>
+        </div>
+        <div style="flex:1; min-width:0;">
+          <strong style="font-size:0.92rem; color:white; display:block; margin-bottom:4px; font-family:'Outfit',sans-serif;">${med.name}</strong>
+          <span style="font-size:0.72rem; color:${colors.accent}; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">${med.category}</span>
+        </div>
+      </div>
+      <p style="font-size:0.8rem; color:rgba(255,255,255,0.65); margin:0 0 16px 0; line-height:1.5; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${med.advantage.substring(0, 80)}...</p>
+      <button onclick="showMedicationInfoModal('${med.name.split(' ')[0].toLowerCase()}')" class="btn btn-outline" style="width:100%; font-size:0.8rem; padding:8px; border-color:${colors.border}; color:${colors.accent}; border-radius:8px;">
+        <i class="fa-solid fa-circle-info"></i> View Full Drug Profile
+      </button>
+    `;
+    
+    card.onmouseenter = () => {
+      card.style.transform = 'translateY(-4px)';
+      card.style.boxShadow = `0 12px 36px ${colors.border.replace('0.2)', '0.25)')}`;
+    };
+    card.onmouseleave = () => {
+      card.style.transform = '';
+      card.style.boxShadow = '';
+    };
+    
+    grid.appendChild(card);
+  });
+}
+
+function showMedicationInfoModal(medKey) {
+  const med = medicationsCache[medKey] || Object.values(medicationsCache).find(m => m.name.toLowerCase().startsWith(medKey));
+  if (!med) return;
+  
+  document.getElementById('med-modal-name').textContent = med.name;
+  document.getElementById('med-modal-category').textContent = med.category;
+  document.getElementById('med-modal-advantage').textContent = med.advantage;
+  document.getElementById('med-modal-side-effects').textContent = med.side_effects;
+  document.getElementById('med-modal-precautions').textContent = med.precautions;
+  
+  document.getElementById('med-info-modal').classList.remove('hidden');
+  addAuditLogLine('info', `Pharmaceutical profile accessed: ${med.name}`);
+}
+
+function closeMedInfoModal() {
+  document.getElementById('med-info-modal').classList.add('hidden');
+}
+

@@ -13,6 +13,8 @@
   <!-- Custom Stylesheets -->
   <link rel="stylesheet" href="/static/styles.css">
   <link rel="stylesheet" href="/static/dashboard.css">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="dashboard-body">
 
@@ -219,6 +221,20 @@
           </div>
 
           <div class="view-grid margin-top">
+            <!-- Health Metrics Analytics Chart (NEW FEATURE) -->
+            <div class="grid-card col-span-2">
+              <div class="card-title-header" style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                  <h3>Health Metrics Analytics</h3>
+                  <p class="section-desc" style="margin-bottom:0;">7-Day historical telemetry plotted from your linked wearables.</p>
+                </div>
+                <span class="badge badge-figma"><i class="fa-solid fa-chart-line"></i> Analytics Engine</span>
+              </div>
+              <div class="analytics-chart-container" style="position: relative; height: 280px; width: 100%; margin-top: 15px; background: rgba(0,0,0,0.2); border-radius: 12px; padding: 15px; border: 1px solid rgba(255,255,255,0.05);">
+                <canvas id="healthMetricsChart"></canvas>
+              </div>
+            </div>
+
             <!-- Fitness & Activity Tracking -->
             <div class="grid-card">
               <h3>Fitness & Activity Tracker</h3>
@@ -1107,6 +1123,185 @@
           </div>
         </div>
 
+        <!-- SUB-PANEL: REQUEST BLOOD -->
+        <div id="patient-panel-blood" class="patient-sub-panel hidden">
+          <div class="view-header">
+            <h2><i class="fa-solid fa-droplet" style="color:#ef4444;"></i> Blood Request Portal</h2>
+            <p>Submit an urgent blood group request. Include your existing health conditions and upload a clean lab test report from your Vault.</p>
+          </div>
+
+          <div class="view-grid">
+            <!-- Blood Request Form -->
+            <div class="grid-card">
+              <h3>Submit New Blood Request</h3>
+              <p class="section-desc">Your contact details (name, number, email) will be automatically shared with the blood provider.</p>
+              
+              <form id="blood-request-form" onsubmit="submitBloodRequest(event)" class="blood-request-form" style="display:flex; flex-direction:column; gap:16px;">
+                <!-- Blood Group Selector -->
+                <div class="form-group">
+                  <label><i class="fa-solid fa-droplet" style="color:#ef4444;"></i> Required Blood Group</label>
+                  <div class="blood-group-selector" id="blood-group-selector">
+                    <div class="blood-group-btn active" data-group="A+" onclick="selectBloodGroup('A+', this)">A+</div>
+                    <div class="blood-group-btn" data-group="A-" onclick="selectBloodGroup('A-', this)">A−</div>
+                    <div class="blood-group-btn" data-group="B+" onclick="selectBloodGroup('B+', this)">B+</div>
+                    <div class="blood-group-btn" data-group="B-" onclick="selectBloodGroup('B-', this)">B−</div>
+                    <div class="blood-group-btn" data-group="AB+" onclick="selectBloodGroup('AB+', this)">AB+</div>
+                    <div class="blood-group-btn" data-group="AB-" onclick="selectBloodGroup('AB-', this)">AB−</div>
+                    <div class="blood-group-btn" data-group="O+" onclick="selectBloodGroup('O+', this)">O+</div>
+                    <div class="blood-group-btn" data-group="O-" onclick="selectBloodGroup('O-', this)">O−</div>
+                  </div>
+                  <input type="hidden" id="blood-req-group" value="A+">
+                </div>
+
+                <!-- Existing Illness -->
+                <div class="form-group">
+                  <label><i class="fa-solid fa-notes-medical"></i> Existing Illnesses / Conditions</label>
+                  <textarea id="blood-req-illness" placeholder="Describe any pre-existing conditions (e.g. Thalassemia, Sickle Cell Anemia, none)" rows="3" required style="background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; padding:10px; border-radius:8px; width:100%; resize:vertical; font-family:'Inter',sans-serif; font-size:0.85rem;"></textarea>
+                </div>
+
+                <!-- Lab Report from Vault -->
+                <div class="form-group">
+                  <label><i class="fa-solid fa-file-medical"></i> Clean Lab Test Report (from Records Vault)</label>
+                  <select id="blood-req-report" required style="background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; padding:10px; border-radius:8px; width:100%; font-size:0.85rem;">
+                    <option value="">⏳ Loading your lab reports from Vault...</option>
+                  </select>
+                  <span style="font-size:0.72rem; color:#7d9696; display:block; margin-top:4px;"><i class="fa-solid fa-lock"></i> Reports are pulled securely from your encrypted Records Vault</span>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block" style="padding:12px; font-family:'Outfit',sans-serif; font-weight:600;">
+                  <i class="fa-solid fa-droplet"></i> Submit Blood Request
+                </button>
+              </form>
+            </div>
+
+            <!-- My Active Blood Requests -->
+            <div class="grid-card">
+              <div class="card-title-header" style="margin-bottom:12px;">
+                <h3>My Blood Request History</h3>
+                <button class="btn btn-outline" style="font-size:0.78rem; padding:5px 12px;" onclick="loadPatientBloodRequests()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+              </div>
+              <div id="patient-blood-requests-list" style="display:flex; flex-direction:column; gap:12px;">
+                <p class="text-center" style="color:#7d9696; padding:20px 0; font-size:0.85rem;">No blood requests submitted yet.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-PANEL: CHAT WITH DOCTOR -->
+        <div id="patient-panel-chat" class="patient-sub-panel hidden">
+          <div class="view-header">
+            <h2><i class="fa-solid fa-comments-medical" style="color:var(--primary);"></i> Chat with Your Doctor</h2>
+            <p>Send messages directly to your consulting doctor. AI-assisted replies available 24/7 between scheduled sessions.</p>
+          </div>
+
+          <div class="chat-layout-grid" style="display:grid; grid-template-columns:260px 1fr; gap:20px; height:calc(100vh - 250px); min-height:500px;">
+            <!-- Doctor Selection Drawer -->
+            <div class="grid-card" style="display:flex; flex-direction:column; padding:0; overflow:hidden;">
+              <div style="padding:14px 16px; background:rgba(0,204,180,0.08); border-bottom:1px solid rgba(0,204,180,0.1);">
+                <h4 style="margin:0; font-size:0.9rem; color:var(--primary);"><i class="fa-solid fa-user-doctor"></i> Your Care Team</h4>
+              </div>
+              <div id="doctor-list-drawer" style="flex:1; overflow-y:auto; padding:10px; display:flex; flex-direction:column; gap:8px;">
+                <!-- Doctor Cards -->
+                <div class="doctor-drawer-card active-doctor" data-doctor="Dr. Dev Kumar" onclick="selectChatDoctor('Dr. Dev Kumar', this)">
+                  <div class="doctor-avatar-mini" style="background:linear-gradient(135deg,#00ccb4,#0891b2);"><i class="fa-solid fa-stethoscope"></i></div>
+                  <div>
+                    <strong style="font-size:0.82rem;">Dr. Dev Kumar</strong>
+                    <span style="font-size:0.72rem; color:#7d9696; display:block;">Cardiologist</span>
+                  </div>
+                  <span class="online-dot"></span>
+                </div>
+                <div class="doctor-drawer-card" data-doctor="Dr. Sarah Johnson" onclick="selectChatDoctor('Dr. Sarah Johnson', this)">
+                  <div class="doctor-avatar-mini" style="background:linear-gradient(135deg,#a855f7,#7c3aed);"><i class="fa-solid fa-brain"></i></div>
+                  <div>
+                    <strong style="font-size:0.82rem;">Dr. Sarah Johnson</strong>
+                    <span style="font-size:0.72rem; color:#7d9696; display:block;">Neurologist</span>
+                  </div>
+                  <span class="online-dot" style="background:#7d9696;"></span>
+                </div>
+                <div class="doctor-drawer-card" data-doctor="Dr. Clara Barton" onclick="selectChatDoctor('Dr. Clara Barton', this)">
+                  <div class="doctor-avatar-mini" style="background:linear-gradient(135deg,#f59e0b,#d97706);"><i class="fa-solid fa-lungs"></i></div>
+                  <div>
+                    <strong style="font-size:0.82rem;">Dr. Clara Barton</strong>
+                    <span style="font-size:0.72rem; color:#7d9696; display:block;">Pulmonologist</span>
+                  </div>
+                  <span class="online-dot"></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Chat Window -->
+            <div class="grid-card" style="display:flex; flex-direction:column; padding:0; overflow:hidden;">
+              <!-- Chat Header -->
+              <div id="chat-window-header" style="padding:14px 20px; background:rgba(0,0,0,0.2); border-bottom:1px solid rgba(255,255,255,0.06); display:flex; align-items:center; gap:12px;">
+                <div class="doctor-avatar-mini" style="background:linear-gradient(135deg,#00ccb4,#0891b2); width:38px; height:38px; font-size:1rem;">
+                  <i class="fa-solid fa-stethoscope"></i>
+                </div>
+                <div>
+                  <strong id="chat-doctor-name" style="font-size:0.92rem;">Dr. Dev Kumar</strong>
+                  <span style="font-size:0.75rem; color:var(--primary); display:block;"><i class="fa-solid fa-circle" style="font-size:0.5rem;"></i> Online — AI Assisted</span>
+                </div>
+                <div style="margin-left:auto;">
+                  <span class="badge badge-python" style="font-size:0.7rem;"><i class="fa-solid fa-shield-halved"></i> E2E Encrypted</span>
+                </div>
+              </div>
+
+              <!-- Messages Area -->
+              <div id="patient-chat-messages" style="flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:14px; max-height:420px; scroll-behavior:smooth;">
+                <!-- Loaded dynamically -->
+                <div class="chat-bubble doctor-bubble">
+                  <span class="bubble-sender">Dr. Dev Kumar</span>
+                  <div class="bubble-text">Hello! How are you feeling today? Feel free to share your symptoms or questions.</div>
+                  <span class="bubble-time">Just now</span>
+                </div>
+              </div>
+
+              <!-- Typing Indicator -->
+              <div id="chat-typing-indicator" class="chat-typing-indicator hidden">
+                <span></span><span></span><span></span>
+                <em>Doctor is typing...</em>
+              </div>
+
+              <!-- Message Input Bar -->
+              <div style="padding:12px 16px; border-top:1px solid rgba(255,255,255,0.06); display:flex; gap:10px; align-items:center; background:rgba(0,0,0,0.15);">
+                <input type="text" id="patient-chat-input" placeholder="Type your message to the doctor..." 
+                  style="flex:1; background:rgba(255,255,255,0.05); border:1px solid rgba(165,243,252,0.15); color:white; padding:10px 16px; border-radius:24px; font-size:0.85rem; font-family:'Inter',sans-serif;"
+                  onkeydown="if(event.key==='Enter') sendPatientChatMessage()">
+                <button class="btn btn-primary" onclick="sendPatientChatMessage()" style="border-radius:50%; width:42px; height:42px; padding:0; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                  <i class="fa-solid fa-paper-plane" style="font-size:0.9rem;"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-PANEL: MEDICATIONS DIRECTORY -->
+        <div id="patient-panel-med-dir" class="patient-sub-panel hidden">
+          <div class="view-header">
+            <h2><i class="fa-solid fa-pills" style="color:#a855f7;"></i> Pharmaceutical Medications Directory</h2>
+            <p>Instantly look up advantages, side effects, and precautions for any medicine in your prescription or search the drug directory.</p>
+          </div>
+
+          <!-- Search Bar -->
+          <div class="grid-card" style="margin-bottom:20px;">
+            <div style="display:flex; gap:12px; align-items:center;">
+              <div style="flex:1; position:relative;">
+                <i class="fa-solid fa-magnifying-glass" style="position:absolute; left:14px; top:50%; transform:translateY(-50%); color:#7d9696; font-size:0.9rem;"></i>
+                <input type="text" id="med-search-input" placeholder="Search by medication name (e.g. Amoxicillin, Metformin...)" 
+                  style="width:100%; padding:11px 14px 11px 40px; background:rgba(0,0,0,0.25); border:1px solid rgba(165,243,252,0.15); color:white; border-radius:10px; font-size:0.88rem; font-family:'Inter',sans-serif;"
+                  oninput="filterMedicationDirectory(this.value)">
+              </div>
+              <button class="btn btn-primary" onclick="filterMedicationDirectory(document.getElementById('med-search-input').value)" style="padding:11px 20px;">
+                <i class="fa-solid fa-search"></i> Search
+              </button>
+            </div>
+          </div>
+
+          <!-- Medication Cards Grid -->
+          <div id="med-directory-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:20px;">
+            <!-- Loaded dynamically -->
+          </div>
+        </div>
+
       </div>
 
       <!-- ========================================== -->
@@ -1186,6 +1381,47 @@
                 </div>
                 <button type="submit" class="btn btn-primary btn-block">Log & Dispatch Digital Prescription <i class="fa-solid fa-cube"></i></button>
               </form>
+            </div>
+          </div>
+
+          <!-- DOCTOR: Blood Requests Queue -->
+          <div class="grid-card margin-top" id="doctor-blood-requests-card">
+            <div class="card-title-header" style="margin-bottom:16px;">
+              <h3><i class="fa-solid fa-droplet" style="color:#ef4444;"></i> Blood Donation Request Queue</h3>
+              <button class="btn btn-outline" style="font-size:0.78rem; padding:5px 12px;" onclick="loadDoctorBloodRequestsQueue()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+            </div>
+            <p class="section-desc">Incoming patient blood requests with contact details, blood group requirements, and uploaded lab reports.</p>
+            <div id="doctor-blood-requests-list" style="margin-top:12px;">
+              <p class="text-center" style="color:#7d9696; padding:20px 0; font-size:0.85rem;">Loading requests...</p>
+            </div>
+          </div>
+
+          <!-- DOCTOR: Patient Chat Console -->
+          <div class="grid-card margin-top">
+            <div class="card-title-header" style="margin-bottom:16px;">
+              <h3><i class="fa-solid fa-comments" style="color:var(--primary);"></i> Patient Chat Console</h3>
+              <button class="btn btn-outline" style="font-size:0.78rem; padding:5px 12px;" onclick="loadDoctorChatThreads()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+            </div>
+            <p class="section-desc">Active patient conversation threads. Select a thread to view and reply to messages.</p>
+            <div style="display:grid; grid-template-columns:220px 1fr; gap:16px; min-height:300px;">
+              <!-- Patient Threads -->
+              <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); border-radius:8px; overflow:hidden;">
+                <div style="padding:10px 12px; background:rgba(0,204,180,0.08); border-bottom:1px solid rgba(0,204,180,0.1); font-size:0.78rem; font-weight:600; color:var(--primary); text-transform:uppercase; letter-spacing:0.5px;">Active Threads</div>
+                <div id="doctor-patient-threads-list" style="padding:8px;">
+                  <p style="color:#7d9696; font-size:0.78rem; padding:10px;">Loading...</p>
+                </div>
+              </div>
+              <!-- Chat Window -->
+              <div style="display:flex; flex-direction:column; background:rgba(255,255,255,0.01); border:1px solid rgba(255,255,255,0.05); border-radius:8px; overflow:hidden;">
+                <div id="doctor-chat-view-header" style="padding:10px 16px; background:rgba(0,0,0,0.2); border-bottom:1px solid rgba(255,255,255,0.05); font-size:0.85rem; color:#7d9696; font-style:italic;">Select a patient thread to view messages</div>
+                <div id="doctor-chat-messages-view" style="flex:1; padding:16px; overflow-y:auto; display:flex; flex-direction:column; gap:10px; max-height:280px;"></div>
+                <div id="doctor-reply-bar" style="display:none; padding:10px; border-top:1px solid rgba(255,255,255,0.05);">
+                  <div style="display:flex; gap:8px; align-items:center;">
+                    <input type="text" id="doctor-reply-input" placeholder="Type your reply..." style="flex:1; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; padding:8px 12px; border-radius:20px; font-size:0.85rem;">
+                    <button class="btn btn-primary" style="padding:8px 16px; border-radius:20px; font-size:0.8rem;" onclick="sendDoctorReply()"><i class="fa-solid fa-paper-plane"></i></button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1331,6 +1567,58 @@
           Confirm Payment & Clear Dues <i class="fa-solid fa-circle-check" style="margin-left: 5px;"></i>
         </button>
       </form>
+    </div>
+  </div>
+
+  <!-- Medication Info Modal Overlay -->
+  <div id="med-info-modal" class="modal-overlay hidden" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); backdrop-filter:blur(12px); display:flex; align-items:center; justify-content:center; z-index:25000;">
+    <div class="modal-card grid-card" style="width:100%; max-width:560px; margin:20px; padding:0; border:1px solid rgba(168,85,247,0.3); box-shadow:0 24px 80px rgba(168,85,247,0.2); animation:modalZoom 0.3s cubic-bezier(0.175,0.885,0.32,1.275); border-radius:16px; overflow:hidden;">
+      <!-- Modal Header -->
+      <div style="background:linear-gradient(135deg,rgba(168,85,247,0.15),rgba(124,58,237,0.1)); padding:22px 24px; border-bottom:1px solid rgba(168,85,247,0.15); display:flex; align-items:center; justify-content:space-between;">
+        <div style="display:flex; align-items:center; gap:14px;">
+          <div style="background:rgba(168,85,247,0.15); width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; border:1px solid rgba(168,85,247,0.2);">
+            <i class="fa-solid fa-pills" style="color:#a855f7; font-size:1.2rem;"></i>
+          </div>
+          <div>
+            <h3 id="med-modal-name" style="margin:0; font-size:1.1rem; font-family:'Outfit',sans-serif; color:white;">Medication Name</h3>
+            <span id="med-modal-category" style="font-size:0.75rem; color:#a855f7; font-weight:500;">Category</span>
+          </div>
+        </div>
+        <button onclick="closeMedInfoModal()" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; width:36px; height:36px; color:#7d9696; cursor:pointer; font-size:1rem; display:flex; align-items:center; justify-content:center; transition:all 0.2s;">
+          <i class="fa-solid fa-times"></i>
+        </button>
+      </div>
+
+      <!-- Modal Content -->
+      <div style="padding:24px; display:flex; flex-direction:column; gap:18px;">
+        <!-- Advantages -->
+        <div style="background:rgba(16,185,129,0.05); border:1px solid rgba(16,185,129,0.15); border-radius:10px; padding:16px;">
+          <h4 style="margin:0 0 8px 0; font-size:0.82rem; color:#10b981; text-transform:uppercase; letter-spacing:1px; font-family:'Outfit',sans-serif;">
+            <i class="fa-solid fa-circle-check"></i> Advantages & Benefits
+          </h4>
+          <p id="med-modal-advantage" style="margin:0; font-size:0.88rem; color:rgba(255,255,255,0.85); line-height:1.6;"></p>
+        </div>
+
+        <!-- Side Effects -->
+        <div style="background:rgba(245,158,11,0.05); border:1px solid rgba(245,158,11,0.15); border-radius:10px; padding:16px;">
+          <h4 style="margin:0 0 8px 0; font-size:0.82rem; color:#f59e0b; text-transform:uppercase; letter-spacing:1px; font-family:'Outfit',sans-serif;">
+            <i class="fa-solid fa-triangle-exclamation"></i> Possible Side Effects
+          </h4>
+          <p id="med-modal-side-effects" style="margin:0; font-size:0.88rem; color:rgba(255,255,255,0.85); line-height:1.6;"></p>
+        </div>
+
+        <!-- Precautions -->
+        <div style="background:rgba(239,68,68,0.05); border:1px solid rgba(239,68,68,0.15); border-radius:10px; padding:16px;">
+          <h4 style="margin:0 0 8px 0; font-size:0.82rem; color:#ef4444; text-transform:uppercase; letter-spacing:1px; font-family:'Outfit',sans-serif;">
+            <i class="fa-solid fa-shield-halved"></i> Precautions & Guidelines
+          </h4>
+          <p id="med-modal-precautions" style="margin:0; font-size:0.88rem; color:rgba(255,255,255,0.85); line-height:1.6;"></p>
+        </div>
+
+        <button onclick="closeMedInfoModal()" class="btn btn-outline btn-block" style="margin-top:4px;">
+          <i class="fa-solid fa-times"></i> Close Drug Information Panel
+        </button>
+      </div>
     </div>
   </div>
 
