@@ -1460,9 +1460,15 @@
                     </div>
                     <span>Follow-up (Cardio)</span>
                     <span style="color:#f59e0b; font-weight:600;"><i class="fa-solid fa-clock"></i> Waiting</span>
-                    <div style="display:flex; gap:8px;">
-                      <button class="btn btn-outline" style="padding:4px 8px; font-size:0.75rem; border-color:var(--primary); color:var(--primary);" onclick="initiateVideoCall('Anna Smith')"><i class="fa-solid fa-video"></i> Video Consult</button>
-                      <button class="btn btn-outline" style="padding:4px 8px; font-size:0.75rem;" onclick="initiateIVRVoiceCall('Anna Smith', '+91 98XXX-XX234')"><i class="fa-solid fa-phone"></i> IVR Voice Route</button>
+                    <div style="display:flex; flex-direction:column; gap:6px;">
+                      <div style="display:flex; gap:8px;">
+                        <button class="btn btn-outline" style="padding:4px 8px; font-size:0.75rem; border-color:var(--primary); color:var(--primary); flex:1;" onclick="initiateVideoCall('Anna Smith')"><i class="fa-solid fa-video"></i> Video Consult</button>
+                        <button class="btn btn-outline" style="padding:4px 8px; font-size:0.75rem; flex:1;" onclick="initiateIVRVoiceCall('Anna Smith', '+91 98XXX-XX234')"><i class="fa-solid fa-phone"></i> IVR Voice Route</button>
+                      </div>
+                      <div style="display:flex; gap:8px;">
+                        <button class="btn btn-outline" style="padding:4px; font-size:0.65rem; flex:1;" onclick="syncToGoogleCalendar('Consult: Anna Smith', new Date().toISOString().split('T')[0], '10:00', 'Follow-up (Cardio)')"><i class="fa-brands fa-google"></i> Sync to Google</button>
+                        <button class="btn btn-outline" style="padding:4px; font-size:0.65rem; flex:1;" onclick="syncToOutlookCalendar('Consult: Anna Smith', new Date().toISOString().split('T')[0], '10:00', 'Follow-up (Cardio)')"><i class="fa-brands fa-microsoft"></i> Sync to Outlook</button>
+                      </div>
                     </div>
                   </div>
 
@@ -1475,9 +1481,15 @@
                     </div>
                     <span>New Consultation</span>
                     <span style="color:var(--success); font-weight:600;"><i class="fa-solid fa-check-circle"></i> Completed</span>
-                    <div style="display:flex; gap:8px;">
-                      <button class="btn btn-outline" style="padding:4px 8px; font-size:0.75rem; opacity:0.5; cursor:not-allowed;" disabled><i class="fa-solid fa-video"></i> Video Consult</button>
-                      <button class="btn btn-outline" style="padding:4px 8px; font-size:0.75rem;" onclick="initiateIVRVoiceCall('Rahul Sharma', '+91 99XXX-XX111')"><i class="fa-solid fa-phone"></i> IVR Voice Route</button>
+                    <div style="display:flex; flex-direction:column; gap:6px;">
+                      <div style="display:flex; gap:8px;">
+                        <button class="btn btn-outline" style="padding:4px 8px; font-size:0.75rem; opacity:0.5; cursor:not-allowed; flex:1;" disabled><i class="fa-solid fa-video"></i> Video Consult</button>
+                        <button class="btn btn-outline" style="padding:4px 8px; font-size:0.75rem; flex:1;" onclick="initiateIVRVoiceCall('Rahul Sharma', '+91 99XXX-XX111')"><i class="fa-solid fa-phone"></i> IVR Voice Route</button>
+                      </div>
+                      <div style="display:flex; gap:8px;">
+                        <button class="btn btn-outline" style="padding:4px; font-size:0.65rem; flex:1;" onclick="syncToGoogleCalendar('Consult: Rahul Sharma', new Date().toISOString().split('T')[0], '11:30', 'New Consultation')"><i class="fa-brands fa-google"></i> Sync to Google</button>
+                        <button class="btn btn-outline" style="padding:4px; font-size:0.65rem; flex:1;" onclick="syncToOutlookCalendar('Consult: Rahul Sharma', new Date().toISOString().split('T')[0], '11:30', 'New Consultation')"><i class="fa-brands fa-microsoft"></i> Sync to Outlook</button>
+                      </div>
                     </div>
                   </div>
 
@@ -1490,9 +1502,15 @@
                     </div>
                     <span>Lab Review</span>
                     <span style="color:#7d9696; font-weight:600;"><i class="fa-solid fa-calendar-day"></i> Upcoming</span>
-                    <div style="display:flex; gap:8px;">
-                      <button class="btn btn-outline" style="padding:4px 8px; font-size:0.75rem; border-color:var(--primary); color:var(--primary);" onclick="initiateVideoCall('Priya Desai')"><i class="fa-solid fa-video"></i> Video Consult</button>
-                      <button class="btn btn-outline" style="padding:4px 8px; font-size:0.75rem;" onclick="initiateIVRVoiceCall('Priya Desai', '+91 88XXX-XX999')"><i class="fa-solid fa-phone"></i> IVR Voice Route</button>
+                    <div style="display:flex; flex-direction:column; gap:6px;">
+                      <div style="display:flex; gap:8px;">
+                        <button class="btn btn-outline" style="padding:4px 8px; font-size:0.75rem; border-color:var(--primary); color:var(--primary); flex:1;" onclick="initiateVideoCall('Priya Desai')"><i class="fa-solid fa-video"></i> Video Consult</button>
+                        <button class="btn btn-outline" style="padding:4px 8px; font-size:0.75rem; flex:1;" onclick="initiateIVRVoiceCall('Priya Desai', '+91 88XXX-XX999')"><i class="fa-solid fa-phone"></i> IVR Voice Route</button>
+                      </div>
+                      <div style="display:flex; gap:8px;">
+                        <button class="btn btn-outline" style="padding:4px; font-size:0.65rem; flex:1;" onclick="syncToGoogleCalendar('Consult: Priya Desai', new Date().toISOString().split('T')[0], '14:15', 'Lab Review')"><i class="fa-brands fa-google"></i> Sync to Google</button>
+                        <button class="btn btn-outline" style="padding:4px; font-size:0.65rem; flex:1;" onclick="syncToOutlookCalendar('Consult: Priya Desai', new Date().toISOString().split('T')[0], '14:15', 'Lab Review')"><i class="fa-brands fa-microsoft"></i> Sync to Outlook</button>
+                      </div>
                     </div>
                   </div>
 

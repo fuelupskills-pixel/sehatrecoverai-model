@@ -900,11 +900,22 @@ async function loadPatientActiveBookings() {
         const row = document.createElement('div');
         row.className = 'bkg-card-row';
         row.innerHTML = `
-          <div class="bkg-info-col">
+          <div class="bkg-info-col" style="flex:1;">
             <span class="bkg-title"><i class="fa-solid fa-calendar-check"></i> ${bkg.type} (Status: ${bkg.status})</span>
             <span class="bkg-provider">Provider: ${bkg.provider}</span>
             <span class="bkg-schedule"><i class="fa-solid fa-clock"></i> Date: ${bkg.date} | Time: ${bkg.time}</span>
             <span class="bkg-details-text">Triage Context: "${bkg.details}"</span>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px; min-width:200px;">
+            <div style="display:flex; gap:8px;">
+              <button class="btn btn-outline" style="flex:1; padding:4px; font-size:0.75rem; border-color:var(--primary); color:var(--primary);" onclick="patientInitiateVideoCall('${bkg.provider}')"><i class="fa-solid fa-video"></i> Video</button>
+              <button class="btn btn-outline" style="flex:1; padding:4px; font-size:0.75rem;" onclick="patientInitiateVoiceCall('${bkg.provider}')"><i class="fa-solid fa-phone"></i> Voice</button>
+              <button class="btn btn-outline" style="flex:1; padding:4px; font-size:0.75rem;" onclick="showToast('Chat Request', 'Routing to chat console...', 'info')"><i class="fa-solid fa-comment"></i> Chat</button>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <button class="btn btn-outline" style="flex:1; padding:4px; font-size:0.7rem;" onclick="syncToGoogleCalendar('${bkg.type} with ${bkg.provider}', '${bkg.date}', '${bkg.time}', '${bkg.details}')"><i class="fa-brands fa-google"></i> Google Cal</button>
+              <button class="btn btn-outline" style="flex:1; padding:4px; font-size:0.7rem;" onclick="syncToOutlookCalendar('${bkg.type} with ${bkg.provider}', '${bkg.date}', '${bkg.time}', '${bkg.details}')"><i class="fa-brands fa-microsoft"></i> Outlook</button>
+            </div>
           </div>
         `;
         container.appendChild(row);
@@ -3045,3 +3056,66 @@ function closeVideoCall() {
   showToast("Call Ended", `Duration: ${document.getElementById('video-call-timer').textContent}. Call logs saved securely.`, "info");
 }
 
+// ==========================================
+// PATIENT PANEL: TELEHEALTH & CALENDAR SYNC
+// ==========================================
+
+function patientInitiateVideoCall(doctorName) {
+  addAuditLogLine('info', `Initializing E2E encrypted video bridge to provider: ${doctorName}.`);
+  
+  document.getElementById('video-call-patient-name').textContent = doctorName;
+  document.getElementById('telehealth-video-modal').classList.remove('hidden');
+  
+  document.getElementById('video-call-status').innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Establishing secure connection to Doctor...`;
+  
+  setTimeout(() => {
+    document.getElementById('video-call-status').innerHTML = `<i class="fa-solid fa-lock" style="color:var(--success)"></i> Connected (E2E Encrypted)`;
+    document.getElementById('video-call-timer').textContent = "00:00";
+    startVideoTimer();
+  }, 2000);
+}
+
+function patientInitiateVoiceCall(doctorName) {
+  addAuditLogLine('info', `Initiating IVR voice route to provider ${doctorName} via secure virtual number.`);
+  showToast("Dialing Provider", `Connecting to Virtual Number +91 8000-000-IVR...`, "info");
+  
+  setTimeout(() => {
+    showToast("IVR Connected", `Call routed to ${doctorName}. Your personal number is masked.`, "success");
+  }, 2500);
+}
+
+// Convert YYYY-MM-DD and HH:MM to UTC YYYYMMDDTHHMMSSZ
+function _formatDateForCalendar(dateStr, timeStr) {
+  try {
+    const d = new Date(`${dateStr}T${timeStr}:00`);
+    return d.toISOString().replace(/-|:|\.\d\d\d/g, "");
+  } catch(e) {
+    return "";
+  }
+}
+
+function syncToGoogleCalendar(title, date, time, details) {
+  const startStr = _formatDateForCalendar(date, time);
+  const d = new Date(`${date}T${time}:00`);
+  d.setMinutes(d.getMinutes() + 30);
+  const endStr = d.toISOString().replace(/-|:|\.\d\d\d/g, "");
+
+  const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${startStr}/${endStr}&details=${encodeURIComponent(details)}&location=SehatRecover%20Telehealth`;
+  
+  addAuditLogLine('success', `Exporting booking to Google Calendar.`);
+  window.open(url, '_blank');
+}
+
+function syncToOutlookCalendar(title, date, time, details) {
+  const d = new Date(`${date}T${time}:00`);
+  const dEnd = new Date(`${date}T${time}:00`);
+  dEnd.setMinutes(dEnd.getMinutes() + 30);
+  
+  const startStr = encodeURIComponent(d.toISOString());
+  const endStr = encodeURIComponent(dEnd.toISOString());
+
+  const url = `https://outlook.live.com/calendar/0/deeplink/compose?path=/calendar/action/compose&rru=addevent&subject=${encodeURIComponent(title)}&startdt=${startStr}&enddt=${endStr}&body=${encodeURIComponent(details)}&location=SehatRecover%20Telehealth`;
+
+  addAuditLogLine('success', `Exporting booking to Microsoft Outlook.`);
+  window.open(url, '_blank');
+}
