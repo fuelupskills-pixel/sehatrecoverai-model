@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SehatRecover - Unified Health Dashboard (Blockchain & AI Integrated)</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Custom Stylesheets -->
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="/static/dashboard.css">
+</head>
+<body class="dashboard-body">
+
+  <!-- In-app Google-like Notification Banner -->
+  <div id="google-alert-toast" class="google-alert-toast hidden">
+    <div class="toast-icon"><i class="fa-solid fa-bell"></i></div>
+    <div class="toast-body">
+      <h5 id="toast-title">Security Alert</h5>
+      <p id="toast-message">Doctor Dev Kumar is requesting view access for diagnostic reports.</p>
+      <div class="toast-actions" style="margin-bottom: 4px;">
+        <button class="btn btn-secondary btn-toast-approve" onclick="approveToastConsent()">Allow (15m)</button>
+        <button class="btn-link btn-toast-deny" onclick="denyToastConsent()">Deny</button>
+      </div>
+      <div style="font-size:0.68rem; color:#7d9696; margin-top:2px;" id="toast-countdown-text">Expires in 60s</div>
+    </div>
+    <!-- Progress Bar Countdown timeline -->
+    <div class="toast-progress-bar-container">
+      <div class="toast-progress-bar" id="toast-progress-bar" style="width: 100%;"></div>
+    </div>
+  </div>
+
+  <!-- Dashboard Top Nav -->
+  <header class="dashboard-header">
+    <div class="db-nav-container">
+      <div class="logo" onclick="window.location.href='/'" style="cursor: pointer;">
+        <span class="logo-main">sehat<span>recover</span></span>
+        <span class="logo-sub">Delivering Health</span>
+      </div>
+      
+      <!-- Role Switcher (Tactile Dev Tool selector) -->
+      <div class="db-role-pill">
+        <label for="db-role-select"><i class="fa-solid fa-user-gear"></i> Active Persona:</label>
+        <select id="db-role-select" onchange="switchDashboardRole(this.value)">
+          <option value="Patient">Patient Dashboard</option>
+          <option value="Doctor">Doctor Portal</option>
+          <option value="Pharmacy">Pharmacy Dispensation</option>
+          <option value="Admin">Admin Explorer (Blockchain)</option>
+        </select>
+      </div>
+
+      <div class="header-actions">
+        <span class="user-badge" id="header-user-badge">
+          <i class="fa-solid fa-circle-user"></i> <span id="user-display-name">Anna Smith</span>
+        </span>
+        <button onclick="logoutDashboard()" class="btn-logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Dashboard Main Layout Grid -->
+  <main class="dashboard-container">
+    
+    <!-- LEFT SIDEBAR: Navigation Menu -->
+    <aside class="dashboard-sidebar">
+      <div class="sidebar-user-card">
+        <div class="avatar-ring">
+          <i class="fa-solid fa-user-shield"></i>
+        </div>
+        <h4 id="sidebar-name">Anna Smith</h4>
+        <span id="sidebar-id" class="badge-tag">SR-9982-1045</span>
+      </div>
+
+      <!-- Rendered dynamically by active role -->
+      <nav class="sidebar-menu" id="sidebar-menu-list">
+        <!-- Javascript injections -->
+      </nav>
+      
+      <div class="sidebar-help">
+        <h5><i class="fa-solid fa-cube"></i> Blockchain Node</h5>
+        <p>This session is cryptographically bound to the decentralized health ledger. Telemetries sync automatically.</p>
+      </div>
+    </aside>
+
+    <!-- RIGHT PANEL: Dynamic View Area -->
+    <section class="dashboard-content" id="dashboard-content-area">
+      
+      <!-- ========================================== -->
+      <!-- PATIENT DASHBOARD VIEWS -->
+      <!-- ========================================== -->
+      <div id="view-Patient" class="dashboard-view-panel">
+        
+        <!-- SUB-PANEL: OVERVIEW (Home) -->
+        <div id="patient-panel-overview" class="patient-sub-panel">
+          <div class="view-header">
+            <h2>Patient Command Center</h2>
+            <p>Access your health metrics, dynamic universal card, and active treatments.</p>
+          </div>
+
+          <div class="view-grid">
+            <!-- 3D Card Front/Back -->
+            <div class="grid-card flex-center">
+              <h3>Your Universal Health Card</h3>
+              <span class="tap-hint"><i class="fa-solid fa-circle-info"></i> Click card to flip it</span>
+              
+              <div class="flip-card" id="patient-card-element">
+                <div class="flip-card-inner">
+                  <!-- Front -->
+                  <div class="card-front">
+                    <div class="card-watermark"></div>
+                    <div class="card-header">
+                      <div class="card-logo">
+                        <span class="logo-main">sehat<span>recover</span></span>
+                      </div>
+                      <span id="card-abha-badge-db" class="card-abha-badge hidden">
+                        <i class="fa-solid fa-circle-check"></i> ABHA LINKED
+                      </span>
+                      <span class="card-type-label" id="card-type-main-db">Universal Health Card</span>
+                    </div>
+                    <div class="card-body">
+                      <div class="card-info">
+                        <h3 class="patient-name" id="card-patient-name-db">Anna Smith</h3>
+                        <div class="info-grid">
+                          <div class="info-item"><span>Full Name</span><strong id="card-full-name-db">Anna Smith</strong></div>
+                          <div class="info-item"><span>Contact</span><strong id="card-contact-db">XXXXXX9876</strong></div>
+                          <div class="info-item" id="card-dynamic-col-1-db"><span>Gender</span><strong>Assigned</strong></div>
+                          <div class="info-item" id="card-dynamic-col-2-db"><span>ID No.</span><strong id="card-id-num-db">SR-9982-1045-88</strong></div>
+                          <div class="info-item hidden" id="card-scheme-col-db"><span>Linked Scheme</span><strong id="card-scheme-name-db">N/A</strong></div>
+                          <div class="info-item hidden" id="card-balance-col-db"><span>Coverage Balance</span><strong id="card-insurance-balance-db">N/A</strong></div>
+                        </div>
+                      </div>
+                      <div class="card-qr">
+                        <div class="qr-border">
+                          <i class="fa-solid fa-qrcode"></i>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="card-footer">
+                      <span class="secure-tag"><i class="fa-solid fa-shield-halved"></i> SECURE HEALTH ID</span>
+                      <div class="dots-pattern"></div>
+                    </div>
+                  </div>
+                  <!-- Back -->
+                  <div class="card-back">
+                    <div class="card-watermark"></div>
+                    <div class="card-header">
+                      <div class="card-logo">
+                        <span class="logo-main">sehat<span>recover</span></span>
+                      </div>
+                      <span class="card-type-label">BLOCKCHAIN SECURED</span>
+                    </div>
+                    <div class="card-body-back">
+                      <ul class="card-terms">
+                        <li>Integrated with PM-JAY & State health insurance coverages.</li>
+                        <li>Double-authenticated access via session-timed OTP verification.</li>
+                        <li>Cryptographic transactions log every medical ledger query.</li>
+                      </ul>
+                    </div>
+                    <div class="card-footer">
+                      <span>Emergency Helpline: 1800-RECOVER</span>
+                      <div class="dots-pattern"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- IoMT Live Sync Telemetry -->
+            <div class="grid-card">
+              <div class="card-title-header">
+                <h3>IoMT Live Triage Sync</h3>
+                <span class="badge badge-python"><i class="fa-solid fa-circle-dot pulse-dot"></i> Live Sync Active</span>
+              </div>
+              <p class="section-desc">Real-time health telemetry synced cryptographically from connected wearable devices.</p>
+              
+              <div class="iomt-telemetry-grid">
+                <!-- Pulse -->
+                <div class="vital-card">
+                  <div class="vital-header">
+                    <span class="vital-name">Heart Rate</span>
+                    <i class="fa-solid fa-heart vital-icon heart-pulse-animation"></i>
+                  </div>
+                  <div class="vital-value"><span id="iomt-pulse">72</span> <small>bpm</small></div>
+                  <div class="vital-status status-healthy">Healthy Normal</div>
+                </div>
+                <!-- SpO2 -->
+                <div class="vital-card">
+                  <div class="vital-header">
+                    <span class="vital-name">Oxygen Level</span>
+                    <i class="fa-solid fa-wind vital-icon"></i>
+                  </div>
+                  <div class="vital-value"><span id="iomt-spo2">98</span> <small>%</small></div>
+                  <div class="vital-status status-healthy">Optimal SpO2</div>
+                </div>
+                <!-- Blood Pressure -->
+                <div class="vital-card">
+                  <div class="vital-header">
+                    <span class="vital-name">Blood Pressure</span>
+                    <i class="fa-solid fa-gauge-high vital-icon"></i>
+                  </div>
+                  <div class="vital-value"><span id="iomt-bp">120/80</span> <small>mmHg</small></div>
+                  <div class="vital-status status-healthy">Normal BP</div>
+                </div>
+                <!-- Temp -->
+                <div class="vital-card">
+                  <div class="vital-header">
+                    <span class="vital-name">Body Temp</span>
+                    <i class="fa-solid fa-thermometer vital-icon"></i>
+                  </div>
+                  <div class="vital-value"><span id="iomt-temp">98.4</span> <small>°F</small></div>
+                  <div class="vital-status status-healthy">Ideal Temp</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="view-grid margin-top">
+            <!-- Fitness & Activity Tracking -->
+            <div class="grid-card">
+              <h3>Fitness & Activity Tracker</h3>
+              <p class="section-desc">Track step count and walk/run distance metrics. Hitting goals yields reward points.</p>
+              
+              <div class="fitness-tracker-box">
+                <!-- Progress Ring -->
+                <div class="fitness-circle-wrapper">
+                  <div class="steps-progress-circle" id="fitness-progress-bar">
+                    <div class="inner-circle">
+                      <span class="steps-count" id="fitness-steps">8,432</span>
+                      <span class="steps-goal">/ 10,000 steps</span>
+                    </div>
+                  </div>
+                </div>
+                <!-- Details -->
+                <div class="fitness-details-list">
+                  <div class="fit-detail-row">
+                    <div class="fit-icon walk-color"><i class="fa-solid fa-person-walking"></i></div>
+                    <div class="fit-info">
+                      <span>Walking Distance</span>
+                      <h4 id="fitness-walk">5.8 <small>km</small></h4>
+                    </div>
+                  </div>
+                  <div class="fit-detail-row">
+                    <div class="fit-icon run-color"><i class="fa-solid fa-person-running"></i></div>
+                    <div class="fit-info">
+                      <span>Running Distance</span>
+                      <h4 id="fitness-run">2.1 <small>km</small></h4>
+                    </div>
+                  </div>
+                  <div class="fit-detail-row">
+                    <div class="fit-icon calorie-color"><i class="fa-solid fa-fire"></i></div>
+                    <div class="fit-info">
+                      <span>Calories Burned</span>
+                      <h4 id="fitness-calories">340 <small>kcal</small></h4>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Simulator Action -->
+              <div class="fitness-simulator-widget">
+                <button class="btn btn-outline btn-block" onclick="simulateFitnessWalk()">
+                  <i class="fa-solid fa-running"></i> Simulate Walking & Running Session (+1200 Steps)
+                </button>
+              </div>
+            </div>
+
+            <!-- Active Doctor Prescriptions -->
+            <div class="grid-card">
+              <h3>Active Doctor Prescriptions</h3>
+              <p class="section-desc">Prescribed medicines written during your consultations. Dispatched straight from network doctors.</p>
+              
+              <div class="prescriptions-feed-box" id="patient-prescriptions-feed">
+                <!-- Loaded dynamically -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-PANEL: DOCUMENTS VAULT -->
+        <div id="patient-panel-vault" class="patient-sub-panel hidden">
+          <div class="view-header">
+            <h2>Secure Medical Records Vault (Drive Explorer)</h2>
+            <p>Upload and organize your prescriptions, diagnostic reports, and insurance documents in a secure Google-style drive explorer.</p>
+          </div>
+
+          <div class="grid-card">
+            <h3>Upload Health Record File</h3>
+            <form id="doc-upload-form" class="vault-upload-form" onsubmit="uploadPatientDocument(event)">
+              <div class="form-row-vault" style="display:flex; flex-wrap:wrap; gap:12px; align-items:center;">
+                <input type="text" id="doc-name-input" placeholder="e.g. Diagnostic Report, Cardiology Scan, Urine Test" required style="flex:1.5; min-width:200px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; padding:8px 12px; border-radius:4px;">
+                <select id="doc-category-input" style="flex:1; min-width:150px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; padding:8px; border-radius:4px;">
+                  <option value="Lab Diagnosis">Pathology / Lab Diagnosis</option>
+                  <option value="Prescription">Prescription Document</option>
+                  <option value="Discharge Summary">Discharge Summary</option>
+                  <option value="Insurance Policy">Insurance Policy File</option>
+                  <option value="Government Card">Government Insurance Card</option>
+                </select>
+                <select id="doc-folder-input" style="flex:1; min-width:150px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; padding:8px; border-radius:4px;">
+                  <option value="diagnostics">📂 Diagnostic Data</option>
+                  <option value="prescriptions">📂 Doctor Prescriptions</option>
+                  <option value="insurance_docs">📂 Insurance Documents</option>
+                  <option value="gov_cards">📂 Government Cards</option>
+                </select>
+                <button class="btn btn-primary" type="submit">Encrypt & Upload <i class="fa-solid fa-upload"></i></button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Explorer Window -->
+          <div class="grid-card margin-top">
+            <!-- Drive Breadcrumbs Header -->
+            <div class="drive-header-bar" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; padding-bottom:12px; border-bottom:1px solid rgba(255,255,255,0.08);">
+              <div class="drive-breadcrumbs" style="font-family:'Outfit',sans-serif; font-size:1.1rem; font-weight:600;">
+                <span id="drive-root-link" style="color:var(--primary); cursor:pointer;" onclick="navigateVaultFolder(null)"><i class="fa-solid fa-hard-drive"></i> Patient Drive</span>
+                <span id="drive-folder-separator" class="hidden" style="color:#7d9696; margin:0 8px;">&gt;</span>
+                <span id="drive-current-folder-name" class="hidden" style="color:#fff;">Folder Name</span>
+              </div>
+              <button id="btn-drive-back" class="btn btn-outline hidden" onclick="navigateVaultFolder(null)" style="font-size:0.8rem; padding:6px 12px;"><i class="fa-solid fa-arrow-left"></i> Back to Drive</button>
+            </div>
+
+            <!-- Folder Grid Container -->
+            <div id="drive-folders-grid" class="drive-folders-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:20px;">
+              <!-- Dynamic folders loaded via JS -->
+            </div>
+
+            <!-- Files Grid Container -->
+            <div id="drive-files-container" class="hidden">
+              <div class="document-list-table">
+                <div class="table-header-vault">
+                  <span>File Name / Document Category</span>
+                  <span>Type</span>
+                  <span>File Size</span>
+                  <span>Date Added</span>
+                  <span>Actions</span>
+                </div>
+                <div id="patient-documents-list">
+                  <!-- Loaded dynamically -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-PANEL: INSURANCE & CLAIMS -->
+        <div id="patient-panel-insurance" class="patient-sub-panel hidden">
+          <div class="view-header">
+            <h2>Linked Insurance & Cashless Settlements</h2>
+            <p>Sync central, state, and private insurance coverages automatically using Aadhaar KYC links.</p>
+          </div>
+
+          <div class="view-grid">
+            <!-- Balance cards -->
+            <div class="grid-card">
+              <h3>Synced Coverages</h3>
+              <div id="benefit-unlinked-view" class="scheme-benefit-card text-center">
+                <i class="fa-solid fa-link-slash icon-gray"></i>
+                <p>No National ABHA or State schemes linked to this session.</p>
+                <div class="unlinked-actions-vault" style="margin-top:15px; text-align: left; background: rgba(255, 255, 255, 0.01); padding: 15px; border-radius: 6px; border: 1px dashed rgba(165, 243, 252, 0.1);">
+                  <label for="enroll-aadhaar-input" style="font-size:0.75rem; color:#7d9696; display: block; margin-bottom: 5px;">One-Click Aadhaar ABHA Enrollment</label>
+                  <div style="display:flex; gap:8px; margin-bottom:10px;">
+                    <input type="text" id="enroll-aadhaar-input" placeholder="Enter 12-Digit Aadhaar No." style="flex:1; font-size:0.8rem; padding:6px 12px; background:rgba(255,255,255,0.02); border:1px solid rgba(165,243,252,0.15); color:white; border-radius:4px;">
+                    <button class="btn btn-primary" onclick="enrollAbhaDashboard()" style="font-size:0.8rem; padding:6px 12px;">Enroll Card</button>
+                  </div>
+                  <label for="enroll-state-select" style="font-size: 0.7rem; color: #7d9696; display: block; margin-bottom: 5px;">Sync State Government Scheme</label>
+                  <select id="enroll-state-select" class="form-select" style="font-size:0.75rem; padding:6px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; border-radius:4px; width:100%;">
+                    <option value="">None (Central PM-JAY only)</option>
+                    <option value="mjpjay">Maharashtra - MJPJAY</option>
+                    <option value="aarogyasri">Andhra Pradesh - Dr. YSR Aarogyasri</option>
+                    <option value="cmchis">Tamil Nadu - CMCHIS</option>
+                    <option value="chiranjeevi">Rajasthan - Chiranjeevi Scheme</option>
+                    <option value="bsky">Odisha - BSKY</option>
+                  </select>
+                </div>
+              </div>
+              <div id="benefit-linked-view" class="scheme-benefit-card hidden">
+                <div class="benefit-status-tag">Connected & Aadhaar KYC Verified</div>
+                <div class="benefit-row"><span>ABHA Number:</span><strong id="db-benefit-abha">None</strong></div>
+                <div class="benefit-row"><span>Synced Scheme:</span><strong id="db-benefit-scheme">Central PM-JAY</strong></div>
+                <div class="benefit-row"><span>Remaining Balance:</span><strong id="db-benefit-balance" style="color:var(--success);">₹5,00,000</strong></div>
+              </div>
+            </div>
+
+            <!-- Private insurance sync status -->
+            <div class="grid-card">
+              <h3>Private Insurance Sync Gateway</h3>
+              <p class="section-desc">Integration with commercial policy provider APIs for cashless settlements at network hospitals.</p>
+              
+              <div class="private-insurance-list">
+                <div class="ins-provider-row">
+                  <div class="p-brand">🛡️ HDFC Ergo Health</div>
+                  <span class="status-pill status-healthy">Synced & Active</span>
+                </div>
+                <div class="ins-provider-row">
+                  <div class="p-brand">🛡️ Star Health Policy</div>
+                  <span class="status-pill status-healthy">Synced & Active</span>
+                </div>
+                <div class="ins-provider-row">
+                  <div class="p-brand">🛡️ ICICI Lombard</div>
+                  <span class="status-pill status-unlinked" style="cursor:pointer;" onclick="alert('ICICI Lombard sync initiated...')">Link Gateway</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- One-Click Claims Center -->
+            <div class="grid-card col-span-2 margin-top">
+              <h3>One-Click Cashless claim Dispatch</h3>
+              <p class="section-desc">Instantly dispatch cashless claim verification files using documents stored in your secure vault.</p>
+              
+              <div class="claim-creation-wizard">
+                <form onsubmit="submitCashlessClaim(event)" class="claims-form">
+                  <div class="form-row-vault" style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+                    <select id="claim-doc-select" required style="flex:1.5; min-width:180px; padding:8px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; border-radius:4px;">
+                      <option value="">Select Document to Claim against...</option>
+                      <!-- Populated dynamically -->
+                    </select>
+                    
+                    <select id="claim-policy-select" required style="flex:1; min-width:140px; padding:8px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; border-radius:4px;">
+                      <option value="Government">Government Cover</option>
+                      <option value="Private">Private Policy Gateway</option>
+                    </select>
+
+                    <select id="claim-provider-select" required style="flex:1.2; min-width:160px; padding:8px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; border-radius:4px;">
+                      <option value="Apollo Pharmacy #14">Apollo Pharmacy #14</option>
+                      <option value="Metropolis Diagnostic Labs">Metropolis Diagnostic Labs</option>
+                      <option value="Fortis Escorts Super-Specialty">Fortis Escorts Super-Specialty</option>
+                      <option value="Max Chest & Lung ER">Max Chest & Lung ER</option>
+                    </select>
+
+                    <input type="number" id="claim-amount-input" placeholder="Claim Cost Amount (₹)" required style="flex:0.8; min-width:120px; padding:8px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; border-radius:4px;">
+                    <button type="submit" class="btn btn-primary" style="padding:8px 16px;">Process Cashless Claim <i class="fa-solid fa-bolt"></i></button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <!-- Settled Insurance claims history -->
+          <div class="grid-card margin-top">
+            <h3>Cashless Settlements Claim Ledger</h3>
+            <p class="section-desc">Audit logs of insurance claims processed in real-time under synced state/central policies.</p>
+            
+            <div class="claims-list-table">
+              <div class="table-header-vault claims-grid">
+                <span>Claim ID</span>
+                <span>Provider Node</span>
+                <span>Medical Treatment</span>
+                <span>Claimed Cost</span>
+                <span>Status</span>
+                <span>Sync Scheme</span>
+                <span>Date Settled</span>
+              </div>
+              <div id="patient-claims-ledger">
+                <!-- Loaded dynamically -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-PANEL: LOANS & CREDIT DESK -->
+        <div id="patient-panel-loans" class="patient-sub-panel hidden">
+          <div class="view-header">
+            <h2>Loans & Credit Desk (Healthcare Finance)</h2>
+            <p>One-click credit check, zero-interest surgery loans, emergency checkout, and BNPL splittings.</p>
+          </div>
+
+          <div class="view-grid">
+            <!-- Speedometer CIBIL Check -->
+            <div class="grid-card flex-center">
+              <h3>One-Click Bureau Credit Score</h3>
+              <p class="section-desc text-center">Simulate an instant API query to evaluate pre-approved medical loan limits.</p>
+              
+              <div class="credit-score-widget">
+                <div class="speedometer-box">
+                  <div class="speedometer-needle" id="credit-needle"></div>
+                  <div class="speedometer-center">
+                    <span id="credit-score-num">---</span>
+                    <small>CIBIL Score</small>
+                  </div>
+                </div>
+                <div class="speedometer-status" id="credit-score-status">Click Verify to check limits</div>
+              </div>
+
+              <button class="btn btn-primary" onclick="simulateCreditCheck()" id="btn-credit-check">
+                Check Bureau Credit Score <i class="fa-solid fa-gauge-high" style="margin-left: 5px;"></i>
+              </button>
+            </div>
+
+            <!-- Instant Loan limits widgets -->
+            <div class="grid-card">
+              <h3>Pre-Approved Medical Financing</h3>
+              <p class="section-desc">Split high hospital surgery bills into flexible zero-interest monthly installments.</p>
+              
+              <div class="loan-options-list">
+                <div class="loan-option-card">
+                  <div class="opt-header">
+                    <h4>Surgery Loan (Zero-Percent EMI)</h4>
+                    <span class="pre-approved-val" id="pre-approved-val">₹0 Approved</span>
+                  </div>
+                  <p>Cover surgeries up to 24 months with no processing fees.</p>
+                  
+                  <!-- Form loan calculation -->
+                  <div class="loan-calculator hidden" id="loan-calculator-box">
+                    <div class="form-row-vault">
+                      <input type="number" id="calc-loan-amount" placeholder="Enter surgery cost (e.g. 150000)">
+                      <select id="calc-loan-tenure">
+                        <option value="6">6 Months (No Interest)</option>
+                        <option value="12">12 Months (No Interest)</option>
+                        <option value="24">24 Months (No Interest)</option>
+                      </select>
+                      <button class="btn btn-secondary" onclick="applySurgeryLoan()">Apply EMI</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="loan-option-card">
+                  <div class="opt-header">
+                    <h4>Emergency Cash Advance Solution</h4>
+                    <span style="color:var(--accent); font-weight:700;"><i class="fa-solid fa-circle-exclamation"></i> Emergency Line</span>
+                  </div>
+                  <p>Immediate cashless checkout. Pre-authenticated collateral against your linked insurance policies.</p>
+                  <button class="btn btn-outline btn-block" style="margin-top:12px;" onclick="applyEmergencyLoan()">Draw Emergency Fund (₹50,000)</button>
+                </div>
+
+                <div class="loan-option-card" id="loan-against-insurance-card">
+                  <div class="opt-header">
+                    <h4>Loan Against Synced Insurance Policy</h4>
+                    <span id="collateral-loan-preapproved" style="color:var(--success); font-weight:700;">Pre-Approved</span>
+                  </div>
+                  <p>Leverage your central/state insurance policy balance as collateral for direct cash dispatches (up to 50% coverage balance).</p>
+                  
+                  <div class="loan-collateral-wizard hidden" id="loan-collateral-box" style="margin-top:12px; padding-top:12px; border-top:1px dashed rgba(255,255,255,0.05);">
+                    <div style="margin-bottom:10px;">
+                      <label style="font-size:0.75rem; color:#7d9696; display:block; margin-bottom:5px;">Select Active Policy Collateral</label>
+                      <select id="loan-collateral-policy-select" style="width:100%; padding:6px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; border-radius:4px; font-size:0.8rem;">
+                        <!-- Options loaded dynamically -->
+                      </select>
+                    </div>
+                    <div style="margin-bottom:10px;">
+                      <label style="font-size:0.75rem; color:#7d9696; display:block; margin-bottom:5px;">Select Loan Amount</label>
+                      <div style="display:flex; align-items:center; gap:10px;">
+                        <input type="range" id="loan-collateral-slider" min="10000" max="250000" step="5000" value="50000" oninput="updateCollateralLoanAmount(this.value)" style="flex:1;">
+                        <strong id="loan-slider-val" style="color:var(--accent); font-size:0.95rem; min-width:85px; text-align:right;">₹50,000</strong>
+                      </div>
+                    </div>
+                    <div class="form-row-vault" style="display:flex; gap:8px;">
+                      <select id="loan-collateral-tenure" style="flex:1; padding:6px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; border-radius:4px; font-size:0.8rem;">
+                        <option value="6">6 Months (0% APR)</option>
+                        <option value="12">12 Months (0% APR)</option>
+                        <option value="24">24 Months (0% APR)</option>
+                      </select>
+                      <button class="btn btn-primary" onclick="submitCollateralLoan()" style="font-size:0.8rem; padding:6px 12px;">Borrow Cash</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Active Loans & Advances Ledger -->
+          <div class="grid-card margin-top">
+            <h3>Active Healthcare Loans & Advancements</h3>
+            <p class="section-desc">List of approved medical credits and active interest-free monthly installment ledger lines.</p>
+            
+            <div class="loans-list-table">
+              <div class="table-header-vault" style="display:grid; grid-template-columns: 1.2fr 1fr 1.5fr 1fr 1fr 1.2fr 1.2fr; gap:10px; font-weight:600; padding:10px; border-bottom:1px solid rgba(255,255,255,0.05); color:#7d9696; font-size:0.8rem;">
+                <span>Loan ID</span>
+                <span>Principal Cost</span>
+                <span>Collateral Backed</span>
+                <span>Tenure Limit</span>
+                <span>Monthly EMI</span>
+                <span>Interest Rate</span>
+                <span>Disbursement Status</span>
+              </div>
+              <div id="patient-loans-ledger" style="margin-top:10px;">
+                <!-- Loaded dynamically in JS -->
+                <p class="text-center" style="color:#7d9696; padding:15px 0; font-size:0.85rem;">No active medical loans disbursed</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-PANEL: BOOK CARE -->
+        <div id="patient-panel-bookings" class="patient-sub-panel hidden">
+          <div class="view-header">
+            <h2>Book Appointments & Home Care</h2>
+            <p>Schedule doctor consultations, home nursing care, and routing plans securely.</p>
+          </div>
+
+          <div class="view-grid">
+            <!-- Booking Form -->
+            <div class="grid-card">
+              <h3>Schedule New Care Service</h3>
+              <form class="bookings-form" onsubmit="submitCareBooking(event)">
+                <div class="form-group">
+                  <label>Service Type</label>
+                  <select id="bkg-type" onchange="toggleBookingFields(this.value)">
+                    <option value="Doctor Consultation">Doctor Consultation</option>
+                    <option value="Home Care Nursing">Home Care Nursing / Elder Care</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label id="bkg-provider-label">Consultant Doctor Specialist</label>
+                  <select id="bkg-provider">
+                    <!-- Loaded dynamically in JS -->
+                  </select>
+                </div>
+                <div class="form-group-row">
+                  <div class="form-group">
+                    <label>Select Date</label>
+                    <input type="date" id="bkg-date" required>
+                  </div>
+                  <div class="form-group">
+                    <label>Select Time Window</label>
+                    <input type="time" id="bkg-time" required>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Primary Symptoms / Special Instructions</label>
+                  <textarea id="bkg-details" placeholder="e.g. Routine heart monitoring checkup, elder mobility support..." required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Confirm Appointment & Mint Block <i class="fa-solid fa-paper-plane"></i></button>
+              </form>
+            </div>
+
+            <!-- Active Appointments list -->
+            <div class="grid-card">
+              <h3>Active Bookings & Schedule</h3>
+              <p class="section-desc">Active homecare assignments and doctor consultations logged in your profile.</p>
+              
+              <div class="bookings-list-container" id="patient-active-bookings">
+                <!-- Loaded dynamically -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-PANEL: TIMED CONSENT MANAGER -->
+        <div id="patient-panel-consent" class="patient-sub-panel hidden">
+          <div class="view-header">
+            <h2>Sharing Consent & Session Security</h2>
+            <p>Control timed authorizations for doctors and pharmacies. Revoke sessions instantly.</p>
+          </div>
+
+          <div class="view-grid">
+            <!-- Share QR code & OTP generator -->
+            <div class="grid-card text-center flex-center">
+              <h3>Consent OTP Code Generator</h3>
+              <p class="section-desc">Generate a secure temporary authorization code. Share this code to temporarily grant records access.</p>
+              
+              <div class="otp-consent-display-card">
+                <span class="otp-number-display" id="patient-consent-otp">------</span>
+                <span class="otp-desc" id="patient-consent-otp-desc">Click button to generate code</span>
+                <div class="otp-bar-countdown hidden" id="otp-timer-container">
+                  <div class="countdown-bar" id="otp-countdown-bar"></div>
+                  <span>Code expires in <strong id="otp-countdown-sec">30</strong> seconds</span>
+                </div>
+              </div>
+
+              <button class="btn btn-primary" onclick="generateConsentOTP()">
+                Generate Consent OTP <i class="fa-solid fa-key" style="margin-left: 5px;"></i>
+              </button>
+            </div>
+
+            <!-- Active access log -->
+            <div class="grid-card">
+              <h3>Active Provider Access Sessions</h3>
+              <p class="section-desc">These providers currently hold valid session tokens to view your medical vault files.</p>
+              
+              <div class="active-sessions-feed" id="patient-active-sessions-list">
+                <!-- Loaded dynamically in JS -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-PANEL: AI HEALTH ADVISOR -->
+        <div id="patient-panel-ai-chat" class="patient-sub-panel hidden">
+          <div class="view-header">
+            <h2>AI Medical Assistant Desk</h2>
+            <p>Diagnose symptoms, read prescriptions, generate customized diet & exercise plans, and map specialized routes.</p>
+          </div>
+
+          <div class="grid-card ai-chat-container">
+            <!-- Chat header -->
+            <div class="chat-header-widget">
+              <div class="ai-avatar"><i class="fa-solid fa-brain"></i></div>
+              <div class="ai-info">
+                <h4>SehatRecover AI Assistant</h4>
+                <span>Online &mdash; Python NLP Knowledge Base</span>
+              </div>
+            </div>
+            
+            <!-- Chat history logs -->
+            <div class="chat-history-log" id="ai-chat-logs">
+              <div class="chat-bubble received">
+                Hello! I am your SehatRecover AI Health Advisor. How can I help you today? You can:
+                <br>• Ask for a diabetes/heart diet chart.
+                <br>• Explain prescriptions like Amoxicillin or Metformin.
+                <br>• Query specialized routing based on chest pains or lung coughs.
+                <br>• Retrieve exercise routines for joint pain.
+              </div>
+            </div>
+
+            <!-- Action Quick Prompts Drawer -->
+            <div class="chat-quick-drawers">
+              <button onclick="sendQuickAIChat('Generate a diabetic-friendly meal plan', 'diet')"><i class="fa-solid fa-apple-whole"></i> Diabetic Diet Plan</button>
+              <button onclick="sendQuickAIChat('Explain my Amoxicillin 500mg prescription', 'prescription')"><i class="fa-solid fa-prescription-bottle-medical"></i> Explain Amoxicillin</button>
+              <button onclick="sendQuickAIChat('Suggest joint-friendly knee workouts', 'exercise')"><i class="fa-solid fa-person-running"></i> Knee Joint Workouts</button>
+              <button onclick="sendQuickAIChat('Find hospital routing for chest pain emergency', 'routing')"><i class="fa-solid fa-route"></i> Cardiology Route</button>
+            </div>
+
+            <!-- Chat input bar -->
+            <div class="chat-input-bar">
+              <input type="text" id="ai-chat-input" placeholder="Type health query or select a quick prompt..." onkeypress="handleChatEnter(event)">
+              <button class="btn btn-primary" onclick="sendAIChatQuery()"><i class="fa-solid fa-paper-plane"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-PANEL: EMERGENCY & AMBULANCE BOOKING -->
+        <div id="patient-panel-emergency" class="patient-sub-panel hidden">
+          <div class="view-header">
+            <h2>Emergency Dispatch & Ambulance Tracking Hub</h2>
+            <p>Request immediate medical transit. Track ambulance locations dynamically on the smart route map.</p>
+          </div>
+
+          <div class="view-grid">
+            <!-- Left: Dispatch Booking Card -->
+            <div class="grid-card">
+              <h3>Dispatch ICU or Basic Ambulance</h3>
+              <p class="section-desc">Instantly alert emergency responders. Pre-dispatched Aadhaar details will sync with the emergency crew.</p>
+              
+              <form class="bookings-form" onsubmit="submitAmbulanceBooking(event)">
+                <div class="form-group" style="margin-bottom:15px;">
+                  <label for="amb-type-select" style="font-size:0.8rem; color:#7d9696; display:block; margin-bottom:5px;">Ambulance Emergency Class</label>
+                  <select id="amb-type-select" style="width:100%; padding:8px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; border-radius:4px;">
+                    <option value="Advanced ICU (Ventilator Equipped)">Advanced ICU (Ventilator & Paramedic Crew)</option>
+                    <option value="Basic Life Support (Oxygen Sync)">Basic Life Support (Oxygen & Trauma Kit)</option>
+                    <option value="Patient Transport Ambulance">Patient Transport (Routine Medical Transit)</option>
+                  </select>
+                </div>
+                <div class="form-group" style="margin-bottom:15px;">
+                  <label for="amb-pickup-address" style="font-size:0.8rem; color:#7d9696; display:block; margin-bottom:5px;">Emergency Pickup Landmark Address</label>
+                  <textarea id="amb-pickup-address" placeholder="e.g. 402, Alpine Crest Apartment, Sector 15, Near City Center" required style="width:100%; height:80px; padding:8px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; border-radius:4px; resize:none;"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block btn-siren-pulse" style="padding:10px; font-weight:600;">
+                  <i class="fa-solid fa-truck-medical" style="margin-right:5px;"></i> Dispatch Emergency Ambulance
+                </button>
+              </form>
+            </div>
+
+            <!-- Right: GPS Live Tracking Visualizer -->
+            <div class="grid-card">
+              <h3>Live Rescuer Tracking Radar</h3>
+              <p class="section-desc">View vehicle GPS pins progressing cashlessly via centralized dispatch networks.</p>
+              
+              <div class="ambulance-tracking-map-container" style="background:rgba(0,0,0,0.3); border-radius:6px; border:1px solid rgba(165,243,252,0.1); padding:15px; position:relative; min-height:350px;">
+                <!-- Visual Map Grid -->
+                <div class="map-grid-overlay" style="position:relative; width:100%; height:200px; background:radial-gradient(circle, rgba(16,185,129,0.03) 0%, rgba(0,0,0,0) 70%), repeating-linear-gradient(0deg, rgba(255,255,255,0.01) 0px, rgba(255,255,255,0.01) 1px, transparent 1px, transparent 20px), repeating-linear-gradient(90deg, rgba(255,255,255,0.01) 0px, rgba(255,255,255,0.01) 1px, transparent 1px, transparent 20px); border-radius:4px; overflow:hidden;">
+                  <div class="map-landmark hospital-node" style="position:absolute; top:20px; left:30px; font-size:0.75rem; color:#ef4444; background:rgba(239,68,68,0.1); padding:4px 8px; border-radius:4px; border:1px solid rgba(239,68,68,0.2);"><i class="fa-solid fa-hospital"></i> City ER</div>
+                  <div class="map-landmark home-node" style="position:absolute; bottom:20px; right:30px; font-size:0.75rem; color:#10b981; background:rgba(16,185,129,0.1); padding:4px 8px; border-radius:4px; border:1px solid rgba(16,185,129,0.2);"><i class="fa-solid fa-house-user"></i> Patient Home</div>
+                  <div class="map-ambulance-pin" id="map-ambulance-pin" style="position:absolute; top:20px; left:30px; font-size:1.4rem; color:var(--primary); transition: all 0.3s ease; text-shadow: 0 0 10px var(--primary); display:none;"><i class="fa-solid fa-truck-medical"></i></div>
+                  <canvas id="ambulance-route-canvas" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;"></canvas>
+                </div>
+                
+                <!-- Active Tracker Panel HUD -->
+                <div class="ambulance-tracker-hud hidden" id="ambulance-hud" style="margin-top:15px; background:rgba(255,255,255,0.02); border:1px solid rgba(165,243,252,0.1); border-radius:4px; padding:10px; display:flex; flex-direction:column; gap:8px;">
+                  <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
+                    <div>Status: <strong id="hud-status-text" style="color:var(--accent);">DISPATCHED</strong></div>
+                    <div>ETA: <strong id="hud-eta-minutes" style="color:var(--success);">10 mins</strong></div>
+                  </div>
+                  <div class="hud-driver-details" style="display:flex; gap:10px; align-items:center; border-top:1px solid rgba(255,255,255,0.05); padding-top:8px;">
+                    <div class="driver-avatar" style="font-size:1.8rem; color:#7d9696;"><i class="fa-solid fa-circle-user"></i></div>
+                    <div class="driver-info">
+                      <h4 id="hud-driver-name" style="margin:0; font-size:0.85rem; color:white;">Driver Ramesh Kumar</h4>
+                      <p style="margin:0; font-size:0.75rem; color:#7d9696;"><span id="hud-vehicle-num">MH-12-EQ-8892</span> &bull; <strong id="hud-driver-contact" style="color:var(--accent);">+91 9988776655</strong></p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="tracker-empty-view text-center" id="tracker-empty" style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:300px;">
+                  <i class="fa-solid fa-location-crosshairs icon-gray" style="font-size:2.5rem; color:rgba(255,255,255,0.05); margin-bottom:10px;"></i>
+                  <p style="color:#7d9696; font-size:0.85rem; margin:0;">No active emergency dispatches on radar</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-PANEL: ONLINE PHARMACY -->
+        <div id="patient-panel-pharmacy" class="patient-sub-panel hidden">
+          <div class="view-header">
+            <h2>Online Pharmacy & Wellness Store</h2>
+            <p>Order prescribed medicines, buy OTC health items, apply coupon discounts, and redeem rewards.</p>
+          </div>
+
+          <div class="view-grid">
+            <!-- Left Side: Store Catalog -->
+            <div class="grid-card col-span-2">
+              <div class="card-title-header" style="margin-bottom:15px;">
+                <h3>Active Prescriptions for Ordering</h3>
+                <span class="badge badge-python"><i class="fa-solid fa-file-signature"></i> Verified Rx Docs</span>
+              </div>
+              <p class="section-desc">Add active clinical prescriptions from your consults directly into your purchase cart.</p>
+              
+              <div class="prescriptions-feed-box" id="pharmacy-shop-prescriptions" style="margin-bottom:25px;">
+                <!-- Loaded dynamically -->
+              </div>
+
+              <div class="card-title-header" style="margin-bottom:15px; border-top:1px solid rgba(255,255,255,0.06); padding-top:20px;">
+                <h3>Wellness & OTC Medicines</h3>
+                <span class="badge badge-python"><i class="fa-solid fa-pills"></i> OTC Catalog</span>
+              </div>
+              <p class="section-desc">General everyday medicines and nutritional products available without doctor prescription.</p>
+              
+              <div class="wellness-catalog-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:16px; margin-top:12px;">
+                <!-- Wellness items -->
+                <div class="wellness-item-card" style="background:rgba(255,255,255,0.02); border:1px solid rgba(165,243,252,0.08); border-radius:8px; padding:15px; display:flex; flex-direction:column; justify-content:space-between; gap:10px;">
+                  <div>
+                    <strong style="color:white; display:block; font-size:0.9rem;">Multivitamins Daily Booster</strong>
+                    <p style="color:#7d9696; font-size:0.75rem; margin:4px 0 0 0; line-height:1.3;">Essential daily vitamins and zinc for overall immune support.</p>
+                  </div>
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
+                    <strong style="color:var(--accent); font-size:1rem;">Rs.250</strong>
+                    <button class="btn btn-primary" onclick="addOtcToCart('Multivitamins Daily Booster', 250)" style="font-size:0.75rem; padding:4px 8px;">Add to Cart</button>
+                  </div>
+                </div>
+
+                <div class="wellness-item-card" style="background:rgba(255,255,255,0.02); border:1px solid rgba(165,243,252,0.08); border-radius:8px; padding:15px; display:flex; flex-direction:column; justify-content:space-between; gap:10px;">
+                  <div>
+                    <strong style="color:white; display:block; font-size:0.9rem;">Organic Herbal Cough Elixir</strong>
+                    <p style="color:#7d9696; font-size:0.75rem; margin:4px 0 0 0; line-height:1.3;">Natural honey and basil syrup for throat irritation relief.</p>
+                  </div>
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
+                    <strong style="color:var(--accent); font-size:1rem;">Rs.180</strong>
+                    <button class="btn btn-primary" onclick="addOtcToCart('Organic Herbal Cough Elixir', 180)" style="font-size:0.75rem; padding:4px 8px;">Add to Cart</button>
+                  </div>
+                </div>
+
+                <div class="wellness-item-card" style="background:rgba(255,255,255,0.02); border:1px solid rgba(165,243,252,0.08); border-radius:8px; padding:15px; display:flex; flex-direction:column; justify-content:space-between; gap:10px;">
+                  <div>
+                    <strong style="color:white; display:block; font-size:0.9rem;">Pure Vitamin C Tablets</strong>
+                    <p style="color:#7d9696; font-size:0.75rem; margin:4px 0 0 0; line-height:1.3;">Chewable 500mg ascorbic acid tablets for skin health and vitality.</p>
+                  </div>
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
+                    <strong style="color:var(--accent); font-size:1rem;">Rs.150</strong>
+                    <button class="btn btn-primary" onclick="addOtcToCart('Pure Vitamin C Tablets', 150)" style="font-size:0.75rem; padding:4px 8px;">Add to Cart</button>
+                  </div>
+                </div>
+
+                <div class="wellness-item-card" style="background:rgba(255,255,255,0.02); border:1px solid rgba(165,243,252,0.08); border-radius:8px; padding:15px; display:flex; flex-direction:column; justify-content:space-between; gap:10px;">
+                  <div>
+                    <strong style="color:white; display:block; font-size:0.9rem;">Premium Hydration Salts</strong>
+                    <p style="color:#7d9696; font-size:0.75rem; margin:4px 0 0 0; line-height:1.3;">Fast-acting electrolyte powders for quick rehydration after exercise.</p>
+                  </div>
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
+                    <strong style="color:var(--accent); font-size:1rem;">Rs.100</strong>
+                    <button class="btn btn-primary" onclick="addOtcToCart('Premium Hydration Salts', 100)" style="font-size:0.75rem; padding:4px 8px;">Add to Cart</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Side: Mini Shopping Cart -->
+            <div class="grid-card">
+              <div class="card-title-header" style="margin-bottom:12px;">
+                <h3>Your Prescription Cart</h3>
+                <span class="badge" id="pharmacy-cart-count-badge" style="background:var(--primary); color:black; font-weight:700;">0 Items</span>
+              </div>
+              <p class="section-desc">Verify billing items, apply vouchers, and complete your purchase flow.</p>
+
+              <!-- Cart Empty View -->
+              <div id="pharmacy-cart-empty-view" class="text-center" style="padding:40px 0;">
+                <i class="fa-solid fa-basket-shopping" style="font-size:2.5rem; color:rgba(255,255,255,0.05); margin-bottom:12px; display:block;"></i>
+                <span style="color:#7d9696; font-size:0.85rem;">Your cart is empty. Add a prescription or OTC medicine above to begin.</span>
+              </div>
+
+              <!-- Cart Content View -->
+              <div id="pharmacy-cart-content-view" class="hidden">
+                <!-- Cart Items List -->
+                <div id="pharmacy-cart-items" style="display:flex; flex-direction:column; gap:10px; max-height:200px; overflow-y:auto; padding-right:5px; margin-bottom:15px; border-bottom:1px solid rgba(255,255,255,0.06); padding-bottom:15px;">
+                  <!-- Loaded dynamically -->
+                </div>
+
+                <!-- Discount Voucher Input -->
+                <div class="voucher-input-group" style="display:flex; gap:8px; margin-bottom:15px;">
+                  <input type="text" id="cart-coupon-input" placeholder="Enter coupon code (e.g. SEHAT20)" style="flex:1; padding:8px 12px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; border-radius:4px; font-size:0.8rem;">
+                  <button class="btn btn-outline" onclick="applyCartCoupon()" style="font-size:0.8rem; padding:8px 12px;">Apply</button>
+                </div>
+                <div id="cart-coupon-message" style="font-size:0.75rem; margin-top:-10px; margin-bottom:12px; display:none;"></div>
+
+                <!-- Reward Points slider -->
+                <div class="rewards-slider-group" style="margin-bottom:15px; background:rgba(0,0,0,0.15); padding:12px; border-radius:6px; border:1px solid rgba(165,243,252,0.05);">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <span style="font-size:0.8rem; color:#7d9696;"><i class="fa-solid fa-star" style="color:var(--accent);"></i> Redeem Reward Points</span>
+                    <strong id="cart-rewards-available-text" style="color:white; font-size:0.8rem;">Available: 0 pts</strong>
+                  </div>
+                  <div style="display:flex; align-items:center; gap:12px;">
+                    <input type="range" id="cart-rewards-slider" min="0" max="0" value="0" step="1" oninput="updateCartRewardsSlider(this.value)" style="flex:1;">
+                    <span id="cart-rewards-slider-val" style="color:var(--accent); font-weight:700; font-size:0.9rem; min-width:55px; text-align:right;">0 pts</span>
+                  </div>
+                  <span style="font-size:0.7rem; color:#7d9696; display:block; margin-top:4px;">1 Reward point = Rs.1 off on final purchase price</span>
+                </div>
+
+                <!-- Royal Customer Switch -->
+                <div class="royal-switch-group" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; background:rgba(212,175,55,0.04); border:1px solid rgba(212,175,55,0.15); padding:12px; border-radius:6px;">
+                  <div style="display:flex; gap:10px; align-items:center;">
+                    <i class="fa-solid fa-crown" style="color:#d4af37; font-size:1.2rem;"></i>
+                    <div style="display:flex; flex-direction:column;">
+                      <strong style="color:white; font-size:0.82rem;">Royal Member Benefits</strong>
+                      <span style="font-size:0.7rem; color:#bba07a;">Extra 10% discount & priority delivery</span>
+                    </div>
+                  </div>
+                  <label class="switch-toggle" style="position:relative; display:inline-block; width:46px; height:24px;">
+                    <input type="checkbox" id="cart-royal-toggle" onchange="toggleCartRoyalCustomer(this.checked)" style="opacity:0; width:0; height:0;">
+                    <span class="slider-toggle-round" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#333; transition:.4s; border-radius:34px;"></span>
+                  </label>
+                </div>
+
+                <!-- Billing Summary Receipt -->
+                <div class="billing-summary-receipt" style="background:rgba(255,255,255,0.01); border:1px solid rgba(255,255,255,0.05); padding:15px; border-radius:6px; margin-bottom:20px;">
+                  <div class="summary-line" style="display:flex; justify-content:space-between; font-size:0.8rem; color:#7d9696; margin-bottom:6px;">
+                    <span>Cart Subtotal</span>
+                    <strong id="cart-subtotal-val" style="color:white;">Rs.0</strong>
+                  </div>
+                  <div class="summary-line" id="cart-coupon-line" style="display:none; justify-content:space-between; font-size:0.8rem; color:var(--success); margin-bottom:6px;">
+                    <span>Coupon Discount (20%)</span>
+                    <strong id="cart-coupon-val">-Rs.0</strong>
+                  </div>
+                  <div class="summary-line" id="cart-rewards-line" style="display:none; justify-content:space-between; font-size:0.8rem; color:var(--success); margin-bottom:6px;">
+                    <span>Points Redeemed</span>
+                    <strong id="cart-rewards-val">-Rs.0</strong>
+                  </div>
+                  <div class="summary-line" id="cart-royal-line" style="display:none; justify-content:space-between; font-size:0.8rem; color:var(--success); margin-bottom:6px;">
+                    <span>Royal Discount (10%)</span>
+                    <strong id="cart-royal-val">-Rs.0</strong>
+                  </div>
+                  <div class="summary-line" style="display:flex; justify-content:space-between; font-size:0.8rem; color:#7d9696; margin-bottom:6px;">
+                    <span>Delivery Fee</span>
+                    <strong id="cart-delivery-val" style="color:white;">Rs.50</strong>
+                  </div>
+                  <div class="summary-line" style="display:flex; justify-content:space-between; font-size:0.95rem; font-weight:700; border-top:1px dashed rgba(255,255,255,0.08); padding-top:10px; margin-top:10px; color:white;">
+                    <span>Net Total Payable</span>
+                    <strong id="cart-net-total-val" style="color:var(--accent);">Rs.50</strong>
+                  </div>
+                </div>
+
+                <button class="btn btn-primary btn-block" onclick="openCartPaymentCheckout()">
+                  Proceed to Payment <i class="fa-solid fa-circle-chevron-right" style="margin-left: 5px;"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-PANEL: FITNESS HUB -->
+        <div id="patient-panel-fitness" class="patient-sub-panel hidden">
+          <div class="view-header">
+            <h2>Fitness & Wellness Activities Hub</h2>
+            <p>Track steps/distance metrics, buy activity gym/club passes, and book exercise sessions.</p>
+          </div>
+
+          <div class="view-grid">
+            <!-- Left Side: Fitness Vital Logs -->
+            <div class="grid-card">
+              <div class="card-title-header" style="margin-bottom:12px;">
+                <h3>Daily Fitness Vitals Log</h3>
+                <span class="badge badge-python"><i class="fa-solid fa-heart-pulse"></i> Wearable Sync</span>
+              </div>
+              <p class="section-desc">Track step count and walk/run distance metrics. Hitting daily goals yields reward points.</p>
+              
+              <div class="fitness-tracker-box" style="margin:20px 0;">
+                <!-- Progress Ring -->
+                <div class="fitness-circle-wrapper" style="display:flex; justify-content:center; margin-bottom:20px;">
+                  <div class="steps-progress-circle" id="fitpanel-progress-bar" style="width:160px; height:160px; border-radius:50%; background:conic-gradient(var(--primary) 84%, rgba(255,255,255,0.05) 0); display:flex; align-items:center; justify-content:center; position:relative; box-shadow:0 0 20px rgba(0,204,180,0.2);">
+                    <div class="inner-circle" style="width:140px; height:140px; border-radius:50%; background:rgba(18,28,28,0.95); display:flex; flex-direction:column; align-items:center; justify-content:center; color:white;">
+                      <span class="steps-count" id="fitpanel-steps" style="font-size:1.8rem; font-weight:700; font-family:'Outfit',sans-serif;">8,432</span>
+                      <span class="steps-goal" style="font-size:0.75rem; color:#7d9696;">/ 10,000 steps</span>
+                    </div>
+                  </div>
+                </div>
+                <!-- Details -->
+                <div class="fitness-details-list" style="display:flex; flex-direction:column; gap:12px;">
+                  <div class="fit-detail-row" style="display:flex; align-items:center; gap:12px; background:rgba(255,255,255,0.01); border:1px solid rgba(255,255,255,0.03); padding:10px; border-radius:6px;">
+                    <div class="fit-icon walk-color" style="color:#00ccb4; font-size:1.2rem; width:30px; text-align:center;"><i class="fa-solid fa-person-walking"></i></div>
+                    <div class="fit-info" style="display:flex; justify-content:space-between; flex:1; align-items:center;">
+                      <span style="font-size:0.8rem; color:#7d9696;">Walking Distance</span>
+                      <h4 id="fitpanel-walk" style="margin:0; font-size:0.95rem; color:white;">5.8 <small style="font-weight:400; color:#7d9696;">km</small></h4>
+                    </div>
+                  </div>
+                  <div class="fit-detail-row" style="display:flex; align-items:center; gap:12px; background:rgba(255,255,255,0.01); border:1px solid rgba(255,255,255,0.03); padding:10px; border-radius:6px;">
+                    <div class="fit-icon run-color" style="color:#a855f7; font-size:1.2rem; width:30px; text-align:center;"><i class="fa-solid fa-person-running"></i></div>
+                    <div class="fit-info" style="display:flex; justify-content:space-between; flex:1; align-items:center;">
+                      <span style="font-size:0.8rem; color:#7d9696;">Running Distance</span>
+                      <h4 id="fitpanel-run" style="margin:0; font-size:0.95rem; color:white;">2.1 <small style="font-weight:400; color:#7d9696;">km</small></h4>
+                    </div>
+                  </div>
+                  <div class="fit-detail-row" style="display:flex; align-items:center; gap:12px; background:rgba(255,255,255,0.01); border:1px solid rgba(255,255,255,0.03); padding:10px; border-radius:6px;">
+                    <div class="fit-icon calorie-color" style="color:#ef4444; font-size:1.2rem; width:30px; text-align:center;"><i class="fa-solid fa-fire"></i></div>
+                    <div class="fit-info" style="display:flex; justify-content:space-between; flex:1; align-items:center;">
+                      <span style="font-size:0.8rem; color:#7d9696;">Calories Burned</span>
+                      <h4 id="fitpanel-calories" style="margin:0; font-size:0.95rem; color:white;">340 <small style="font-weight:400; color:#7d9696;">kcal</small></h4>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Simulator Action -->
+              <div class="fitness-simulator-widget">
+                <button class="btn btn-outline btn-block" onclick="simulateFitnessWalk()">
+                  <i class="fa-solid fa-running"></i> Simulate Walking & Running Session (+1200 Steps)
+                </button>
+              </div>
+            </div>
+
+            <!-- Right Side: Gym Passes & Classes Booking -->
+            <div class="grid-card">
+              <div class="card-title-header" style="margin-bottom:12px;">
+                <h3>Book Activities & Classes</h3>
+                <span class="badge" id="fitness-reward-points-badge" style="background:var(--accent); color:black; font-weight:700;">0 Points</span>
+              </div>
+              <p class="section-desc">Schedule classes (Gym, Sports, Yoga, Aerobics, Dance) or redeem reward points for free access passes.</p>
+              
+              <!-- Fitness Book Form -->
+              <form class="bookings-form" onsubmit="submitFitnessActivityBooking(event)" style="margin-top:15px; display:flex; flex-direction:column; gap:12px;">
+                <div class="form-group">
+                  <label for="fit-activity-select" style="font-size:0.8rem; color:#7d9696; display:block; margin-bottom:4px;">Select Activity Class</label>
+                  <select id="fit-activity-select" onchange="updateFitnessActivityPrices(this.value)" style="width:100%; padding:8px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; border-radius:4px; font-size:0.85rem;">
+                    <option value="Yoga Class">Yoga & Meditation (Rs.350 / session)</option>
+                    <option value="Dance Class">Zumba Fitness & Dance (Rs.250 / session)</option>
+                    <option value="Aerobic Class">Cardio Aerobics Class (Rs.300 / session)</option>
+                    <option value="Gym Pass">FitLife Gym Day Pass (Rs.200 / pass)</option>
+                    <option value="Sports Club">Badminton Club Court Booking (Rs.400 / slot)</option>
+                  </select>
+                </div>
+                <div class="form-group-row" style="display:flex; gap:10px;">
+                  <div class="form-group" style="flex:1;">
+                    <label for="fit-booking-date" style="font-size:0.8rem; color:#7d9696; display:block; margin-bottom:4px;">Date</label>
+                    <input type="date" id="fit-booking-date" required style="width:100%; padding:8px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; border-radius:4px; font-size:0.85rem;">
+                  </div>
+                  <div class="form-group" style="flex:1;">
+                    <label for="fit-booking-time" style="font-size:0.8rem; color:#7d9696; display:block; margin-bottom:4px;">Time Slot</label>
+                    <select id="fit-booking-time" style="width:100%; padding:8px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; border-radius:4px; font-size:0.85rem;">
+                      <option value="07:30 AM">Morning 07:30 AM</option>
+                      <option value="09:00 AM">Morning 09:00 AM</option>
+                      <option value="05:30 PM">Evening 05:30 PM</option>
+                      <option value="07:00 PM">Evening 07:00 PM</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Reward Point Redemption Switch inside booking -->
+                <div class="points-redemption-row" style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.02); border:1px solid rgba(165,243,252,0.08); padding:10px; border-radius:6px; margin-top:5px;">
+                  <div style="display:flex; flex-direction:column;">
+                    <strong style="color:white; font-size:0.8rem;">Use Reward Points</strong>
+                    <span style="font-size:0.7rem; color:#7d9696;">Redeem 1 pt = Rs.1. Get free pass if points cover price.</span>
+                  </div>
+                  <label class="switch-toggle" style="position:relative; display:inline-block; width:46px; height:24px;">
+                    <input type="checkbox" id="fit-redeem-points-toggle" onchange="toggleFitnessPointsRedeem(this.checked)" style="opacity:0; width:0; height:0;">
+                    <span class="slider-toggle-round" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#333; transition:.4s; border-radius:34px;"></span>
+                  </label>
+                </div>
+
+                <!-- Price Summary -->
+                <div style="background:rgba(255,255,255,0.01); border:1px solid rgba(255,255,255,0.05); padding:10px; border-radius:6px; font-size:0.8rem;">
+                  <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                    <span style="color:#7d9696;">Activity Subtotal:</span>
+                    <strong id="fit-price-subtotal" style="color:white;">Rs.350</strong>
+                  </div>
+                  <div id="fit-price-points-row" style="display:none; justify-content:space-between; margin-bottom:4px; color:var(--success);">
+                    <span>Points Discount:</span>
+                    <strong id="fit-price-points-discount">-Rs.0</strong>
+                  </div>
+                  <div style="display:flex; justify-content:space-between; font-weight:700; border-top:1px dashed rgba(255,255,255,0.08); padding-top:6px; margin-top:6px; color:white;">
+                    <span>Final Amount:</span>
+                    <strong id="fit-price-final" style="color:var(--accent);">Rs.350</strong>
+                  </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block">Confirm Activity Booking <i class="fa-solid fa-circle-check"></i></button>
+              </form>
+            </div>
+
+            <!-- Active Fitness Passes/Bookings Table -->
+            <div class="grid-card col-span-2 margin-top">
+              <h3>Your Active Fitness & Activity Passes</h3>
+              <p class="section-desc">Class bookings, gym day passes, and sports courts reservations logged to the ledger.</p>
+              
+              <div class="document-list-table">
+                <div class="table-header-vault" style="display:grid; grid-template-columns: 1fr 1.5fr 1fr 1fr 1fr 1.2fr; gap:10px; font-weight:600; padding:10px; border-bottom:1px solid rgba(255,255,255,0.05); color:#7d9696; font-size:0.8rem;">
+                  <span>Pass ID</span>
+                  <span>Activity Name</span>
+                  <span>Type</span>
+                  <span>Schedule Slot</span>
+                  <span>Cost Paid</span>
+                  <span>Status</span>
+                </div>
+                <div id="patient-fitness-bookings-list" style="margin-top:10px;">
+                  <!-- Dynamic bindings -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ========================================== -->
+      <!-- DOCTOR VIEW PANEL -->
+      <!-- ========================================== -->
+      <div id="view-Doctor" class="dashboard-view-panel hidden">
+        
+        <!-- SUB-PANEL: CONSULTING DESK -->
+        <div id="doctor-panel-consult" class="doctor-sub-panel">
+          <div class="view-header">
+            <h2>Doctor Consulting Portal</h2>
+            <p>Scan patient QR health cards, authorize document access via patient consent OTP, and dispatch digital prescriptions.</p>
+          </div>
+
+          <div class="view-grid">
+            <!-- Scan & Handshake Kiosk -->
+            <div class="grid-card">
+              <h3>Patient Verification Kiosk</h3>
+              <p class="section-desc">Simulate an offline NFC/QR scanner handshake or search patient health IDs.</p>
+              
+              <div class="search-handshake-wrapper">
+                <input type="text" id="doc-patient-search" placeholder="Enter Patient ID (e.g. SR-9982-1045-88)">
+                <button onclick="searchPatientRecord()" class="btn btn-primary">Retrieve Record <i class="fa-solid fa-search"></i></button>
+              </div>
+
+              <!-- Scanner Simulator Interface -->
+              <div class="mock-scanner-widget" id="scanner-widget">
+                <div class="scanner-kiosk-view">
+                  <div class="kiosk-laser"></div>
+                  <i class="fa-solid fa-qrcode kiosk-qr-icon"></i>
+                </div>
+                <button onclick="simulateDoctorScanner()" class="btn btn-outline btn-block">Simulate QR Scan Card Front <i class="fa-solid fa-camera"></i></button>
+              </div>
+
+              <!-- Active consulting panel -->
+              <div class="patient-record-details hidden" id="active-consultation-details">
+                <div class="record-header">
+                  <h4>Consulting: <span id="consulting-patient-name">Anna Smith</span></h4>
+                  <span id="consulting-patient-id" class="badge-tag">SR-9982-1045</span>
+                </div>
+                <div class="record-meta">
+                  <span>ABHA Status: <strong id="consulting-abha-linked" style="color:var(--success);">LINKED</strong></span>
+                  <span>Active Scheme: <strong id="consulting-state-scheme">AB-PMJAY + MJPJAY</strong></span>
+                </div>
+                <div id="record-docs-requester" class="records-requester-box">
+                  <p>Security protocol requires OTP consent to view Patient Document Vault.</p>
+                  <div class="form-row-vault" style="max-width:280px; margin: 12px 0 0 0;">
+                    <input type="text" id="doc-otp-consent" placeholder="Enter 6-Digit OTP">
+                    <button class="btn btn-primary" onclick="verifyConsentOtp()">Authorize Access</button>
+                  </div>
+                  <span style="font-size:0.75rem; color:var(--info); margin-top:6px; display:block;">Enter 123456 (or dynamic patient OTP) to verify.</span>
+                </div>
+                
+                <!-- Patient files vault visible after OTP -->
+                <div id="record-vault-files" class="records-files-list hidden">
+                  <h5>Patient Records Vault</h5>
+                  <div class="vault-items-container" id="consulting-patient-files">
+                    <!-- Loaded dynamically -->
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Prescription Writer Form -->
+            <div class="grid-card">
+              <h3>Prescription Dispatcher</h3>
+              <p class="section-desc">Write clinical prescriptions. Dispatched records are logged via Blockchain blocks and made available to pharmacies.</p>
+              
+              <form onsubmit="dispatchDoctorPrescription(event)" class="prescription-form">
+                <div class="form-group">
+                  <label>Patient ID / Name</label>
+                  <input type="text" id="rx-patient-details" placeholder="e.g. SR-9982-1045 | Anna Smith" required>
+                </div>
+                <div class="form-group">
+                  <label>Medications & Directions</label>
+                  <textarea id="rx-medications" placeholder="e.g. Tab Metformin 500mg (twice daily after meals), Tab Atorvastatin 10mg (once daily before bed)" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Log & Dispatch Digital Prescription <i class="fa-solid fa-cube"></i></button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- PHARMACY VIEW PANEL -->
+      <!-- ========================================== -->
+      <div id="view-Pharmacy" class="dashboard-view-panel hidden">
+        
+        <!-- SUB-PANEL: ACTIVE ORDERS -->
+        <div id="pharmacy-panel-orders" class="pharmacy-sub-panel">
+          <div class="view-header">
+            <h2>Pharmacy Dispatch & Settlements Kiosk</h2>
+            <p>Fulfill prescription orders, dispense medicines, and settle cashless insurance claims.</p>
+          </div>
+
+          <div class="view-grid">
+            <div class="grid-card col-span-2">
+              <h3>Online Pharmacy Orders Feed</h3>
+              <p class="section-desc">Live purchase order feed placed by patients containing verified document hashes.</p>
+              
+              <div class="prescription-list-table">
+                <div class="table-header-vault rx-table-grid">
+                  <span>Order ID</span>
+                  <span>Patient ID</span>
+                  <span>Meds Summary</span>
+                  <span>Bill Price</span>
+                  <span>Order Status</span>
+                  <span>Action</span>
+                </div>
+                <div id="pharmacy-prescription-queue">
+                  <!-- Loaded dynamically -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- ADMIN VIEW PANEL (BLOCKCHAIN EXPLORER) -->
+      <!-- ========================================== -->
+      <div id="view-Admin" class="dashboard-view-panel hidden">
+        
+        <div id="admin-panel-security" class="admin-sub-panel">
+          <div class="view-header">
+            <h2>Cryptographic Blockchain Ledger Kiosk</h2>
+            <p>Audit visual transaction blocks, hash links, block height counters, and validation parameters.</p>
+          </div>
+
+          <!-- Blockchain block nodes horizontal flow -->
+          <div class="blockchain-chain-visualizer">
+            <h3>Visual Block Registry Node Stream</h3>
+            <div class="blockchain-cards-scroller" id="blockchain-block-nodes">
+              <!-- Loaded dynamically in JS -->
+            </div>
+          </div>
+
+          <!-- Console logs audits -->
+          <div class="view-grid margin-top">
+            <div class="grid-card col-span-2">
+              <h3>Real-Time Ledger Transaction Blocks</h3>
+              <p class="section-desc">Audit output ledger lines emitted on new block mining events.</p>
+              <div class="audit-block-console" id="admin-audit-console">
+                <!-- Logs loaded dynamically -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Unified Paid Checkout Modal Overlay -->
+  <div id="paid-checkout-modal" class="modal-overlay hidden" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; z-index:20000;">
+    <div class="modal-card grid-card" style="width:100%; max-width:480px; margin:20px; padding:25px; border:1px solid rgba(165,243,252,0.2); box-shadow:0 24px 60px rgba(0,0,0,0.8); animation:modalZoom 0.3s cubic-bezier(0.175,0.885,0.32,1.275);">
+      <div class="card-title-header" style="margin-bottom:15px; border-bottom:1px solid rgba(255,255,255,0.06); padding-bottom:12px;">
+        <h3 id="chkmodal-title">Secure Payment Gateway</h3>
+        <button class="btn-link" onclick="closePaidCheckoutModal()" style="color:var(--danger); font-size:1.1rem; background:none; border:none; cursor:pointer;"><i class="fa-solid fa-times"></i></button>
+      </div>
+
+      <div class="billing-receipt-box" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); padding:15px; border-radius:6px; margin-bottom:20px;">
+        <h4 style="color:#7d9696; font-size:0.8rem; text-transform:uppercase; margin:0 0 10px 0; letter-spacing:1px;">Purchase Invoice Receipt</h4>
+        <div id="chkmodal-receipt-rows" style="display:flex; flex-direction:column; gap:8px;">
+          <!-- Receipt rows dynamically loaded -->
+        </div>
+        <div style="display:flex; justify-content:space-between; font-weight:700; border-top:1px dashed rgba(255,255,255,0.1); padding-top:10px; margin-top:10px; color:white; font-size:1.1rem;">
+          <span>Net Charge Total</span>
+          <strong id="chkmodal-payable-total" style="color:var(--accent);">Rs.0</strong>
+        </div>
+      </div>
+
+      <form id="checkout-payment-form" onsubmit="processPaidCheckoutSubmit(event)" style="display:flex; flex-direction:column; gap:15px;">
+        <div class="form-group">
+          <label style="font-size:0.8rem; color:#7d9696; display:block; margin-bottom:6px;">Select Payment Method</label>
+          <div class="payment-method-selector" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
+            <div class="pay-method-item active" id="paymethod-upi" onclick="switchPayMethod('UPI')">
+              <i class="fa-solid fa-mobile-screen" style="font-size:1.2rem; color:var(--primary);"></i> UPI
+            </div>
+            <div class="pay-method-item" id="paymethod-card" onclick="switchPayMethod('Card')">
+              <i class="fa-solid fa-credit-card" style="font-size:1.2rem; color:#7d9696;"></i> Card
+            </div>
+            <div class="pay-method-item" id="paymethod-cashless" onclick="switchPayMethod('Cashless')">
+              <i class="fa-solid fa-shield-heart" style="font-size:1.2rem; color:#7d9696;"></i> Insurance
+            </div>
+          </div>
+        </div>
+
+        <!-- UPI Input fields -->
+        <div id="checkout-upi-fields" class="form-group">
+          <label for="chk-upi-id" style="font-size:0.8rem; color:#7d9696; display:block; margin-bottom:5px;">Virtual Payment Address (UPI ID)</label>
+          <input type="text" id="chk-upi-id" placeholder="e.g. anna@okaxis" style="width:100%; padding:8px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; border-radius:4px; font-size:0.85rem;">
+        </div>
+
+        <!-- Card Input fields -->
+        <div id="checkout-card-fields" class="form-group hidden">
+          <div style="margin-bottom:10px;">
+            <label for="chk-card-number" style="font-size:0.8rem; color:#7d9696; display:block; margin-bottom:5px;">Credit / Debit Card Number</label>
+            <input type="text" id="chk-card-number" placeholder="4111 2222 3333 4444" style="width:100%; padding:8px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; border-radius:4px; font-size:0.85rem;">
+          </div>
+          <div style="display:flex; gap:10px;">
+            <div style="flex:1;">
+              <label for="chk-card-expiry" style="font-size:0.75rem; color:#7d9696; display:block; margin-bottom:4px;">Expiry Date</label>
+              <input type="text" id="chk-card-expiry" placeholder="MM/YY" style="width:100%; padding:8px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; border-radius:4px; font-size:0.85rem;">
+            </div>
+            <div style="flex:0.8;">
+              <label for="chk-card-cvv" style="font-size:0.75rem; color:#7d9696; display:block; margin-bottom:4px;">CVV</label>
+              <input type="password" id="chk-card-cvv" placeholder="***" maxlength="3" style="width:100%; padding:8px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; border-radius:4px; font-size:0.85rem;">
+            </div>
+          </div>
+        </div>
+
+        <!-- Cashless Insurance Info -->
+        <div id="checkout-cashless-fields" class="form-group hidden" style="background:rgba(16,185,129,0.05); border:1px solid rgba(16,185,129,0.15); padding:10px; border-radius:6px; font-size:0.8rem; color:#10b981; display:flex; gap:8px; align-items:center;">
+          <i class="fa-solid fa-circle-info" style="font-size:1.1rem;"></i>
+          <span>Aadhaar KYC will instantly lock cashless insurance coverage. Total payable: Rs.0</span>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block" style="padding:10px; font-weight:600; font-family:'Outfit',sans-serif; margin-top:10px;">
+          Confirm Payment & Clear Dues <i class="fa-solid fa-circle-check" style="margin-left: 5px;"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- JS Logic -->
+  <script src="/static/dashboard.js"></script>
+</body>
+</html>

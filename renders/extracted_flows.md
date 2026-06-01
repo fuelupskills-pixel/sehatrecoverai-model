@@ -1,0 +1,159 @@
+# SehatRecover Flowchart Structure
+
+
+## Patient Flow (Node: 1:2713)
+- User Flow (container)
+  - Group (group)
+  - Group 12 (group)
+    - Group 7 (group)
+      - Rectangle 17 (rectangle)
+      - Scan QR code (tspan) [Text: "Scan QR code"]
+    - Group 8 (group)
+      - Rectangle 17 (rectangle)
+      - Request for Document (tspan) [Text: "Request for Document"]
+    - Group 7 --> Group 8 (vector)
+    - Group 9 (group)
+      - Rectangle 17 (rectangle)
+      - OTP Verification (tspan) [Text: "OTP Verification"]
+    - Group 8 --> Group 9 (vector)
+    - Group 10 (group)
+      - Rectangle 17 (rectangle)
+      - Limited time access (tspan) [Text: "Limited time access"]
+    - Group 9 --> Group 10 (vector)
+    - Group 11 (group)
+      - Rectangle 17 (rectangle)
+      - Confirm Transaction (tspan) [Text: "Confirm Transaction"]
+    - Group 10 --> Group 11 (vector)
+  - Group 13 (group)
+    - Group 7 (group)
+      - Rectangle 17 (rectangle)
+      - Scan QR code (tspan) [Text: "Scan QR code"]
+    - Group 8 (group)
+      - Rectangle 17 (rectangle)
+      - Request for Document (tspan) [Text: "Request for Document"]
+    - Group 7 --> Group 8 (vector)
+    - Group 9 (group)
+      - Rectangle 17 (rectangle)
+      - OTP Verification (tspan) [Text: "OTP Verification"]
+    - Group 8 --> Group 9 (vector)
+    - Group 10 (group)
+      - Rectangle 17 (rectangle)
+      - Limited time access (tspan) [Text: "Limited time access"]
+    - Group 9 --> Group 10 (vector)
+    - Group 11 (group)
+      - Rectangle 17 (rectangle)
+      - Confirm Transaction (tspan) [Text: "Confirm Transaction"]
+    - Group 10 --> Group 11 (vector)
+
+## Doctor Flow (Node: 1:7482)
+- User Flow (container)
+  - Group 12 (group)
+    - Group 7 (group)
+      - Rectangle 17 (rectangle)
+      - Scan QR code (tspan) [Text: "Scan QR code"]
+    - Group 8 (group)
+      - Rectangle 17 (rectangle)
+      - Request for Document (tspan) [Text: "Request for Document"]
+    - Group 7 --> Group 8 (vector)
+    - Group 9 (group)
+      - Rectangle 17 (rectangle)
+      - OTP Verification (tspan) [Text: "OTP Verification"]
+    - Group 8 --> Group 9 (vector)
+    - Group 10 (group)
+      - Rectangle 17 (rectangle)
+      - Limited time access (tspan) [Text: "Limited time access"]
+    - Group 9 --> Group 10 (vector)
+    - Group 11 (group)
+      - Rectangle 17 (rectangle)
+      - Confirm Transaction (tspan) [Text: "Confirm Transaction"]
+    - Group 10 --> Group 11 (vector)
+  - Text (tspan)
+
+## Pharmacy Flow (Node: 1:8392)
+- User Flow (container)
+  - Group 12 (group)
+    - Group 7 (group)
+      - Rectangle 17 (rectangle)
+      - Scan QR code (tspan) [Text: "Scan QR code"]
+    - Group 8 (group)
+      - Rectangle 17 (rectangle)
+      - Request for Document (tspan) [Text: "Request for Document"]
+    - Group 7 --> Group 8 (vector)
+    - Group 9 (group)
+      - Rectangle 17 (rectangle)
+      - OTP Verification (tspan) [Text: "OTP Verification"]
+    - Group 8 --> Group 9 (vector)
+    - Group 10 (group)
+      - Rectangle 17 (rectangle)
+      - Limited time access (tspan) [Text: "Limited time access"]
+    - Group 9 --> Group 10 (vector)
+    - Group 11 (group)
+      - Rectangle 17 (rectangle)
+      - Confirm Transaction (tspan) [Text: "Confirm Transaction"]
+    - Group 10 --> Group 11 (vector)
+
+## Admin Flow (Node: 1:9222)
+- User Flow (container)
+  - Group 12 (group)
+    - Group 7 (group)
+      - Rectangle 17 (rectangle)
+      - Scan QR code (tspan) [Text: "Scan QR code"]
+    - Group 8 (group)
+      - Rectangle 17 (rectangle)
+      - Request for Document (tspan) [Text: "Request for Document"]
+    - Group 7 --> Group 8 (vector)
+    - Group 9 (group)
+      - Rectangle 17 (rectangle)
+      - OTP Verification (tspan) [Text: "OTP Verification"]
+    - Group 8 --> Group 9 (vector)
+    - Group 10 (group)
+      - Rectangle 17 (rectangle)
+      - Limited time access (tspan) [Text: "Limited time access"]
+    - Group 9 --> Group 10 (vector)
+    - Group 11 (group)
+      - Rectangle 17 (rectangle)
+      - Confirm Transaction (tspan) [Text: "Confirm Transaction"]
+    - Group 10 --> Group 11 (vector)
+  - Group 13 (group)
+    - Group 7 (group)
+      - Rectangle 17 (rectangle)
+      - Scan QR code (tspan) [Text: "Scan QR code"]
+    - Group 8 (group)
+      - Rectangle 17 (rectangle)
+      - Request for Document (tspan) [Text: "Request for Document"]
+    - Group 7 --> Group 8 (vector)
+    - Group 9 (group)
+      - Rectangle 17 (rectangle)
+      - OTP Verification (tspan) [Text: "OTP Verification"]
+    - Group 8 --> Group 9 (vector)
+    - Group 10 (group)
+      - Rectangle 17 (rectangle)
+      - Limited time access (tspan) [Text: "Limited time access"]
+    - Group 9 --> Group 10 (vector)
+    - Group 11 (group)
+      - Rectangle 17 (rectangle)
+      - Confirm Transaction (tspan) [Text: "Confirm Transaction"]
+    - Group 10 --> Group 11 (vector)
+
+## Insurance Flow (Node: 1:10352)
+- User Flow (container)
+  - Group 12 (group)
+    - Group 7 (group)
+      - Rectangle 17 (rectangle)
+      - Scan QR code (tspan) [Text: "Scan QR code"]
+    - Group 8 (group)
+      - Rectangle 17 (rectangle)
+      - Request for Document (tspan) [Text: "Request for Document"]
+    - Group 7 --> Group 8 (vector)
+    - Group 9 (group)
+      - Rectangle 17 (rectangle)
+      - OTP Verification (tspan) [Text: "OTP Verification"]
+    - Group 8 --> Group 9 (vector)
+    - Group 10 (group)
+      - Rectangle 17 (rectangle)
+      - Limited time access (tspan) [Text: "Limited time access"]
+    - Group 9 --> Group 10 (vector)
+    - Group 11 (group)
+      - Rectangle 17 (rectangle)
+      - Confirm Transaction (tspan) [Text: "Confirm Transaction"]
+    - Group 10 --> Group 11 (vector)

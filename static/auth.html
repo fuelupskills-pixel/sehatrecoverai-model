@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SehatRecover - Access Your Universal Health Card</title>
+  <meta name="description" content="Secure passwordless access to your SehatRecover Universal Health Card and ABHA account integration.">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Custom Stylesheets -->
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="/static/auth.css">
+</head>
+<body class="auth-body">
+
+  <!-- Background Blur Blobs -->
+  <div class="auth-blur-blob blob-1"></div>
+  <div class="auth-blur-blob blob-2"></div>
+
+  <div class="auth-wrapper">
+    <!-- Top Branding Logo -->
+    <div class="auth-logo" onclick="window.location.href='/'">
+      <span class="logo-main">sehat<span>recover</span></span>
+      <span class="logo-sub">Delivering Health</span>
+    </div>
+
+    <!-- Auth Glassmorphic Card Container -->
+    <div class="auth-card" id="auth-main-card">
+      
+      <!-- STEP 1: Details Entry -->
+      <div id="auth-step-entry" class="auth-step-panel">
+        <div class="auth-card-header">
+          <h2 id="auth-title">Passwordless Access</h2>
+          <p id="auth-subtitle">Verify your contact to log in or create a card</p>
+        </div>
+
+        <!-- Tab Selector: Log In vs Sign Up -->
+        <div class="auth-tabs tabs-action">
+          <button class="tab-btn active" id="btn-tab-login" onclick="switchAuthTab('login')">
+            <i class="fa-solid fa-right-to-bracket"></i> Log In
+          </button>
+          <button class="tab-btn" id="btn-tab-signup" onclick="switchAuthTab('signup')">
+            <i class="fa-solid fa-user-plus"></i> Sign Up
+          </button>
+        </div>
+
+        <!-- Contact Method Selector: Mobile vs Email -->
+        <div class="auth-tabs tabs-channel">
+          <button class="tab-btn active" id="btn-channel-mobile" onclick="switchAuthChannel('mobile')">
+            <i class="fa-solid fa-phone"></i> Mobile Number
+          </button>
+          <button class="tab-btn" id="btn-channel-email" onclick="switchAuthChannel('email')">
+            <i class="fa-solid fa-envelope"></i> Email Address
+          </button>
+        </div>
+
+        <!-- Form Elements -->
+        <div class="auth-form">
+          <!-- Full Name Field (Sign Up Only) -->
+          <div class="form-group hidden" id="field-signup-name">
+            <label for="auth-name">Full Name</label>
+            <div class="input-icon-wrapper">
+              <i class="fa-solid fa-user input-icon"></i>
+              <input type="text" id="auth-name" placeholder="e.g. Anna Smith">
+            </div>
+          </div>
+
+          <!-- Mobile Input Group -->
+          <div class="form-group" id="field-group-mobile">
+            <label for="auth-mobile">Mobile Number</label>
+            <div class="input-icon-wrapper prefix-phone">
+              <span class="phone-prefix">+91</span>
+              <input type="tel" id="auth-mobile" placeholder="9876543210" maxlength="10">
+            </div>
+          </div>
+
+          <!-- Email Input Group -->
+          <div class="form-group hidden" id="field-group-email">
+            <label for="auth-email">Email Address</label>
+            <div class="input-icon-wrapper">
+              <i class="fa-solid fa-envelope input-icon"></i>
+              <input type="email" id="auth-email" placeholder="anna.smith@example.com">
+            </div>
+          </div>
+
+          <!-- Error Alert Panel -->
+          <div id="entry-error-alert" class="form-error hidden"></div>
+
+          <!-- Action Button -->
+          <button class="btn btn-primary btn-block btn-auth" onclick="sendVerificationCode()" id="btn-send-code">
+            <span>Send Verification OTP</span>
+            <i class="fa-solid fa-chevron-right icon-arrow"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 2: OTP Verification -->
+      <div id="auth-step-otp" class="auth-step-panel hidden">
+        <div class="auth-card-header">
+          <h2>Enter OTP Code</h2>
+          <p>We've sent a 6-digit verification code to <br><strong id="otp-target-display">your contact</strong></p>
+        </div>
+
+        <div class="auth-form text-center">
+          <div class="form-group">
+            <label for="auth-otp-code">6-Digit Passcode</label>
+            <input type="text" id="auth-otp-code" placeholder="••••••" maxlength="6" class="otp-input-field">
+            
+            <div class="dev-otp-tip" style="margin-top: 16px;">
+              <i class="fa-solid fa-circle-info"></i> Developer Tip: Enter <strong>123456</strong> or checkout the console/terminal logs.
+            </div>
+          </div>
+
+          <!-- Error Alert Panel -->
+          <div id="otp-error-alert" class="form-error hidden"></div>
+
+          <div class="otp-actions-wrapper">
+            <button class="btn btn-primary btn-block btn-auth" onclick="verifyVerificationCode()" id="btn-verify-otp">
+              <span>Verify & Authenticate</span>
+              <i class="fa-solid fa-circle-check icon-check" style="margin-left: 8px;"></i>
+            </button>
+
+            <button class="btn-link btn-back-details" onclick="backToEntryStep()">
+              <i class="fa-solid fa-arrow-left"></i> Change contact details
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3: Success Confirmation -->
+      <div id="auth-step-success" class="auth-step-panel hidden">
+        <div class="success-check-animation">
+          <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <div class="auth-card-header text-center">
+          <h2>Access Granted!</h2>
+          <p>Your passwordless session is active and secure.</p>
+        </div>
+
+        <div class="success-profile-preview">
+          <div class="success-row">
+            <span>Health ID Number:</span>
+            <strong id="display-health-id">SR-XXXX-XXXX</strong>
+          </div>
+          <div class="success-row">
+            <span>Linked Account:</span>
+            <strong id="display-account-name">Anna Smith</strong>
+          </div>
+        </div>
+
+        <div class="redirect-spinner-box">
+          <i class="fa-solid fa-circle-notch fa-spin"></i>
+          <span>Loading Health Card Dashboard...</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Small Footer Note -->
+    <div class="auth-footer-note">
+      <span><i class="fa-solid fa-shield-halved"></i> HIPAA Compliant Secure Gateway</span>
+      <a href="/">Back to Home</a>
+    </div>
+  </div>
+
+  <!-- Custom Authentication Script -->
+  <script src="/static/auth.js"></script>
+</body>
+</html>

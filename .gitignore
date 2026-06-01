@@ -1,0 +1,21 @@
+# Node dependencies
+node_modules/
+package-lock.json
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Local database (optional, but keep if we need mock data schema)
+# sehatrecover.db
+
+# Scratch files
+scratch/test_app_mismatch.py
+scratch/test_babel.js
+scratch/test_js_syntax.py
+scratch/test_mismatch.py
+scratch/check_single_quotes.py
+scratch/fix_app_js.py
+scratch/fix_quotes.py
+scratch/find_huge_matches.py

@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SehatRecover - Delivering Health</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-fontawesome/6.4.0/css/all.min.css">
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+
+  <!-- Header Section -->
+  <header class="header">
+    <div class="container nav-container">
+      <div class="logo">
+        <span class="logo-main">sehat<span>recover</span></span>
+        <span class="logo-sub">Delivering Health</span>
+      </div>
+      <nav class="nav-menu">
+        <a href="#home" class="active">Home</a>
+        <a href="#benefits">Benefits</a>
+        <a href="#services">Services</a>
+        <a href="#ai-sandbox">AI Simulator</a>
+        <a href="#testimonials">About Us</a>
+      </nav>
+      <div class="header-actions">
+        <!-- Logged Out / Sign In link -->
+        <span id="user-profile-badge" class="user-badge hidden">
+          <i class="fa-solid fa-circle-user"></i> <span id="user-badge-name">Anna Smith</span>
+        </span>
+        <a href="/login" id="nav-login-btn" class="btn btn-primary">Login / Signup</a>
+      </div>
+      <button class="mobile-toggle" aria-label="Toggle Menu">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section id="home" class="hero-section">
+    <div class="container hero-container">
+      <!-- Left Column: Copy -->
+      <div class="hero-content">
+        <h1 class="hero-title">Always available for <br><span class="highlight">Our patients</span></h1>
+        <p class="hero-description">
+          We at Sehat Recover are always fully focused on helping our patients and you to overcome any hurdle or any other problem. Get instant medical card details, smart symptom analysis, and seamless role-based health coordination.
+        </p>
+        <div class="hero-buttons">
+          <a href="#benefits" class="btn btn-secondary">More Details <i class="fa-solid fa-chevron-right"></i></a>
+          <a href="#ai-sandbox" class="btn btn-outline">Book appointment <i class="fa-solid fa-chevron-right"></i></a>
+        </div>
+      </div>
+
+      <!-- Right Column: Sign Up Funnel Card -->
+      <div class="hero-signup-card" id="signup-funnel-card">
+        <div class="signup-card-header">
+          <h3>Passwordless Signup</h3>
+          <p>Get your Universal Health Card instantly</p>
+        </div>
+        <div class="signup-card-body">
+          <!-- State 1: Enter details -->
+          <div id="signup-state-enter" class="signup-state">
+            <div class="signup-tabs">
+              <button class="tab-btn active" id="tab-mobile" onclick="switchSignupChannel('mobile')">
+                <i class="fa-solid fa-phone"></i> Mobile
+              </button>
+              <button class="tab-btn" id="tab-email" onclick="switchSignupChannel('email')">
+                <i class="fa-solid fa-envelope"></i> Email
+              </button>
+            </div>
+            
+            <div class="form-group">
+              <label for="signup-name">Full Name</label>
+              <input type="text" id="signup-name" placeholder="e.g. Anna Smith">
+            </div>
+            
+            <div class="form-group" id="group-mobile">
+              <label for="signup-mobile">Mobile Number</label>
+              <div class="input-phone-wrapper">
+                <span class="phone-prefix">+91</span>
+                <input type="tel" id="signup-mobile" placeholder="9876543210">
+              </div>
+            </div>
+            
+            <div class="form-group hidden" id="group-email">
+              <label for="signup-email">Email Address</label>
+              <input type="email" id="signup-email" placeholder="anna.smith@example.com">
+            </div>
+
+            <!-- Error container -->
+            <div id="signup-error" class="form-error hidden"></div>
+            
+            <button class="btn btn-primary btn-block" onclick="sendAuthOtp()">
+              Send Verification OTP <i class="fa-solid fa-paper-plane" style="margin-left: 5px;"></i>
+            </button>
+          </div>
+          
+          <!-- State 2: OTP Verification -->
+          <div id="signup-state-otp" class="signup-state hidden">
+            <p class="otp-instruction">We've sent a 6-digit code to <strong id="signup-otp-target">your contact</strong>.</p>
+            
+            <div class="form-group">
+              <label for="signup-otp">Enter OTP Code</label>
+              <div class="otp-input-container">
+                <input type="text" id="signup-otp" placeholder="Enter 6-digit code" maxlength="6" class="otp-input-field">
+              </div>
+              <span class="dev-otp-tip" id="dev-otp-tip">Tip: Enter <strong id="dev-otp-code">123456</strong> to verify.</span>
+            </div>
+
+            <!-- Error container -->
+            <div id="otp-error" class="form-error hidden"></div>
+            
+            <div class="otp-actions">
+              <button class="btn btn-primary btn-block" onclick="verifyAuthOtp()">
+                Verify & Generate Card <i class="fa-solid fa-circle-check" style="margin-left: 5px;"></i>
+              </button>
+              <button class="btn-link" onclick="backToSignupDetails()">
+                <i class="fa-solid fa-arrow-left"></i> Change contact details
+              </button>
+            </div>
+          </div>
+          
+          <!-- State 3: Success -->
+          <div id="signup-state-success" class="signup-state hidden">
+            <div class="success-icon"><i class="fa-solid fa-circle-check"></i></div>
+            <h4>Welcome to SehatRecover!</h4>
+            <p>Your passwordless session is active, and your Universal Health ID has been generated.</p>
+            <div class="generated-preview">
+              <span>Health ID:</span>
+              <strong id="signup-generated-id">SR-1234-5678</strong>
+            </div>
+            <div class="success-actions" style="display: flex; flex-direction: column; gap: 10px;">
+              <a href="#benefits" class="btn btn-secondary btn-block" onclick="highlightUserCard()">
+                View Your Health Card <i class="fa-solid fa-arrow-down" style="margin-left: 5px;"></i>
+              </a>
+              <a href="/dashboard" class="btn btn-primary btn-block">
+                Go to Dashboard <i class="fa-solid fa-gauge" style="margin-left: 5px;"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Universal Health Card Section -->
+  <section id="benefits" class="card-section">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Universal Health Card</h2>
+        <p class="section-subtitle">All medical problems one solution</p>
+      </div>
+
+      <div class="card-interactive-grid">
+        <!-- 3D Card Flip Showcase -->
+        <div class="card-showcase" id="health-card-showcase">
+          <span class="tap-hint"><i class="fa-solid fa-circle-info"></i> Hover or Tap the card to flip it</span>
+          <div class="flip-card">
+            <div class="flip-card-inner">
+              <!-- Card Front -->
+              <div class="card-front">
+                <div class="card-watermark"></div>
+                <div class="card-header">
+                  <div class="card-logo">
+                    <span class="logo-main">sehat<span>recover</span></span>
+                    <span class="logo-sub">Delivering Health</span>
+                  </div>
+                  <span id="card-abha-badge" class="card-abha-badge hidden">
+                    <i class="fa-solid fa-circle-check"></i> ABHA LINKED
+                  </span>
+                  <span class="card-type-label" id="card-type-main">Universal Health Card</span>
+                </div>
+                <div class="card-body">
+                  <div class="card-info">
+                    <h3 class="patient-name" id="card-patient-name">Anna Smith</h3>
+                    <div class="info-grid">
+                      <div class="info-item"><span>Full Name</span><strong id="card-full-name">Anna Smith</strong></div>
+                      <div class="info-item"><span>Contact</span><strong id="card-contact">XXXXXX9876</strong></div>
+                      <div class="info-item" id="card-dynamic-col-1"><span>Gender</span><strong>Assigned</strong></div>
+                      <div class="info-item" id="card-dynamic-col-2"><span>ID No.</span><strong id="card-id-num">SR-9982-1045-88</strong></div>
+                      <div class="info-item hidden" id="card-scheme-col"><span>Linked Scheme</span><strong id="card-scheme-name">N/A</strong></div>
+                      <div class="info-item hidden" id="card-balance-col"><span>Coverage Balance</span><strong id="card-insurance-balance">N/A</strong></div>
+                    </div>
+                  </div>
+                  <div class="card-qr">
+                    <div class="qr-border">
+                      <i class="fa-solid fa-qrcode"></i>
+                    </div>
+                  </div>
+                </div>
+                <div class="card-footer">
+                  <span class="secure-tag"><i class="fa-solid fa-shield-halved"></i> SECURE HEALTH ID</span>
+                  <div class="dots-pattern"></div>
+                </div>
+              </div>
+              <!-- Card Back -->
+              <div class="card-back">
+                <div class="card-watermark"></div>
+                <div class="card-header">
+                  <div class="card-logo">
+                    <span class="logo-main">sehat<span>recover</span></span>
+                  </div>
+                  <span class="card-type-label">TERMS & CONDITIONS</span>
+                </div>
+                <div class="card-body-back">
+                  <ul class="card-terms">
+                    <li>This card is securely integrated with state and central health schemes.</li>
+                    <li>Verify transactions and grant limited time access via secure OTP.</li>
+                    <li>Reward points accumulated are redeemable at network hospitals.</li>
+                    <li>Subject to HIPAA and local patient data protection acts.</li>
+                  </ul>
+                  <div class="card-qr-back">
+                    <i class="fa-solid fa-qrcode"></i>
+                  </div>
+                </div>
+                <div class="card-footer">
+                  <span>Emergency Helpline: 1800-RECOVER</span>
+                  <div class="dots-pattern"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <button class="btn btn-primary get-card-btn" id="health-card-action-btn" onclick="scrollToSandbox('Patient')">
+            Get Your Universal Health Card
+          </button>
+        </div>
+
+        <!-- Benefits Descriptions & ABHA Portal -->
+        <div class="benefits-intro">
+          <h3>Benefits of Universal Health Card</h3>
+          <p>The SehatRecover Health Card serves as your digital gateway to all critical healthcare benefits and direct partner integrations.</p>
+          
+          <div class="benefits-vertical-list">
+            <div class="benefit-item">
+              <span class="number">1</span>
+              <div>
+                <h4>Easy Loan & Reward Points</h4>
+                <p>Access BNPL credit and save reward points redeemable at network hospitals.</p>
+              </div>
+            </div>
+            <div class="benefit-item">
+              <span class="number">2</span>
+              <div>
+                <h4>Direct Insurance Settlements</h4>
+                <p>Instant digital coverages and zero-hassle real-time claims verification.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- National ABHA Portal Integration Panel -->
+          <div class="abha-portal-box" id="abha-linkage-panel">
+            <div class="abha-header">
+              <div class="abha-title">
+                <i class="fa-solid fa-address-card"></i> National ABHA Integration
+              </div>
+              <span class="govt-tag"><i class="fa-solid fa-shield-halved"></i> NDHM Portal Link</span>
+            </div>
+            <div class="abha-body">
+              <p>Link your 14-digit Ayushman Bharat Health Account (ABHA) to sync government health scheme benefits and Aadhaar KYC details.</p>
+              
+              <!-- State: Unlinked -->
+              <div id="abha-state-unlinked">
+                <div class="form-group" style="margin-bottom: 12px;">
+                  <label for="abha-id-input" style="font-size: 0.75rem;">ABHA ID / Address</label>
+                  <input type="text" id="abha-id-input" placeholder="e.g. 14-1234-5678-9012 or address@abha">
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 16px;">
+                  <label for="abha-state-select" style="font-size: 0.75rem;">Link State Scheme (Optional)</label>
+                  <select id="abha-state-select" class="form-select">
+                    <option value="">None (Central PM-JAY only)</option>
+                    <option value="mjpjay">Maharashtra - MJPJAY</option>
+                    <option value="aarogyasri">Andhra Pradesh - Dr. YSR Aarogyasri</option>
+                    <option value="cmchis">Tamil Nadu - CMCHIS</option>
+                    <option value="chiranjeevi">Rajasthan - Chiranjeevi Scheme</option>
+                    <option value="bsky">Odisha - BSKY</option>
+                  </select>
+                </div>
+                
+                <div id="abha-error" class="form-error hidden" style="margin-bottom: 12px;"></div>
+                <button class="btn btn-primary btn-block" onclick="linkAbhaAccount()">
+                  Link ABHA Account <i class="fa-solid fa-link" style="margin-left: 5px;"></i>
+                </button>
+              </div>
+              
+              <!-- State: Linked -->
+              <div id="abha-state-linked" class="hidden">
+                <div class="abha-success-badge">
+                  <i class="fa-solid fa-circle-check"></i> Connected & Aadhaar KYC Verified
+                </div>
+                <div class="abha-details-grid">
+                  <div class="abha-detail-row"><span>ABHA Number:</span><strong id="abha-display-num">N/A</strong></div>
+                  <div class="abha-detail-row"><span>ABHA Address:</span><strong id="abha-display-addr">N/A</strong></div>
+                  <div class="abha-detail-row"><span>Linked Scheme:</span><strong id="abha-display-scheme">N/A</strong></div>
+                  <div class="abha-detail-row"><span>Insurance Bal:</span><strong id="abha-display-bal" style="color: var(--success);">N/A</strong></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- 5 Column Benefits Grid (Figma option 2 style) -->
+      <h3 class="benefits-grid-title">Benefits Universal Health Card</h3>
+      <div class="benefits-grid">
+        <div class="benefit-card">
+          <div class="benefit-icon"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+          <h4>Easy Loan</h4>
+          <p>Give option to go forward with EMI (Buy Now Pay Later) easy loan.</p>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-icon"><i class="fa-solid fa-gift"></i></div>
+          <h4>Reward Points</h4>
+          <p>Reward points saving will be integrated with your card for partner discounts.</p>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-icon"><i class="fa-solid fa-shield-heart"></i></div>
+          <h4>Buy Insurance</h4>
+          <p>Integration with all insurance companies for real-time claim settlement.</p>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-icon"><i class="fa-solid fa-star"></i></div>
+          <h4>Saving Points</h4>
+          <p>Save on each medicine and diagnostic purchase via our secure network.</p>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-icon"><i class="fa-solid fa-arrows-spin"></i></div>
+          <h4>Universal Integration</h4>
+          <p>Integrated with central & state health schemes for government benefits.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Our Services Section -->
+  <section id="services" class="services-section">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Our Services</h2>
+        <p class="section-subtitle">We Provide everything in our services</p>
+      </div>
+
+      <div class="services-list-container">
+        <div class="services-timeline">
+          <!-- Item 1 -->
+          <div class="timeline-item" onclick="scrollToSandbox('Pharmacy')">
+            <div class="timeline-badge"><i class="fa-solid fa-prescription-bottle-medical"></i></div>
+            <div class="timeline-panel">
+              <h4>1. Pharmacy</h4>
+              <p>Instant online medicine orders & prescriptions</p>
+            </div>
+          </div>
+          <!-- Item 2 -->
+          <div class="timeline-item" onclick="scrollToSandbox('Lab')">
+            <div class="timeline-badge"><i class="fa-solid fa-microscope"></i></div>
+            <div class="timeline-panel">
+              <h4>2. Diagnosis</h4>
+              <p>Book lab tests & download digital reports</p>
+            </div>
+          </div>
+          <!-- Item 3 -->
+          <div class="timeline-item" onclick="scrollToSandbox('Doctor')">
+            <div class="timeline-badge"><i class="fa-solid fa-user-doctor"></i></div>
+            <div class="timeline-panel">
+              <h4>3. Doctor Appointment</h4>
+              <p>Book live consulting with leading specialists</p>
+            </div>
+          </div>
+          <!-- Item 4 -->
+          <div class="timeline-item" onclick="scrollToSandbox('Patient')">
+            <div class="timeline-badge"><i class="fa-solid fa-house-chimney-medical"></i></div>
+            <div class="timeline-panel">
+              <h4>4. Home Care Services</h4>
+              <p>Professional home nursing and care support</p>
+            </div>
+          </div>
+          <!-- Item 5 -->
+          <div class="timeline-item" onclick="scrollToSandbox('Admin')">
+            <div class="timeline-badge"><i class="fa-solid fa-laptop-medical"></i></div>
+            <div class="timeline-panel">
+              <h4>5. IOT Devices</h4>
+              <p>Smart wearable health metric tracking</p>
+            </div>
+          </div>
+          <!-- Item 6 -->
+          <div class="timeline-item" onclick="scrollToSandbox('Emergency')">
+            <div class="timeline-badge"><i class="fa-solid fa-truck-medical"></i></div>
+            <div class="timeline-panel">
+              <h4>6. Emergency Services</h4>
+              <p>24/7 ambulance and blood bank finder</p>
+            </div>
+          </div>
+          <!-- Item 7 -->
+          <div class="timeline-item" onclick="scrollToSandbox('Insurance')">
+            <div class="timeline-badge"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+            <div class="timeline-panel">
+              <h4>7. Insurance & Health Package</h4>
+              <p>Review policy coverages & health bundles</p>
+            </div>
+          </div>
+          <!-- Item 8 -->
+          <div class="timeline-item" onclick="scrollToSandbox('Loan')">
+            <div class="timeline-badge"><i class="fa-solid fa-hand-holding-heart"></i></div>
+            <div class="timeline-panel">
+              <h4>8. Loan for Healthcare</h4>
+              <p>Zero interest financing options for surgery</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AI Symptom Assistant & Flow Simulator Dashboard -->
+  <section id="ai-sandbox" class="sandbox-section">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">AI Triage & Flow Simulator</h2>
+        <p class="section-subtitle">Interact with our Python AI Engine and Role-Based User Flowcharts</p>
+      </div>
+
+      <div class="sandbox-grid">
+        
+        <!-- Left Panel: In-House AI Symptom Checker -->
+        <div class="sandbox-panel ai-panel">
+          <div class="panel-header">
+            <h3><i class="fa-solid fa-brain"></i> In-House AI Symptom Triage</h3>
+            <span class="badge badge-python">Python AI Engine</span>
+          </div>
+          <div class="panel-body">
+            <p class="panel-intro">Describe your symptoms below. Our custom Python NLP engine will map terms, run triage classification, and recommend the best medical specialist.</p>
+            <div class="input-group">
+              <label for="symptoms-input">Enter Symptoms</label>
+              <textarea id="symptoms-input" placeholder="e.g. I have chest pain, high fever, cough, and some breathing trouble..."></textarea>
+            </div>
+            <button id="btn-analyze-symptoms" class="btn btn-primary">
+              <i class="fa-solid fa-wand-magic-sparkles"></i> Run AI Diagnostics
+            </button>
+            
+            <div id="ai-result" class="ai-result-box hidden">
+              <div class="result-header">
+                <span class="result-dept"><i class="fa-solid fa-stethoscope"></i> Department: <strong id="res-dept">N/A</strong></span>
+                <span id="res-triage" class="triage-badge triage-low">LOW PRIORITY</span>
+              </div>
+              <div class="result-body">
+                <p id="res-advice" class="res-text">Recommendations will appear here.</p>
+                <div class="result-insights">
+                  <strong>AI Insights:</strong>
+                  <p id="res-insights"></p>
+                </div>
+                <div class="matched-keywords">
+                  <strong>Matched Keywords:</strong>
+                  <div id="res-keywords" class="keyword-tags"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Panel: Interactive User Flow Simulator -->
+        <div class="sandbox-panel flow-panel">
+          <div class="panel-header">
+            <h3><i class="fa-solid fa-route"></i> Interactive User Flow Simulator</h3>
+            <span class="badge badge-figma">Figma Flowchart Data</span>
+          </div>
+          <div class="panel-body">
+            <!-- Role Tabs Selector -->
+            <label>Select User Role Profile</label>
+            <div class="role-selector" id="role-tab-container">
+              <!-- Rendered via JS -->
+            </div>
+
+            <!-- Visual Flowchart Tracker -->
+            <div class="flowchart-visualizer">
+              <div class="flowchart-steps" id="flowchart-steps-container">
+                <!-- Steps rendered here dynamically -->
+              </div>
+            </div>
+
+            <!-- Active Step Action Interface -->
+            <div class="step-interactive-zone" id="interactive-zone">
+              <!-- Dynamic content based on active step -->
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials Section -->
+  <section id="testimonials" class="testimonials-section">
+    <div class="container testimonial-container">
+      <h2 class="section-title text-white">Patient Testimonials</h2>
+      <p class="section-subtitle text-white-muted">Patient experience with our services</p>
+      
+      <div class="testimonial-card">
+        <div class="quote-icon"><i class="fa-solid fa-quote-left"></i></div>
+        <p class="testimonial-text">
+          "It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like."
+        </p>
+        <div class="testimonial-author">
+          <div class="author-info">
+            <span class="author-name">Hannah Schmitt</span>
+            <span class="author-role">Lead Designer</span>
+          </div>
+          <div class="author-platform">
+            <i class="fa-brands fa-google"></i> Google Review
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <div class="logo">
+          <span class="logo-main">sehat<span>recover</span></span>
+          <span class="logo-sub text-white-muted">Delivering Health</span>
+        </div>
+        <p class="footer-desc">
+          We bring the years, global experience, and stamina to guide our clients through new and often disruptive realities.
+        </p>
+        <span class="secure-footer-tag"><i class="fa-solid fa-lock"></i> End-to-End HIPAA Encrypted</span>
+      </div>
+      
+      <div class="footer-links">
+        <h4>For Patients</h4>
+        <a href="#ai-sandbox"><i class="fa-solid fa-chevron-right"></i> Search Doctors</a>
+        <a href="/login"><i class="fa-solid fa-chevron-right"></i> Patient Login</a>
+        <a href="/signup"><i class="fa-solid fa-chevron-right"></i> Register Card</a>
+        <a href="/dashboard"><i class="fa-solid fa-chevron-right"></i> Patient Dashboard</a>
+      </div>
+
+      <div class="footer-links">
+        <h4>Services</h4>
+        <a href="#services"><i class="fa-solid fa-chevron-right"></i> Pharmacy Orders</a>
+        <a href="#services"><i class="fa-solid fa-chevron-right"></i> Lab Diagnosis</a>
+        <a href="#services"><i class="fa-solid fa-chevron-right"></i> Doctor consulting</a>
+        <a href="#services"><i class="fa-solid fa-chevron-right"></i> Home care services</a>
+      </div>
+
+      <div class="footer-downloads">
+        <h4>Our App</h4>
+        <a href="#" class="store-btn"><i class="fa-brands fa-google-play"></i> <span>Google Store</span></a>
+        <a href="#" class="store-btn"><i class="fa-brands fa-apple"></i> <span>Apple Store</span></a>
+      </div>
+    </div>
+    <div class="footer-bottom container">
+      <p>© 2026 SehatRecover. All rights reserved.</p>
+      <div class="footer-legal">
+        <a href="#">Terms and Conditions</a>
+        <span>|</span>
+        <a href="#">Privacy Policy</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- JS Logic -->
+  <script src="/static/app.js"></script>
+</body>
+</html>
