@@ -706,8 +706,13 @@ async function uploadPatientDocument(e) {
     if (response.ok) {
       document.getElementById('doc-name-input').value = '';
       document.getElementById('doc-file-input').value = '';
+      
+      // Switch active folder to the one we just uploaded to!
+      currentVaultFolder = folder;
+      
       loadPatientDocuments();
       addAuditLogLine('success', `Document encrypted & added to folder '${folder}': ${name}`);
+      showToast("Upload Successful", `File securely added to ${folder}.`, "success");
     }
   } catch (err) {
     console.error(err);
