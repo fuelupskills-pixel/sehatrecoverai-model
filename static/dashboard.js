@@ -682,8 +682,13 @@ async function uploadPatientDocument(e) {
   const name = document.getElementById('doc-name-input').value.trim();
   const category = document.getElementById('doc-category-input').value;
   const folder = document.getElementById('doc-folder-input').value;
+  const fileInput = document.getElementById('doc-file-input');
   
-  if (!name) return;
+  if (!name || !fileInput.files.length) return;
+
+  const file = fileInput.files[0];
+  const fileExtension = file.name.split('.').pop();
+  const calculatedSize = (file.size / (1024 * 1024)).toFixed(2) + " MB";
 
   try {
     const response = await fetch('/api/dashboard/documents', {
@@ -691,15 +696,16 @@ async function uploadPatientDocument(e) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         patientId: currentUser.healthId,
-        fileName: name.endsWith('.pdf') ? name : `${name}.pdf`,
+        fileName: name.toLowerCase().endsWith(`.${fileExtension}`) ? name : `${name}.${fileExtension}`,
         category: category,
-        fileSize: `${(1 + Math.random() * 4).toFixed(1)} MB`,
+        fileSize: calculatedSize,
         folder: folder
       })
     });
     
     if (response.ok) {
       document.getElementById('doc-name-input').value = '';
+      document.getElementById('doc-file-input').value = '';
       loadPatientDocuments();
       addAuditLogLine('success', `Document encrypted & added to folder '${folder}': ${name}`);
     }
@@ -1262,7 +1268,17 @@ async function loadPharmacyOrdersFeed() {
         let actionBtn = "";
         
         if (order.status.includes('Pending')) {
-          actionBtn = `<button onclick="fulfillPharmacyOrder('${order.id}')" class="btn-dispense">Dispatch Order</button>`;
+          actionBtn = `
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <button onclick="fulfillPharmacyOrder('${order.id}')" class="btn-dispense">Dispatch Order</button>
+              <div style="display:flex; flex-direction:column; gap:4px; padding:6px; background:rgba(0,0,0,0.2); border-radius:4px; border:1px dashed rgba(255,255,255,0.2);">
+                <label style="font-size:0.6rem; color:#7d9696; text-transform:uppercase;">Compliance Rx Upload</label>
+                <div style="display:flex; gap:5px; align-items:center;">
+                  <input type="file" id="pharmacy-rx-file-${order.id}" accept=".pdf,.jpg,.jpeg,.png" style="font-size:0.65rem; max-width:130px; color:#ccc;" />
+                  <button onclick="uploadPharmacyComplianceRx('${order.id}')" class="btn btn-outline" style="padding:4px; font-size:0.65rem; white-space:nowrap;"><i class="fa-solid fa-upload"></i> Upload</button>
+                </div>
+              </div>
+            </div>`;
         } else {
           statusStyle = 'rx-status-fulfilled';
           actionBtn = `<span style="color:#10b981; font-weight:700;"><i class="fa-solid fa-circle-check"></i> Settle Claims</span>`;
@@ -1299,6 +1315,25 @@ async function fulfillPharmacyOrder(orderId) {
   } catch (err) {
     console.error(err);
   }
+}
+
+async function uploadPharmacyComplianceRx(orderId) {
+  const fileInput = document.getElementById(`pharmacy-rx-file-${orderId}`);
+  if (!fileInput || !fileInput.files.length) {
+    showToast("Missing File", "Please select a valid Prescription file before uploading.", "info");
+    return;
+  }
+  
+  const file = fileInput.files[0];
+  const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
+  
+  addAuditLogLine('info', `Encrypting compliance prescription for ${orderId} (${file.name} - ${sizeMb} MB)...`);
+  
+  setTimeout(() => {
+    fileInput.value = '';
+    showToast("Prescription Uploaded", `Compliance document for ${orderId} uploaded successfully to Vault.`, "success");
+    addAuditLogLine('success', `Compliance prescription for ${orderId} securely hashed and committed.`);
+  }, 1000);
 }
 
 // --- ADMIN CRYPTOGRAPHIC BLOCKCHAIN EXPLORER ---

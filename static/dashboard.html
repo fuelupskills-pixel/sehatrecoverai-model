@@ -307,7 +307,8 @@
             <h3>Upload Health Record File</h3>
             <form id="doc-upload-form" class="vault-upload-form" onsubmit="uploadPatientDocument(event)">
               <div class="form-row-vault" style="display:flex; flex-wrap:wrap; gap:12px; align-items:center;">
-                <input type="text" id="doc-name-input" placeholder="e.g. Diagnostic Report, Cardiology Scan, Urine Test" required style="flex:1.5; min-width:200px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; padding:8px 12px; border-radius:4px;">
+                <input type="text" id="doc-name-input" placeholder="Document Name (e.g. Cardiology Scan)" required style="flex:1.5; min-width:200px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; padding:8px 12px; border-radius:4px;">
+                <input type="file" id="doc-file-input" required accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" style="flex:1; min-width:180px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:#7d9696; padding:6px; border-radius:4px; font-size:0.8rem;">
                 <select id="doc-category-input" style="flex:1; min-width:150px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; padding:8px; border-radius:4px;">
                   <option value="Lab Diagnosis">Pathology / Lab Diagnosis</option>
                   <option value="Prescription">Prescription Document</option>
