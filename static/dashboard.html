@@ -824,8 +824,20 @@
               </div>
               <p class="section-desc">Add active clinical prescriptions from your consults directly into your purchase cart.</p>
               
-              <div class="prescriptions-feed-box" id="pharmacy-shop-prescriptions" style="margin-bottom:25px;">
+              <div class="prescriptions-feed-box" id="pharmacy-shop-prescriptions" style="margin-bottom:20px;">
                 <!-- Loaded dynamically -->
+              </div>
+
+              <!-- Upload Custom Prescription -->
+              <div style="background:rgba(0,0,0,0.3); border:1px dashed rgba(0,204,180,0.4); border-radius:8px; padding:20px; margin-bottom:25px; display:flex; align-items:center; justify-content:space-between;">
+                <div>
+                  <h4 style="margin:0; color:#00ccb4;"><i class="fa-solid fa-cloud-arrow-up"></i> Upload External Prescription</h4>
+                  <p style="margin:4px 0 0 0; font-size:0.8rem; color:#7d9696;">Got a physical prescription? Upload a photo or PDF to order medicines.</p>
+                </div>
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <input type="file" id="patient-custom-rx-upload" accept=".pdf,.jpg,.jpeg,.png" style="font-size:0.8rem; color:#ccc; max-width:200px;">
+                  <button class="btn btn-outline" style="border-color:#00ccb4; color:#00ccb4; padding:6px 12px; font-size:0.85rem;" onclick="uploadCustomPatientRx()">Upload to Cart</button>
+                </div>
               </div>
 
               <div class="card-title-header" style="margin-bottom:15px; border-top:1px solid rgba(255,255,255,0.06); padding-top:20px;">

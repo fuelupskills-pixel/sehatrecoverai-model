@@ -1314,7 +1314,7 @@ async function loadPharmacyOrdersFeed() {
           <div>
             <span>${order.patientId}</span>
             <div style="display:flex; gap:5px; margin-top:5px;">
-              <button onclick="downloadPharmacyRx('${order.id}')" class="btn btn-outline" style="padding:2px 6px; font-size:0.65rem;"><i class="fa-solid fa-download"></i> Rx</button>
+              <button onclick="downloadPharmacyRx('${order.id}')" class="btn btn-outline" style="padding:2px 6px; font-size:0.65rem;"><i class="fa-solid fa-download"></i> Download Prescription</button>
               <button onclick="openPharmacyChatModal('${order.id}')" class="btn btn-outline" style="padding:2px 6px; font-size:0.65rem; color:#ef4444; border-color:rgba(239,68,68,0.5);"><i class="fa-solid fa-comment-medical"></i> Chat</button>
             </div>
           </div>
@@ -1922,6 +1922,30 @@ async function loadPharmacyShopPrescriptions() {
   } catch (err) {
     console.error(err);
   }
+}
+
+function uploadCustomPatientRx() {
+  const fileInput = document.getElementById('patient-custom-rx-upload');
+  if (!fileInput.files || fileInput.files.length === 0) {
+    alert("Please select a prescription file (PDF or Image) to upload.");
+    return;
+  }
+  
+  const file = fileInput.files[0];
+  const customRxId = "EXT-" + Math.floor(1000 + Math.random() * 9000);
+  
+  // Add to cart
+  pharmacyCart.push({
+    id: customRxId,
+    name: `Custom Uploaded Prescription (${file.name})`,
+    details: 'Pending Pharmacist Review',
+    price: 0,
+    type: 'prescription'
+  });
+  
+  fileInput.value = ""; // clear input
+  showToast("Prescription Uploaded", "Your prescription has been added to the cart for review.", "success");
+  renderPharmacyCart();
 }
 
 function addPrescriptionToCart(rxId, meds) {
