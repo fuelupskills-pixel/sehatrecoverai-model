@@ -395,6 +395,9 @@
           <button class="channel-btn" id="ch-email" onclick="switchChannel('email')">
             <i class="fa-solid fa-envelope"></i> Email
           </button>
+          <button class="channel-btn" id="ch-telegram" onclick="switchChannel('telegram')">
+            <i class="fa-brands fa-telegram"></i> Telegram
+          </button>
         </div>
 
         <!-- Mobile Field -->
@@ -415,6 +418,15 @@
           </div>
         </div>
 
+        <!-- Telegram Field -->
+        <div class="form-field hidden" id="telegram-field">
+          <label for="auth-telegram">Telegram Username</label>
+          <div class="input-wrap">
+            <span class="input-pfx"><i class="fa-brands fa-telegram"></i> @</span>
+            <input type="text" id="auth-telegram" placeholder="username" autocomplete="username">
+          </div>
+        </div>
+
         <!-- Error -->
         <div class="auth-error hidden" id="entry-error">
           <i class="fa-solid fa-circle-exclamation"></i>
@@ -428,7 +440,7 @@
 
         <div class="tip-pill" style="margin-top: 20px;">
           <i class="fa-solid fa-lightbulb"></i>
-          <span>Demo: Enter any 10-digit number → use OTP <strong>123456</strong> to bypass</span>
+          <span>Check your phone for the 6-digit verification code</span>
         </div>
       </div>
 
@@ -448,7 +460,7 @@
 
         <div class="tip-pill">
           <i class="fa-solid fa-info-circle"></i>
-          <span>Developer bypass: enter <strong>123456</strong> or check server terminal logs</span>
+          <span>Check your messages for the 6-digit code.</span>
         </div>
 
         <!-- Error -->
@@ -513,13 +525,15 @@
       clearError('entry');
     }
 
-    // ── Channel switching ──
+    // ── Channel switching (Mobile / Email / Telegram) ──
     function switchChannel(ch) {
       state.channel = ch;
       document.getElementById('ch-mobile').classList.toggle('active', ch === 'mobile');
       document.getElementById('ch-email').classList.toggle('active', ch === 'email');
+      document.getElementById('ch-telegram').classList.toggle('active', ch === 'telegram');
       document.getElementById('mobile-field').classList.toggle('hidden', ch !== 'mobile');
       document.getElementById('email-field').classList.toggle('hidden', ch !== 'email');
+      document.getElementById('telegram-field').classList.toggle('hidden', ch !== 'telegram');
       clearError('entry');
     }
 
@@ -539,6 +553,7 @@
       const name = document.getElementById('auth-name').value.trim();
       const mobile = document.getElementById('auth-mobile').value.trim();
       const email = document.getElementById('auth-email').value.trim();
+      const telegram = document.getElementById('auth-telegram').value.trim();
 
       if (state.tab === 'signup' && !name) { showError('entry', 'Please enter your full name.'); return; }
 
@@ -547,10 +562,13 @@
         if (!mobile) { showError('entry', 'Please enter your mobile number.'); return; }
         if (!/^\d{10}$/.test(mobile)) { showError('entry', 'Enter a valid 10-digit mobile number.'); return; }
         contact = mobile;
-      } else {
+      } else if (state.channel === 'email') {
         if (!email) { showError('entry', 'Please enter your email address.'); return; }
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showError('entry', 'Enter a valid email address.'); return; }
         contact = email;
+      } else if (state.channel === 'telegram') {
+        if (!telegram) { showError('entry', 'Please enter your Telegram username or chat ID.'); return; }
+        contact = telegram;
       }
 
       state.contact = contact;
@@ -578,16 +596,22 @@
           return;
         }
 
-        console.log(`[DEV] OTP: ${data.devOtp}`);
+        // Show the OTP in a small notification for development/testing
+        if (data.devOtp) {
+          console.log(`[DEV] OTP: ${data.devOtp}`);
+          // Display temporary OTP hint for the user to see
+          const tipEl = document.querySelector('#step-otp .tip-pill span');
+          if (tipEl) {
+            tipEl.innerHTML = `Your OTP code: <strong style="color:#00ccb4; letter-spacing:3px; font-size:1.1em;">${data.devOtp}</strong>`;
+          }
+        }
+
         goToStep('otp');
         document.getElementById('otp-contact-display').textContent = contact;
         setTimeout(() => document.getElementById('auth-otp').focus(), 100);
       } catch (err) {
-        // Network fallback — still proceed to OTP step (offline demo)
-        console.warn('[OFFLINE] Backend not reachable — using offline OTP bypass mode.');
-        goToStep('otp');
-        document.getElementById('otp-contact-display').textContent = contact;
-        setTimeout(() => document.getElementById('auth-otp').focus(), 100);
+        showError('entry', 'Network error — please ensure the backend server is running on port 8000.');
+        resetSendBtn();
       }
     }
 
@@ -620,19 +644,8 @@
 
         onAuthSuccess(data.user);
       } catch (err) {
-        // Offline bypass
-        if (otp === '123456') {
-          const hid = `SR-${Math.floor(1000+Math.random()*8999)}-${Math.floor(1000+Math.random()*8999)}-${Math.floor(10+Math.random()*89)}`;
-          onAuthSuccess({
-            fullName: state.name || 'Valued Patient',
-            contact: state.contact,
-            healthId: hid,
-            token: 'demo-token'
-          });
-        } else {
-          showError('otp', 'Network error. Use bypass OTP: 123456 for demo.');
-          resetVerifyBtn();
-        }
+        showError('otp', 'Network error. Connection to server failed.');
+        resetVerifyBtn();
       }
     }
 
@@ -673,7 +686,7 @@
 
     // ── Keyboard shortcuts ──
     document.addEventListener('DOMContentLoaded', () => {
-      ['auth-mobile','auth-email','auth-name'].forEach(id => {
+      ['auth-mobile','auth-email','auth-name','auth-telegram'].forEach(id => {
         document.getElementById(id)?.addEventListener('keydown', e => { if (e.key === 'Enter') sendOtp(); });
       });
       document.getElementById('auth-otp')?.addEventListener('keydown', e => { if (e.key === 'Enter') verifyOtp(); });

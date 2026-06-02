@@ -15,7 +15,6 @@ let DEFAULT_API_URL = 'http://127.0.0.1:8000';
 export default function App() {
   // --- STATE TETHERS & SETTINGS ---
   const [apiUrl, setApiUrl] = useState(DEFAULT_API_URL);
-  const [offlineMode, setOfflineMode] = useState(false);
   const [step, setStep] = useState(1); // 1: Entrance/Details, 2: Verification, 3: Dashboard Layout
   const [loading, setLoading] = useState(false);
   
@@ -224,38 +223,7 @@ export default function App() {
       }
       
     } catch (error) {
-      console.log('SQL Sync Error, enabling offline simulation modes: ', error.message);
-      setOfflineMode(true);
-      // Pre-populate offline lists if empty
-      if (prescriptionsList.length === 0) {
-        setPrescriptionsList([
-          { id: "RX-9982", patientId: patientId, patientName: fullName, doctorName: "Dr. Dev Kumar", medications: "Amoxicillin 500mg (3x daily), Paracetamol 650mg (as needed)", status: "Active", date: "2026-06-01" }
-        ]);
-        setClaimsList([
-          { id: "CLM-9011", patientId: patientId, provider: "Apollo Pharmacy #14", service: "Medication Dispatch (Amoxicillin)", amount: "Rs.450", status: "Settled (100% Cashless)", scheme: "AB-PMJAY Cover", date: "2026-05-18", blockHeight: 1 },
-          { id: "CLM-8891", patientId: patientId, provider: "Metropolis Diagnostic Labs", service: "Complete Blood Count & Liver Panel", amount: "Rs.1,200", status: "Settled (100% Cashless)", scheme: "MJPJAY Maharashtra", date: "2026-05-24", blockHeight: 2 }
-        ]);
-        setBookingsList([
-          { id: "BKG-3081", patientId: patientId, type: "Doctor Consultation", provider: "Dr. Dev Kumar (Cardiologist)", date: "2026-06-02", time: "10:30 AM", status: "Confirmed", details: "General heart checkup & post-triage consultation." }
-        ]);
-        setDocumentsList([
-          { id: "DOC-7711", patientId: patientId, fileName: "Blood_Report_May_2026.pdf", fileType: "PDF", fileSize: "1.2 MB", category: "Lab Diagnosis", date: "2026-05-15", folder: "diagnostics" },
-          { id: "DOC-8822", patientId: patientId, fileName: "Liver_Panel_Scans.pdf", fileType: "PDF", fileSize: "3.1 MB", category: "Lab Diagnosis", date: "2026-05-24", folder: "diagnostics" },
-          { id: "DOC-9933", patientId: patientId, fileName: "Amoxicillin_Prescription_June.pdf", fileType: "PDF", fileSize: "850 KB", category: "Prescription", date: "2026-06-01", folder: "prescriptions" },
-          { id: "DOC-1044", patientId: patientId, fileName: "HDFC_Ergo_Policy_Receipt.pdf", fileType: "PDF", fileSize: "2.4 MB", category: "Insurance Policy", date: "2026-05-10", folder: "insurance_docs" },
-          { id: "DOC-2055", patientId: patientId, fileName: "Universal_Health_Card_Front.png", fileType: "PNG", fileSize: "350 KB", category: "Government Card", date: "2026-06-01", folder: "gov_cards" }
-        ]);
-        setOrdersList([
-          { id: "ORD-5541", patientId: patientId, prescriptionId: "RX-9982", medications: "Amoxicillin 500mg (3x daily)", originalPrice: 450, discount: 450, finalPrice: 0, status: "Delivered", date: "2026-06-01" }
-        ]);
-        setFitnessBookings([
-          { id: "FIT-1092", patientId: patientId, type: "Yoga Class", name: "Hatha Yoga Morning Session", date: "2026-06-03", time: "07:30 AM", price: "Rs.350", status: "Booked (Paid via UPI)" }
-        ]);
-        setBlockchainLedger([
-          { block_index: 0, timestamp: 1774915200.0, data: "Genesis Block - SehatRecover HIPAA Compliant Cryptographic Ledger Init", previous_hash: "0", hash: "803a78d5e7e6f66345cb892a019b8822557e4e030a21" },
-          { block_index: 1, timestamp: 1774916200.0, data: "{'action': 'CLAIM_SETTLED', 'details': {'claimId': 'CLM-9011', 'patientId': '" + patientId + "', 'amount': 'Rs.450'}}", previous_hash: "803a78d5e7e6f66345cb892a019b8822557e4e030a21", hash: "78152617f66a2b0057e4922acba122abfcd105a3" }
-        ]);
-      }
+      Alert.alert('Network Error', 'Failed to communicate with the production server.');
     }
   };
 
@@ -297,13 +265,7 @@ export default function App() {
       }
     } catch (error) {
       setLoading(false);
-      setOfflineMode(true);
-      setStep(2);
-      Alert.alert(
-        'Connection Timeout',
-        'Serving in Offline Simulation Mode. Use passcode 123456 to verify.',
-        [{ text: 'Proceed Offline' }]
-      );
+      Alert.alert('Network Error', 'Failed to communicate with the production server.');
     }
   };
 
@@ -338,38 +300,7 @@ export default function App() {
       }
     } catch (error) {
       setLoading(false);
-      setOfflineMode(true);
-      if (otpCode === '123456') {
-        const mockHealthId = mobileNumber === '9876543210' ? 'SR-9982-1045-88' : `SR-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}-10`;
-        const mockUser = {
-          fullName: fullName,
-          contact: mobileNumber,
-          healthId: mockHealthId,
-          token: 'offline-token-session-key',
-          qrCodeData: `sehatrecover://card/verify?id=${mockHealthId}&name=${encodeURIComponent(fullName)}`,
-          abhaLinked: false,
-          abhaProfile: null
-        };
-        // Auto load Anna Smith if phone matches
-        if (mobileNumber === '9876543210') {
-          mockUser.fullName = "Anna Smith";
-          mockUser.abhaLinked = true;
-          mockUser.abhaProfile = {
-            abhaNumber: "AB-9982-1045-88",
-            abhaAddress: "annasmith@abha",
-            kycStatus: "VERIFIED (Aadhaar KYC)",
-            linkedScheme: "AB-PMJAY + Dr. YSR Aarogyasri Health Scheme (Andhra Pradesh)",
-            insuranceBalance: "Rs.10,00,000",
-            governmentBenefitsActive: true,
-            linkedUserId: mockHealthId,
-            badgeText: "ABHA & AAROGYASRI LINKED"
-          };
-        }
-        setUserProfile(mockUser);
-        setStep(3);
-      } else {
-        Alert.alert('Verification Error', 'Invalid mock code.');
-      }
+      Alert.alert('Network Error', 'Failed to communicate with the production server.');
     }
   };
 
@@ -406,54 +337,7 @@ export default function App() {
       }
     } catch (error) {
       setLinking(false);
-      // Offline fallback
-      let schemeName = "AB-PMJAY (Pradhan Mantri Jan Arogya Yojana)";
-      let coverBal = "Rs.5,00,000";
-      let badgeTxt = "ABHA LINKED";
-
-      if (stateScheme) {
-        const stateMapping = {
-          mjpjay: { name: "AB-PMJAY + MJPJAY (Maharashtra)", bal: "Rs.5,00,000", badge: "ABHA & MJPJAY LINKED" },
-          aarogyasri: { name: "AB-PMJAY + Aarogyasri (Andhra Pradesh)", bal: "Rs.10,00,000", badge: "ABHA & AAROGYASRI LINKED" },
-          cmchis: { name: "AB-PMJAY + CMCHIS (Tamil Nadu)", bal: "Rs.5,00,000", badge: "ABHA & CMCHIS LINKED" },
-          chiranjeevi: { name: "AB-PMJAY + Chiranjeevi (Rajasthan)", bal: "Rs.25,00,000", badge: "ABHA & CHIRANJEEVI LINKED" },
-          bsky: { name: "AB-PMJAY + BSKY (Odisha)", bal: "Rs.5,00,000", badge: "ABHA & BSKY LINKED" }
-        };
-        const activeS = stateMapping[stateScheme];
-        if (activeS) {
-          schemeName = activeS.name;
-          coverBal = activeS.bal;
-          badgeTxt = activeS.badge;
-        }
-      }
-
-      const newProfile = {
-        abhaNumber: abhaId.length === 14 ? abhaId : "AB-4045-8891-22",
-        abhaAddress: abhaId.includes('@') ? abhaId : `${userProfile.fullName.toLowerCase().replace(/\s/g, '')}@abha`,
-        kycStatus: "VERIFIED (Aadhaar KYC)",
-        linkedScheme: schemeName,
-        insuranceBalance: coverBal,
-        governmentBenefitsActive: true,
-        linkedUserId: userProfile.healthId,
-        badgeText: badgeTxt
-      };
-
-      setUserProfile(prev => ({
-        ...prev,
-        abhaLinked: true,
-        abhaProfile: newProfile
-      }));
-      
-      // Log to offline blockchain
-      const newBlock = {
-        block_index: blockchainLedger.length,
-        timestamp: Date.now() / 1000,
-        data: JSON.stringify({ action: "ABHA_LINKED", details: { userId: userProfile.healthId, abhaAddress: newProfile.abhaAddress, scheme: schemeName } }),
-        previous_hash: blockchainLedger[blockchainLedger.length - 1]?.hash || "0",
-        hash: Math.random().toString(16).substr(2, 32)
-      };
-      setBlockchainLedger(prev => [...prev, newBlock]);
-      Alert.alert('Offline Success', 'Simulated mapping registered in local environment.');
+      Alert.alert('Network Error', 'Failed to communicate with the production server.');
     }
   };
 
@@ -493,54 +377,7 @@ export default function App() {
     } catch (e) {
       setLinking(false);
       setEnrollModalVisible(false);
-      // Simulate locally
-      let schemeName = "AB-PMJAY (Pradhan Mantri Jan Arogya Yojana)";
-      let coverBal = "Rs.5,00,000";
-      let badgeTxt = "ABHA LINKED";
-
-      if (enrollScheme) {
-        const stateMapping = {
-          mjpjay: { name: "AB-PMJAY + MJPJAY (Maharashtra)", bal: "Rs.5,00,000", badge: "ABHA & MJPJAY LINKED" },
-          aarogyasri: { name: "AB-PMJAY + Aarogyasri (Andhra Pradesh)", bal: "Rs.10,00,000", badge: "ABHA & AAROGYASRI LINKED" },
-          cmchis: { name: "AB-PMJAY + CMCHIS (Tamil Nadu)", bal: "Rs.5,00,000", badge: "ABHA & CMCHIS LINKED" },
-          chiranjeevi: { name: "AB-PMJAY + Chiranjeevi (Rajasthan)", bal: "Rs.25,00,000", badge: "ABHA & CHIRANJEEVI LINKED" },
-          bsky: { name: "AB-PMJAY + BSKY (Odisha)", bal: "Rs.5,00,000", badge: "ABHA & BSKY LINKED" }
-        };
-        const activeS = stateMapping[enrollScheme];
-        if (activeS) {
-          schemeName = activeS.name;
-          coverBal = activeS.bal;
-          badgeTxt = activeS.badge;
-        }
-      }
-
-      const generatedId = `AB-${Math.floor(1000+Math.random()*9000)}-${Math.floor(1000+Math.random()*9000)}-${Math.floor(10+Math.random()*90)}`;
-      const newProfile = {
-        abhaNumber: generatedId,
-        abhaAddress: `${(enrollName || userProfile.fullName).toLowerCase().replace(/\s/g, '')}@abha`,
-        kycStatus: "VERIFIED (Aadhaar KYC)",
-        linkedScheme: schemeName,
-        insuranceBalance: coverBal,
-        governmentBenefitsActive: true,
-        linkedUserId: userProfile.healthId,
-        badgeText: badgeTxt
-      };
-
-      setUserProfile(prev => ({
-        ...prev,
-        abhaLinked: true,
-        abhaProfile: newProfile
-      }));
-      
-      const newBlock = {
-        block_index: blockchainLedger.length,
-        timestamp: Date.now() / 1000,
-        data: JSON.stringify({ action: "ABHA_ENROLLED", details: { userId: userProfile.healthId, abhaNumber: generatedId, scheme: schemeName } }),
-        previous_hash: blockchainLedger[blockchainLedger.length - 1]?.hash || "0",
-        hash: Math.random().toString(16).substr(2, 32)
-      };
-      setBlockchainLedger(prev => [...prev, newBlock]);
-      Alert.alert('Offline Enrollment Success', 'New ABHA Profile created & registered.');
+      Alert.alert('Network Error', 'Failed to communicate with the production server.');
     }
   };
 
@@ -570,17 +407,7 @@ export default function App() {
       }
     } catch (e) {
       setSyncingVitals(false);
-      // Local sync simulation
-      setRewardPoints(prev => prev + 50);
-      const newBlock = {
-        block_index: blockchainLedger.length,
-        timestamp: Date.now() / 1000,
-        data: JSON.stringify({ action: "FITNESS_GOAL_ACHIEVED", details: { patientId: userProfile.healthId, steps: 8420, heartRate: heartRate, oxygenLevel: oxygenLevel, points: 50 } }),
-        previous_hash: blockchainLedger[blockchainLedger.length - 1]?.hash || "0",
-        hash: Math.random().toString(16).substr(2, 32)
-      };
-      setBlockchainLedger(prev => [...prev, newBlock]);
-      Alert.alert('Offline Sync Complete', 'Vitals synced locally. Block minted. Received 50 points!');
+      Alert.alert('Network Error', 'Failed to communicate with the production server.');
     }
   };
 
@@ -653,33 +480,7 @@ export default function App() {
     } catch (e) {
       setLoading(false);
       setUploadModalOpen(false);
-      // Offline fallback
-      const generatedId = `DOC-${Math.floor(1000 + Math.random()*9000)}`;
-      const fileExt = newDocName.includes('.') ? newDocName.split('.').pop().toUpperCase() : 'PDF';
-      const cleanName = newDocName.includes('.') ? newDocName : `${newDocName}.pdf`;
-      const docItem = {
-        id: generatedId,
-        patientId: userProfile.healthId,
-        fileName: cleanName,
-        fileType: fileExt,
-        fileSize: newDocSize,
-        category: newDocCat,
-        date: new Date().toISOString().split('T')[0],
-        folder: newDocFolder
-      };
-      setDocumentsList(prev => [docItem, ...prev]);
-      
-      const newBlock = {
-        block_index: blockchainLedger.length,
-        timestamp: Date.now() / 1000,
-        data: JSON.stringify({ action: "DOCUMENT_UPLOADED", details: { docId: generatedId, patientId: userProfile.healthId, fileName: cleanName, folder: newDocFolder } }),
-        previous_hash: blockchainLedger[blockchainLedger.length - 1]?.hash || "0",
-        hash: Math.random().toString(16).substr(2, 32)
-      };
-      setBlockchainLedger(prev => [...prev, newBlock]);
-      Alert.alert('Offline Upload Saved', 'Document simulated in local explorer vault.');
-      setNewDocName('');
-      setNewDocCat('');
+      Alert.alert('Network Error', 'Failed to communicate with the production server.');
     }
   };
 
@@ -834,64 +635,7 @@ export default function App() {
       }
     } catch (e) {
       setLoading(false);
-      // Offline simulation fallback
-      const generatedOrderId = `ORD-${Math.floor(1000 + Math.random()*9000)}`;
-      const newOrder = {
-        id: generatedOrderId,
-        patientId: userProfile.healthId,
-        prescriptionId: 'RX-9982',
-        medications: medString,
-        originalPrice: totals.subtotal,
-        discount: totals.subtotal - totals.finalPrice,
-        finalPrice: totals.finalPrice,
-        status: "Delivered",
-        date: new Date().toISOString().split('T')[0]
-      };
-      setOrdersList(prev => [newOrder, ...prev]);
-
-      if (usePointsToggle) {
-        setRewardPoints(prev => Math.max(0, prev - totals.pointsDiscount));
-      }
-
-      // Sync cashless claim in local list if price was subsidized to 0
-      if (totals.finalPrice === 0 && userProfile.abhaLinked) {
-        const genClaimId = `CLM-${Math.floor(1000 + Math.random()*9000)}`;
-        const claimItem = {
-          id: genClaimId,
-          patientId: userProfile.healthId,
-          provider: "SehatRecover Network Pharmacy",
-          service: `Medications: ${medString}`,
-          amount: `Rs.${totals.subtotal}`,
-          status: "Settled (100% Cashless)",
-          scheme: userProfile.abhaProfile.linkedScheme,
-          date: new Date().toISOString().split('T')[0],
-          blockHeight: blockchainLedger.length
-        };
-        setClaimsList(prev => [claimItem, ...prev]);
-        
-        // Update balance
-        try {
-          let currentBal = parseFloat(userProfile.abhaProfile.insuranceBalance.replace(/[^\d.]/g, ''));
-          let nextBal = Math.max(0, currentBal - totals.subtotal);
-          userProfile.abhaProfile.insuranceBalance = `Rs.${nextBal.toLocaleString()}`;
-        } catch(err){}
-      }
-
-      const newBlock = {
-        block_index: blockchainLedger.length,
-        timestamp: Date.now() / 1000,
-        data: JSON.stringify({ action: "PHARMACY_ORDER_PLACED", details: { orderId: generatedOrderId, medications: medString, price: totals.finalPrice, method: paymentMethodUsed } }),
-        previous_hash: blockchainLedger[blockchainLedger.length - 1]?.hash || "0",
-        hash: Math.random().toString(16).substr(2, 32)
-      };
-      setBlockchainLedger(prev => [...prev, newBlock]);
-
-      setCart([]);
-      setUsePointsToggle(false);
-      setRoyalCustomerToggle(false);
-      setCouponInput('');
-      setCouponDiscount(0);
-      Alert.alert('Offline Order Settled', `Simulated order ${generatedOrderId} registered, and claims dispatched.`);
+      Alert.alert('Network Error', 'Failed to communicate with the production server.');
     }
   };
 
@@ -933,33 +677,7 @@ export default function App() {
       }
     } catch(e) {
       setLoading(false);
-      setUploadPrescriptionModal(false);
-      
-      const cleanName = prescFileName.endsWith('.pdf') ? prescFileName : `${prescFileName}.pdf`;
-      const docItem = {
-        id: `DOC-${Math.floor(1000 + Math.random()*9000)}`,
-        patientId: userProfile.healthId,
-        fileName: cleanName,
-        fileType: "PDF",
-        fileSize: "720 KB",
-        category: "Prescription",
-        date: new Date().toISOString().split('T')[0],
-        folder: "prescriptions"
-      };
-      setDocumentsList(prev => [docItem, ...prev]);
-
-      const rxItem = {
-        id: `RX-${Math.floor(1000 + Math.random()*9000)}`,
-        patientId: userProfile.healthId,
-        patientName: userProfile.fullName,
-        doctorName: "Uploaded Doc Simulation",
-        medications: "Paracetamol 650mg, Cough Syrup (OTC Oral Fluid)",
-        status: "Active",
-        date: new Date().toISOString().split('T')[0]
-      };
-      setPrescriptionsList(prev => [rxItem, ...prev]);
-      Alert.alert('Offline Upload Success', 'Simulated prescription processed, available in active pharmacy feed.');
-      setPrescFileName('');
+      Alert.alert('Network Error', 'Failed to communicate with the production server.');
     }
   };
 
@@ -1028,34 +746,8 @@ export default function App() {
       setPayProcessing(false);
     } catch(e) {
       setPayProcessing(false);
-      // Offline fallback
       setCheckoutModalOpen(false);
-      const bId = checkoutItem.id;
-      const newBk = {
-        id: bId,
-        patientId: userProfile.healthId,
-        type: bookingType,
-        provider: providerName,
-        date: bookingDate,
-        time: bookingTime,
-        status: "Confirmed",
-        details: bookingReason || "Paid local simulation"
-      };
-      setBookingsList(prev => [newBk, ...prev]);
-
-      const newBlock = {
-        block_index: blockchainLedger.length,
-        timestamp: Date.now() / 1000,
-        data: JSON.stringify({ action: "CARE_BOOKING", details: { bookingId: bId, provider: providerName, method: method } }),
-        previous_hash: blockchainLedger[blockchainLedger.length - 1]?.hash || "0",
-        hash: Math.random().toString(16).substr(2, 32)
-      };
-      setBlockchainLedger(prev => [...prev, newBlock]);
-      Alert.alert('Offline Booking Saved', 'Appointment booked locally using simulated checkout.');
-      setBookingReason('');
-      setCheckoutItem(null);
-      setUpiId('');
-      setCardNumber('');
+      Alert.alert('Network Error', 'Failed to communicate with the production server.');
     }
   };
 
@@ -1108,37 +800,7 @@ export default function App() {
       }
     } catch(e) {
       setLoading(false);
-      setFitnessModalOpen(false);
-      // Offline fallback
-      const fId = `FIT-${Math.floor(1000 + Math.random()*9000)}`;
-      const priceText = finalPrice === 0 ? "Booked (Points Redeemed)" : `Booked (Paid Rs.${finalPrice})`;
-      
-      const newFb = {
-        id: fId,
-        patientId: userProfile.healthId,
-        type: selectedFitnessActivity.type,
-        name: selectedFitnessActivity.name,
-        date: fitnessDate,
-        time: fitnessTime,
-        price: `Rs.${finalPrice}`,
-        status: priceText
-      };
-      setFitnessBookings(prev => [newFb, ...prev]);
-
-      if (pointsDeducted > 0) {
-        setRewardPoints(prev => Math.max(0, prev - pointsDeducted));
-      }
-
-      const newBlock = {
-        block_index: blockchainLedger.length,
-        timestamp: Date.now() / 1000,
-        data: JSON.stringify({ action: "FITNESS_ACTIVITY_BOOKED", details: { bookingId: fId, activity: selectedFitnessActivity.name, price: finalPrice } }),
-        previous_hash: blockchainLedger[blockchainLedger.length - 1]?.hash || "0",
-        hash: Math.random().toString(16).substr(2, 32)
-      };
-      setBlockchainLedger(prev => [...prev, newBlock]);
-      Alert.alert('Offline Slot Booked', 'Fitness session scheduled locally.');
-      setUsePointsToggle(false);
+      Alert.alert('Network Error', 'Failed to communicate with the production server.');
     }
   };
 
@@ -1177,47 +839,7 @@ export default function App() {
       }
     } catch(e) {
       setLoading(false);
-      setClaimModalOpen(false);
-      // Offline fallback
-      const cId = `CLM-${Math.floor(1000 + Math.random()*9000)}`;
-      const amtVal = parseFloat(claimAmount);
-      const isGov = claimPolicyType === 'Government';
-      const statusText = isGov ? "Settled (100% Cashless)" : "Approved (Direct Cashless)";
-      const schemeText = isGov ? (userProfile.abhaProfile?.linkedScheme || 'AB-PMJAY Cover') : 'Universal Private Policy';
-
-      const newCl = {
-        id: cId,
-        patientId: userProfile.healthId,
-        provider: claimProvider,
-        service: claimService,
-        amount: `Rs.${amtVal.toLocaleString()}`,
-        status: statusText,
-        scheme: schemeText,
-        date: new Date().toISOString().split('T')[0],
-        blockHeight: blockchainLedger.length
-      };
-      setClaimsList(prev => [newCl, ...prev]);
-
-      if (isGov && userProfile.abhaLinked) {
-        try {
-          let curr = parseFloat(userProfile.abhaProfile.insuranceBalance.replace(/[^\d.]/g, ''));
-          let next = Math.max(0, curr - amtVal);
-          userProfile.abhaProfile.insuranceBalance = `Rs.${next.toLocaleString()}`;
-        } catch(err){}
-      }
-
-      const newBlock = {
-        block_index: blockchainLedger.length,
-        timestamp: Date.now() / 1000,
-        data: JSON.stringify({ action: "CLAIM_SUBMITTED_CASHLESS", details: { claimId: cId, provider: claimProvider, amount: amtVal } }),
-        previous_hash: blockchainLedger[blockchainLedger.length - 1]?.hash || "0",
-        hash: Math.random().toString(16).substr(2, 32)
-      };
-      setBlockchainLedger(prev => [...prev, newBlock]);
-      Alert.alert('Offline Claim Settled', 'Cashless medical claim simulated successfully.');
-      setClaimProvider('');
-      setClaimService('');
-      setClaimAmount('');
+      Alert.alert('Network Error', 'Failed to communicate with the production server.');
     }
   };
 
@@ -1288,42 +910,7 @@ export default function App() {
       }
     } catch(e) {
       setLoanProcessing(false);
-      setLoanModalOpen(false);
-      // Offline fallback
-      const lId = `LON-${Math.floor(1000 + Math.random()*9000)}`;
-      const emi = getLoanEMI();
-      const schemeCollateral = loanCollateralType === 'Collateral Against Insurance Cover' ? (userProfile.abhaProfile?.linkedScheme || 'ABHA Govt Policy') : 'Credit Score Direct Collateral';
-      
-      const newLn = {
-        id: lId,
-        patientId: userProfile.healthId,
-        amount: loanAmount,
-        collateralPolicy: schemeCollateral,
-        tenureMonths: loanTenure,
-        monthlyEmi: emi,
-        status: "Disbursed",
-        date: new Date().toISOString().split('T')[0],
-        interestRate: "0% APR (Pre-Approved)"
-      };
-      setLoansList(prev => [newLn, ...prev]);
-
-      if (loanCollateralType === 'Collateral Against Insurance Cover' && userProfile.abhaLinked) {
-        try {
-          let curr = parseFloat(userProfile.abhaProfile.insuranceBalance.replace(/[^\d.]/g, ''));
-          let next = Math.max(0, curr - loanAmount);
-          userProfile.abhaProfile.insuranceBalance = `Rs.${next.toLocaleString()}`;
-        } catch(err){}
-      }
-
-      const newBlock = {
-        block_index: blockchainLedger.length,
-        timestamp: Date.now() / 1000,
-        data: JSON.stringify({ action: "ONE_CLICK_LOAN_DISBURSED", details: { loanId: lId, amount: loanAmount, collateral: schemeCollateral } }),
-        previous_hash: blockchainLedger[blockchainLedger.length - 1]?.hash || "0",
-        hash: Math.random().toString(16).substr(2, 32)
-      };
-      setBlockchainLedger(prev => [...prev, newBlock]);
-      Alert.alert('Offline Loan Credited', `Simulated loan ${lId} approved at 0% APR. Check ledger.`);
+      Alert.alert('Network Error', 'Failed to communicate with the production server.');
     }
   };
 
@@ -1355,38 +942,7 @@ export default function App() {
       }
     } catch(e) {
       setLoading(false);
-      // Offline Dispatch Simulation
-      const ambId = `AMB-${Math.floor(1000 + Math.random()*9000)}`;
-      const drivers = ["Driver Ramesh Kumar", "Driver Sandeep Patil", "Driver Anil Sharma"];
-      const vehicles = ["MH-12-EQ-8892", "MH-12-AS-9981", "MH-12-DF-2241"];
-      const selectIndex = Math.floor(Math.random() * 3);
-      
-      const mockAmb = {
-        id: ambId,
-        patientId: userProfile.healthId,
-        ambulanceType: ambulanceType,
-        pickupAddress: pickupAddress,
-        status: "Dispatched",
-        etaMinutes: 10,
-        driverName: drivers[selectIndex],
-        driverContact: "+91 99887 76655",
-        vehicleNumber: vehicles[selectIndex],
-        date: new Date().toISOString().split('T')[0],
-        timestamp: Date.now() / 1000
-      };
-      setAmbulanceBooking(mockAmb);
-      setAmbProgress(0);
-
-      const newBlock = {
-        block_index: blockchainLedger.length,
-        timestamp: Date.now() / 1000,
-        data: JSON.stringify({ action: "EMERGENCY_AMBULANCE_DISPATCHED", details: { bookingId: ambId, driver: mockAmb.driverName, type: ambulanceType } }),
-        previous_hash: blockchainLedger[blockchainLedger.length - 1]?.hash || "0",
-        hash: Math.random().toString(16).substr(2, 32)
-      };
-      setBlockchainLedger(prev => [...prev, newBlock]);
-      Alert.alert('Offline Ambulance Sent', `Simulated dispatch of vehicle ${mockAmb.vehicleNumber} triggered.`);
-      triggerAmbulanceTrackingPoll(userProfile.healthId);
+      Alert.alert('Network Error', 'Failed to communicate with the production server.');
     }
   };
 
@@ -1408,19 +964,7 @@ export default function App() {
           }
         }
       } catch(e) {
-        // Offline tracking simulator
-        setAmbProgress(prev => {
-          const next = prev + 0.15;
-          if (next >= 1.0) {
-            clearInterval(ambulanceIntervalRef.current);
-            setAmbulanceBooking(old => ({ ...old, status: 'Arrived', etaMinutes: 0 }));
-            Alert.alert('Arrived', 'Simulated Ambulance has arrived!');
-            return 1.0;
-          } else if (next >= 0.5) {
-            setAmbulanceBooking(old => ({ ...old, status: 'En Route', etaMinutes: 4 }));
-          }
-          return next;
-        });
+        Alert.alert('Network Error', 'Failed to communicate with the production server.');
       }
     }, 4000);
   };

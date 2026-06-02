@@ -109,37 +109,6 @@ STATE_SCHEMES = {
     }
 }
 
-# Medication Directory Data Store
-MEDICATION_DIRECTORY = {
-    "amoxicillin": {
-        "name": "Amoxicillin 500mg",
-        "category": "Antibiotic (Penicillin class)",
-        "advantage": "Highly effective at destroying broad-spectrum bacteria. Commonly used to treat respiratory infections, strep throat, dental abscesses, and urinary tract infections.",
-        "side_effects": "Mild nausea, diarrhea, abdominal discomfort, skin rashes, or allergic reactions (if sensitive to penicillin).",
-        "precautions": "Complete the full prescribed course even if symptoms disappear. Do not take if you have a known penicillin allergy. Take with meals to reduce gastrointestinal side effects."
-    },
-    "metformin": {
-        "name": "Metformin 500mg",
-        "category": "Antidiabetic (Biguanide class)",
-        "advantage": "Lowers blood glucose levels by improving insulin sensitivity, decreasing hepatic glucose production, and delaying intestinal glucose absorption. Standard first-line treatment for Type 2 Diabetes.",
-        "side_effects": "Metallic taste in mouth, nausea, loss of appetite, bloating, mild abdominal pain, or diarrhea (temporary).",
-        "precautions": "Take with meals (breakfast/dinner) to minimize stomach issues. Limit alcohol consumption to prevent lactic acidosis risks. Monitor kidney functions annually."
-    },
-    "paracetamol": {
-        "name": "Paracetamol 650mg",
-        "category": "Analgesic & Antipyretic",
-        "advantage": "Provides rapid relief for mild-to-moderate physical pain (headaches, muscle aches, toothaches, joint stiffness) and reduces fever by acting on heat-regulating centers in the brain.",
-        "side_effects": "Rare when taken at recommended dosages. Extremely high doses can lead to severe liver toxicity.",
-        "precautions": "Max daily intake is 4,000mg (4g) for adults. Do not combine with other paracetamol-containing OTC remedies. Maintain a gap of 4 to 6 hours between doses."
-    },
-    "atorvastatin": {
-        "name": "Atorvastatin 10mg",
-        "category": "Statin (HMG-CoA Reductase Inhibitor)",
-        "advantage": "Lowers 'bad' LDL cholesterol and triglycerides while increasing 'good' HDL cholesterol. Reduces the risks of heart attacks, angina, and cardiovascular strokes.",
-        "side_effects": "Mild muscle aches (myalgia), headache, nasal congestion, or slight elevations in liver enzymes.",
-        "precautions": "Take once daily, preferably in the evening. Avoid excessive grapefruit juice. Report any unexplained, severe muscle pain or weakness immediately to your doctor."
-    }
-}
 
 # --- DATABASE INITIALIZATION ON STARTUP ---
 @app.on_event("startup")
@@ -148,6 +117,16 @@ def setup_sqlite_database():
     cursor = conn.cursor()
     
     # Create Tables
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS medications (
+        key TEXT PRIMARY KEY,
+        name TEXT,
+        category TEXT,
+        advantage TEXT,
+        side_effects TEXT,
+        precautions TEXT
+    )""")
+
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS users (
         contact TEXT PRIMARY KEY,
@@ -276,6 +255,19 @@ def setup_sqlite_database():
     )""")
 
     cursor.execute("""
+    CREATE TABLE IF NOT EXISTS wholesale_orders (
+        id TEXT PRIMARY KEY,
+        pharmacyId TEXT,
+        item TEXT,
+        formulation TEXT,
+        quantity INTEGER,
+        totalAmount REAL,
+        status TEXT,
+        date TEXT,
+        timestamp REAL
+    )""")
+
+    cursor.execute("""
     CREATE TABLE IF NOT EXISTS blockchain (
         block_index INTEGER PRIMARY KEY,
         timestamp REAL,
@@ -347,6 +339,16 @@ def setup_sqlite_database():
     if cursor.fetchone()[0] == 0:
         print("[DATABASE INIT] Inserting default demo patients and historical records...")
         
+        # Insert Medications
+        meds = [
+            ("amoxicillin", "Amoxicillin 500mg", "Antibiotic (Penicillin class)", "Highly effective at destroying broad-spectrum bacteria. Commonly used to treat respiratory infections, strep throat, dental abscesses, and urinary tract infections.", "Mild nausea, diarrhea, abdominal discomfort, skin rashes, or allergic reactions (if sensitive to penicillin).", "Complete the full prescribed course even if symptoms disappear. Do not take if you have a known penicillin allergy. Take with meals to reduce gastrointestinal side effects."),
+            ("metformin", "Metformin 500mg", "Antidiabetic (Biguanide class)", "Lowers blood glucose levels by improving insulin sensitivity, decreasing hepatic glucose production, and delaying intestinal glucose absorption. Standard first-line treatment for Type 2 Diabetes.", "Metallic taste in mouth, nausea, loss of appetite, bloating, mild abdominal pain, or diarrhea (temporary).", "Take with meals (breakfast/dinner) to minimize stomach issues. Limit alcohol consumption to prevent lactic acidosis risks. Monitor kidney functions annually."),
+            ("paracetamol", "Paracetamol 650mg", "Analgesic & Antipyretic", "Provides rapid relief for mild-to-moderate physical pain (headaches, muscle aches, toothaches, joint stiffness) and reduces fever by acting on heat-regulating centers in the brain.", "Rare when taken at recommended dosages. Extremely high doses can lead to severe liver toxicity.", "Max daily intake is 4,000mg (4g) for adults. Do not combine with other paracetamol-containing OTC remedies. Maintain a gap of 4 to 6 hours between doses."),
+            ("atorvastatin", "Atorvastatin 10mg", "Statin (HMG-CoA Reductase Inhibitor)", "Lowers 'bad' LDL cholesterol and triglycerides while increasing 'good' HDL cholesterol. Reduces the risks of heart attacks, angina, and cardiovascular strokes.", "Mild muscle aches (myalgia), headache, nasal congestion, or slight elevations in liver enzymes.", "Take once daily, preferably in the evening. Avoid excessive grapefruit juice. Report any unexplained, severe muscle pain or weakness immediately to your doctor.")
+        ]
+        cursor.executemany("INSERT INTO medications VALUES (?, ?, ?, ?, ?, ?)", meds)
+
+
         # Insert Anna Smith Profiles (phone and email mappings)
         p_anna = ("Anna Smith", "SR-9982-1045-88", "mock-token-anna-smith", "sehatrecover://card/verify?id=SR-9982-1045-88&name=Anna%20Smith", 0)
         cursor.execute("INSERT INTO users VALUES (?, ?, ?, ?, ?, ?)", ("9876543210",) + p_anna)
@@ -555,21 +557,45 @@ class BloodRequestSubmit(BaseModel):
 class BloodRequestStatusUpdate(BaseModel):
     status: str
 
+class PharmacyOrderCreate(BaseModel):
+    patientId: str
+    prescriptionId: str
+    medications: str
+    originalPrice: float
+
+class ClaimSubmitRequest(BaseModel):
+    claimId: str = ""
+    patientId: str
+    provider: str
+    service: str
+    amount: float
+    schemeName: str
+
+class FHIRClaimRequest(BaseModel):
+    patientId: str
+    providerId: str
+    claimAmount: float
+    diagnosisCode: str
+    policyNumber: str
+
+class FHIRClaimResponse(BaseModel):
+    claimId: str
+
 class ChatMessageSend(BaseModel):
     patientId: str
     doctorName: str
     sender: str
     message: str
 
-class FHIRClaimRequest(BaseModel):
-    patientAbhaId: str
-    providerId: str
-    claimAmount: float
-    serviceDetails: str
-    policyNumber: str
+class WholesaleOrderCreate(BaseModel):
+    pharmacyId: str
+    item: str
+    formulation: str
+    quantity: int
+    totalAmount: float
 
-class FHIRClaimResponse(BaseModel):
-    claimId: str
+class WholesaleOrderStatusUpdate(BaseModel):
+    status: str
 
 # --- AUTH ENDPOINTS ---
 @app.post("/api/auth/send-otp")
@@ -585,6 +611,9 @@ def send_otp(request: OTPSendRequest):
         digits = "".join(filter(str.isdigit, contact))
         if len(digits) < 8:
             raise HTTPException(status_code=400, detail="Invalid mobile number.")
+    elif request.channel == "telegram":
+        if not contact:
+            raise HTTPException(status_code=400, detail="Invalid Telegram username.")
     else:
         raise HTTPException(status_code=400, detail="Invalid channel.")
 
@@ -609,6 +638,32 @@ def send_otp(request: OTPSendRequest):
     # Log to Blockchain
     log_blockchain_txn("OTP_ISSUED", {"contact": contact, "purpose": request.purpose})
 
+    # Dispatch OTP based on channel
+    import threading
+    import urllib.request
+    import json
+    import os
+
+    def dispatch_otp_async(channel, contact, code):
+        message = f"Your SehatRecover Health Portal verification code is {code}. Do not share this with anyone."
+        try:
+            if channel == "telegram":
+                bot_token = os.environ.get("TELEGRAM_BOT_TOKEN") or "7536967756:AAGD253KssgM-3sFwU1qB7Xq0yUrdc6xR1g"
+                chat_id = contact.replace("@", "") 
+                url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+                req = urllib.request.Request(url, data=json.dumps({"chat_id": chat_id, "text": message}).encode("utf-8"), headers={"Content-Type": "application/json"})
+                urllib.request.urlopen(req)
+            elif channel == "email":
+                # Simulated print for now as configuring real email takes SMTP credentials
+                print(f"Email to {contact}: {message}")
+            elif channel == "mobile":
+                # Simulated print for now 
+                print(f"SMS to {contact}: {message}")
+        except Exception as e:
+            print(f"Failed to dispatch OTP: {e}")
+
+    threading.Thread(target=dispatch_otp_async, args=(request.channel, contact, otp)).start()
+
     return {
         "status": "success",
         "message": f"OTP successfully sent via {request.channel}.",
@@ -631,7 +686,7 @@ def verify_otp_auth(request: OTPVerifyRequest):
         conn.close()
         raise HTTPException(status_code=404, detail="No active verification session.")
 
-    if otp_row["otp"] != code and code != "123456":
+    if otp_row["otp"] != code:
         conn.close()
         raise HTTPException(status_code=400, detail="Invalid OTP code.")
 
@@ -643,10 +698,14 @@ def verify_otp_auth(request: OTPVerifyRequest):
     user_row = cursor.fetchone()
     
     user = {}
+    blockchain_action = ""
+    blockchain_data = {}
+    
     if user_row:
         user = dict(user_row)
         user["abhaLinked"] = bool(user["abhaLinked"])
-        log_blockchain_txn("USER_LOGIN", {"healthId": user["healthId"], "contact": contact})
+        blockchain_action = "USER_LOGIN"
+        blockchain_data = {"healthId": user["healthId"], "contact": contact}
     else:
         # Sign up flow - create new user
         random_id_seq = f"{random.randint(1000, 9999)}-{random.randint(1000, 9999)}-{random.randint(10, 99)}"
@@ -663,7 +722,8 @@ def verify_otp_auth(request: OTPVerifyRequest):
             "INSERT INTO users (contact, fullName, healthId, token, qrCodeData, abhaLinked) VALUES (?, ?, ?, ?, ?, ?)",
             (contact, user["fullName"], user["healthId"], user["token"], user["qrCodeData"], 0)
         )
-        log_blockchain_txn("USER_SIGNUP", {"healthId": health_id, "fullName": request.fullName})
+        blockchain_action = "USER_SIGNUP"
+        blockchain_data = {"healthId": health_id, "fullName": request.fullName}
         
     conn.commit()
     
@@ -682,6 +742,10 @@ def verify_otp_auth(request: OTPVerifyRequest):
         
     conn.close()
     
+    # Log to blockchain AFTER closing connection to avoid database lock
+    if blockchain_action:
+        log_blockchain_txn(blockchain_action, blockchain_data)
+    
     return {
         "status": "success",
         "message": "User verified successfully.",
@@ -692,9 +756,6 @@ def verify_otp_auth(request: OTPVerifyRequest):
 def verify_otp_sim(request: SimVerifyRequest):
     contact = request.phoneNumber.strip()
     code = request.otpCode.strip()
-
-    if code == "123456":
-        return {"status": "success", "message": "Verification successful."}
 
     conn = get_db_conn()
     cursor = conn.cursor()
@@ -833,7 +894,7 @@ def dispatch_hospital_claim(request: ClaimSubmitRequest):
         "claimId": claim_id
     }
 
-# --- NHCX MOCK INTEGRATION API ---
+# --- NHCX INTEGRATION API ---
 @app.post("/api/nhcx/v1/Claim/$submit")
 def submit_nhcx_claim(request: FHIRClaimRequest):
     claim_id = f"NHCX-{random.randint(10000, 99999)}"
@@ -1760,14 +1821,162 @@ def get_active_patients(doctor_name: str):
 # --- PHARMACEUTICAL DIRECTORY ENDPOINTS ---
 @app.get("/api/directory/medications")
 def get_medications_directory():
-    return {"status": "success", "medications": MEDICATION_DIRECTORY}
+    conn = get_db_conn()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM medications")
+    rows = cursor.fetchall()
+    conn.close()
+    
+    meds = {}
+    for r in rows:
+        meds[r["key"]] = dict(r)
+    return {"status": "success", "medications": meds}
 
 @app.get("/api/directory/medications/{name}")
 def get_medication_details(name: str):
     name_key = name.lower().strip()
-    if name_key in MEDICATION_DIRECTORY:
-        return {"status": "success", "medication": MEDICATION_DIRECTORY[name_key]}
+    conn = get_db_conn()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM medications WHERE key = ?", (name_key,))
+    row = cursor.fetchone()
+    conn.close()
+    
+    if row:
+        return {"status": "success", "medication": dict(row)}
     raise HTTPException(status_code=404, detail="Medication not found in directory.")
+
+# --- NEW UNIFIED DASHBOARD API FOR UI REWIRE ---
+@app.get("/api/dashboard/user/{user_id}")
+def get_user_dashboard(user_id: str):
+    conn = get_db_conn()
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT * FROM users WHERE healthId = ?", (user_id,))
+    user = cursor.fetchone()
+    
+    cursor.execute("SELECT * FROM abha_profiles WHERE userId = ?", (user_id,))
+    abha = cursor.fetchone()
+    
+    cursor.execute("SELECT * FROM bookings WHERE patientId = ? OR provider = ?", (user_id, user_id))
+    bookings = cursor.fetchall()
+    
+    cursor.execute("SELECT * FROM prescriptions WHERE patientId = ? OR doctorName = ?", (user_id, user_id))
+    prescriptions = cursor.fetchall()
+    
+    cursor.execute("SELECT * FROM orders WHERE patientId = ?", (user_id,))
+    orders = cursor.fetchall()
+    
+    cursor.execute("SELECT * FROM documents WHERE patientId = ?", (user_id,))
+    documents = cursor.fetchall()
+
+    cursor.execute("SELECT * FROM claims WHERE patientId = ?", (user_id,))
+    claims = cursor.fetchall()
+    
+    conn.close()
+    
+    return {
+        "status": "success",
+        "user": dict(user) if user else None,
+        "abha": dict(abha) if abha else None,
+        "bookings": [dict(r) for r in bookings],
+        "prescriptions": [dict(r) for r in prescriptions],
+        "orders": [dict(r) for r in orders],
+        "documents": [dict(r) for r in documents],
+        "claims": [dict(r) for r in claims]
+    }
+
+@app.get("/api/dashboard/pharmacy")
+def get_pharmacy_dashboard():
+    conn = get_db_conn()
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT * FROM orders ORDER BY date DESC")
+    orders = cursor.fetchall()
+    
+    cursor.execute("SELECT * FROM claims WHERE status LIKE '%Pending%'")
+    pending_claims = cursor.fetchall()
+    
+    conn.close()
+    
+    return {
+        "status": "success",
+        "orders": [dict(r) for r in orders],
+        "pendingClaims": [dict(r) for r in pending_claims]
+    }
+
+@app.post("/api/pharmacy/order")
+def create_pharmacy_order(req: PharmacyOrderCreate):
+    order_id = f"ORD-{random.randint(1000, 9999)}"
+    conn = get_db_conn()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO orders (id, patientId, prescriptionId, medications, originalPrice, discount, finalPrice, status, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (order_id, req.patientId, req.prescriptionId, req.medications, req.originalPrice, 0.0, req.originalPrice, "Pending", time.strftime("%Y-%m-%d"))
+    )
+    conn.commit()
+    conn.close()
+    return {"status": "success", "orderId": order_id}
+
+@app.post("/api/pharmacy/billing/settle")
+def settle_pharmacy_claim(req: ClaimSubmitRequest):
+    conn = get_db_conn()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE claims SET status = 'Settled (100% Cashless)' WHERE id = ?",
+        (req.claimId,)
+    )
+    conn.commit()
+    conn.close()
+    log_blockchain_txn("CLAIM_SETTLED", {"claimId": req.claimId, "patientId": req.patientId, "amount": f"Rs.{req.amount}"})
+    return {"status": "success"}
+
+# --- WHOLESALE LOGISTICS ENDPOINTS ---
+@app.post("/api/wholesale/order")
+def create_wholesale_order(req: WholesaleOrderCreate):
+    if req.quantity < 1:
+        raise HTTPException(status_code=400, detail="Minimum order quantity must be at least 1 box.")
+    
+    order_id = f"WSL-{uuid.uuid4().hex[:8].upper()}"
+    conn = get_db_conn()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO wholesale_orders (id, pharmacyId, item, formulation, quantity, totalAmount, status, date, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (order_id, req.pharmacyId, req.item, req.formulation, req.quantity, req.totalAmount, "Processing", time.strftime("%Y-%m-%d"), time.time())
+    )
+    conn.commit()
+    conn.close()
+    
+    log_blockchain_txn("WHOLESALE_ORDER_PLACED", {"orderId": order_id, "pharmacy": req.pharmacyId, "item": req.item, "quantity": req.quantity})
+    return {"status": "success", "orderId": order_id}
+
+@app.get("/api/wholesale/orders")
+def get_all_wholesale_orders():
+    conn = get_db_conn()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM wholesale_orders ORDER BY timestamp DESC")
+    orders = cursor.fetchall()
+    conn.close()
+    return {"status": "success", "orders": [dict(r) for r in orders]}
+
+@app.get("/api/wholesale/orders/{pharmacy_id}")
+def get_wholesale_orders_for_pharmacy(pharmacy_id: str):
+    conn = get_db_conn()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM wholesale_orders WHERE pharmacyId = ? ORDER BY timestamp DESC", (pharmacy_id,))
+    orders = cursor.fetchall()
+    conn.close()
+    return {"status": "success", "orders": [dict(r) for r in orders]}
+
+@app.post("/api/wholesale/orders/{order_id}/status")
+def update_wholesale_order_status(order_id: str, req: WholesaleOrderStatusUpdate):
+    conn = get_db_conn()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE wholesale_orders SET status = ? WHERE id = ?", (req.status, order_id))
+    conn.commit()
+    conn.close()
+    
+    log_blockchain_txn("WHOLESALE_STATUS_UPDATE", {"orderId": order_id, "status": req.status})
+    return {"status": "success", "orderId": order_id}
 
 # --- PAGE SERVING ROUTES ---
 @app.get("/")

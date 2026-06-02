@@ -172,22 +172,32 @@
             </div>
 
             <!-- IoMT Live Sync Telemetry -->
-            <div class="grid-card">
+            <div class="grid-card" style="position: relative;">
               <div class="card-title-header">
                 <h3>IoMT Live Triage Sync</h3>
-                <span class="badge badge-python"><i class="fa-solid fa-circle-dot pulse-dot"></i> Live Sync Active</span>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span id="iomt-status-badge" class="badge" style="background-color:rgba(239,68,68,0.1); color:#ef4444;"><i class="fa-solid fa-circle-dot"></i> Offline</span>
+                  <a href="#" id="iomt-disconnect-btn" class="hidden" onclick="disconnectIoMT(event)" style="font-size:0.75rem; color:#ef4444; text-decoration:underline;">Disconnect</a>
+                </div>
               </div>
               <p class="section-desc">Real-time health telemetry synced cryptographically from connected wearable devices.</p>
               
-              <div class="iomt-telemetry-grid">
+              <!-- Disconnected state banner -->
+              <div id="iomt-offline-banner" class="iomt-connect-banner">
+                <h4><i class="fa-solid fa-bluetooth" style="color:var(--primary);"></i> Telemetry Offline</h4>
+                <p>Verify sensor linkages to stream cryptographically signed patient vitals.</p>
+                <button class="btn btn-primary" onclick="openIoMTModal()" style="padding:6px 16px; font-size:0.8rem; background:linear-gradient(90deg, #00f2fe 0%, #4facfe 100%);"><i class="fa-solid fa-plug"></i> Connect Wearable</button>
+              </div>
+
+              <div class="iomt-telemetry-grid offline" id="iomt-telemetry-grid">
                 <!-- Pulse -->
                 <div class="vital-card">
                   <div class="vital-header">
                     <span class="vital-name">Heart Rate</span>
                     <i class="fa-solid fa-heart vital-icon heart-pulse-animation"></i>
                   </div>
-                  <div class="vital-value"><span id="iomt-pulse">72</span> <small>bpm</small></div>
-                  <div class="vital-status status-healthy">Healthy Normal</div>
+                  <div class="vital-value"><span id="iomt-pulse">--</span> <small>bpm</small></div>
+                  <div class="vital-status status-healthy" id="iomt-pulse-status">Offline</div>
                 </div>
                 <!-- SpO2 -->
                 <div class="vital-card">
@@ -195,8 +205,8 @@
                     <span class="vital-name">Oxygen Level</span>
                     <i class="fa-solid fa-wind vital-icon"></i>
                   </div>
-                  <div class="vital-value"><span id="iomt-spo2">98</span> <small>%</small></div>
-                  <div class="vital-status status-healthy">Optimal SpO2</div>
+                  <div class="vital-value"><span id="iomt-spo2">--</span> <small>%</small></div>
+                  <div class="vital-status status-healthy" id="iomt-spo2-status">Offline</div>
                 </div>
                 <!-- Blood Pressure -->
                 <div class="vital-card">
@@ -204,8 +214,8 @@
                     <span class="vital-name">Blood Pressure</span>
                     <i class="fa-solid fa-gauge-high vital-icon"></i>
                   </div>
-                  <div class="vital-value"><span id="iomt-bp">120/80</span> <small>mmHg</small></div>
-                  <div class="vital-status status-healthy">Normal BP</div>
+                  <div class="vital-value"><span id="iomt-bp">--</span> <small>mmHg</small></div>
+                  <div class="vital-status status-healthy" id="iomt-bp-status">Offline</div>
                 </div>
                 <!-- Temp -->
                 <div class="vital-card">
@@ -213,8 +223,8 @@
                     <span class="vital-name">Body Temp</span>
                     <i class="fa-solid fa-thermometer vital-icon"></i>
                   </div>
-                  <div class="vital-value"><span id="iomt-temp">98.4</span> <small>°F</small></div>
-                  <div class="vital-status status-healthy">Ideal Temp</div>
+                  <div class="vital-value"><span id="iomt-temp">--</span> <small>°F</small></div>
+                  <div class="vital-status status-healthy" id="iomt-temp-status">Offline</div>
                 </div>
               </div>
             </div>
@@ -1341,7 +1351,7 @@
               </div>
 
               <!-- Scanner Simulator Interface -->
-              <div class="mock-scanner-widget" id="scanner-widget">
+              <div class="placeholder-scanner-widget" id="scanner-widget">
                 <div class="scanner-kiosk-view">
                   <div class="kiosk-laser"></div>
                   <i class="fa-solid fa-qrcode kiosk-qr-icon"></i>
@@ -1365,7 +1375,7 @@
                     <input type="text" id="doc-otp-consent" placeholder="Enter 6-Digit OTP">
                     <button class="btn btn-primary" onclick="verifyConsentOtp()">Authorize Access</button>
                   </div>
-                  <span style="font-size:0.75rem; color:var(--info); margin-top:6px; display:block;">Enter 123456 (or dynamic patient OTP) to verify.</span>
+                  <span style="font-size:0.75rem; color:var(--info); margin-top:6px; display:block;">Enter dynamic patient OTP to verify.</span>
                 </div>
                 
                 <!-- Patient files vault visible after OTP -->
@@ -1633,6 +1643,53 @@
               </form>
             </div>
 
+            <!-- Wholesale Supply Chain Request Form -->
+            <div id="wholesale-request-form" class="grid-card col-span-2" style="border-left:4px solid #10b981; background:rgba(16,185,129,0.05);">
+              <h3 style="color:#10b981; margin-top:0;"><i class="fa-solid fa-truck-fast"></i> Request Wholesaler Restock</h3>
+              <p class="section-desc">Order direct supplies from the Admin Supply Chain. (Custom MOQ based on your transaction tier)</p>
+              <form onsubmit="submitWholesaleOrder(event)">
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:15px; margin-top:15px;">
+                  <div>
+                    <label style="font-size:0.75rem; color:#7d9696;">Item Name <span style="color:#ef4444;">*</span></label>
+                    <input type="text" id="ws-item-name" required placeholder="e.g. Paracetamol 500mg" style="width:100%; margin-top:4px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; padding:8px; border-radius:4px;">
+                  </div>
+                  <div>
+                    <label style="font-size:0.75rem; color:#7d9696;">Formulation <span style="color:#ef4444;">*</span></label>
+                    <select id="ws-formulation" required style="width:100%; margin-top:4px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; padding:8px; border-radius:4px;">
+                      <option value="Tablet">Tablet / Pill</option>
+                      <option value="Capsule">Capsule</option>
+                      <option value="Syrup">Syrup / Suspension</option>
+                      <option value="Injection">Injection / Vial</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style="font-size:0.75rem; color:#7d9696;">Quantity (Boxes - 10x10 packing) <span style="color:#ef4444;">*</span></label>
+                    <input type="number" id="ws-quantity" required min="1" placeholder="Enter custom MOQ" style="width:100%; margin-top:4px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; padding:8px; border-radius:4px;">
+                  </div>
+                </div>
+                <div style="margin-top:20px; text-align:right;">
+                  <button type="submit" class="btn btn-primary" style="padding:8px 24px; background:#10b981; border-color:#10b981;"><i class="fa-solid fa-paper-plane"></i> Place Supply Order</button>
+                </div>
+              </form>
+            </div>
+
+            <!-- Wholesale Supply Tracking Tracker -->
+            <div class="grid-card col-span-2">
+              <h3>Live Supply Chain Tracker</h3>
+              <div class="document-list-table margin-top">
+                <div class="table-header-vault" style="grid-template-columns: 1fr 1.5fr 1fr 1fr 1fr;">
+                  <span>Order ID</span>
+                  <span>Item</span>
+                  <span>Quantity</span>
+                  <span>Status</span>
+                  <span>Tracking</span>
+                </div>
+                <div id="pharmacy-wholesale-tracker-body">
+                  <!-- Loaded dynamically -->
+                </div>
+              </div>
+            </div>
+
             <!-- Master Inventory Ledger Table -->
             <div class="grid-card col-span-2">
               <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -1800,6 +1857,33 @@
         </div>
       <!-- NEW ADMIN PANELS -->
         
+        <!-- SUB-PANEL: WHOLESALER LOGISTICS -->
+        <div id="admin-panel-wholesaler" class="admin-sub-panel hidden">
+          <div class="view-header">
+            <h2>Wholesaler Logistics & Supply Chain</h2>
+            <p>Manage real-time inventory restock orders, billing, and dispatch supply chain for pharmacies.</p>
+          </div>
+          <div class="view-grid">
+            <div class="grid-card col-span-2">
+              <h3>Wholesale Supply Chain Tracker</h3>
+              <p class="section-desc">Active supply requests placed by the pharmacy network.</p>
+              <div class="document-list-table margin-top">
+                <div class="table-header-vault" style="grid-template-columns: 1fr 1.5fr 1fr 1fr 1fr 1.5fr;">
+                  <span>Order ID</span>
+                  <span>Pharmacy ID</span>
+                  <span>Item</span>
+                  <span>Qty / Amount</span>
+                  <span>Status</span>
+                  <span>Action</span>
+                </div>
+                <div id="admin-wholesale-tracker-body">
+                  <!-- Loaded dynamically -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- SUB-PANEL: SYSTEM CONTROLS -->
         <div id="admin-panel-controls" class="admin-sub-panel hidden">
           <div class="view-header">
@@ -2193,6 +2277,138 @@
         </div>
       </div>
       
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- IoMT WEARABLE CONNECT SIMULATOR MODAL -->
+  <!-- ========================================== -->
+  <div id="iomt-connect-modal" class="custom-modal">
+    <div class="modal-content-box">
+      <div class="modal-header-nav">
+        <h3><i class="fa-solid fa-bluetooth"></i> Link Smart Wearable</h3>
+        <button class="close-modal-btn" onclick="closeIoMTModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <!-- Step dots -->
+      <div class="modal-step-dots">
+        <div class="step-dot active" id="dot-step-1"></div>
+        <div class="step-dot" id="dot-step-2"></div>
+        <div class="step-dot" id="dot-step-3"></div>
+        <div class="step-dot" id="dot-step-4"></div>
+        <div class="step-dot" id="dot-step-5"></div>
+      </div>
+
+      <!-- Step 1: Category Selection -->
+      <div id="iomt-step-1" class="iomt-step-view">
+        <h4 style="color:white; margin:0 0 10px 0;">Step 1: Choose Device Category</h4>
+        <p style="color:#7d9696; font-size:0.8rem; margin:0 0 15px 0;">Select the health tracking wearable category you wish to link.</p>
+        <div class="iomt-grid-choices">
+          <div class="iomt-choice-card active" onclick="selectIoMTCategory('smartwatch', this)">
+            <i class="fa-solid fa-stopwatch"></i>
+            <span>Smart Watch</span>
+          </div>
+          <div class="iomt-choice-card" onclick="selectIoMTCategory('fitband', this)">
+            <i class="fa-solid fa-heart-pulse"></i>
+            <span>Fitness Band</span>
+          </div>
+          <div class="iomt-choice-card" onclick="selectIoMTCategory('bpmonitor', this)">
+            <i class="fa-solid fa-gauge-high"></i>
+            <span>Smart BP Monitor</span>
+          </div>
+          <div class="iomt-choice-card" onclick="selectIoMTCategory('pulseox', this)">
+            <i class="fa-solid fa-wind"></i>
+            <span>Pulse Oximeter</span>
+          </div>
+        </div>
+        <div style="margin-top:25px; text-align:right;">
+          <button class="btn btn-primary" onclick="nextIoMTStep(2)">Continue <i class="fa-solid fa-chevron-right" style="margin-left:5px;"></i></button>
+        </div>
+      </div>
+
+      <!-- Step 2: Connection Type Selection -->
+      <div id="iomt-step-2" class="iomt-step-view hidden">
+        <h4 style="color:white; margin:0 0 10px 0;">Step 2: Choose Connection Protocol</h4>
+        <p style="color:#7d9696; font-size:0.8rem; margin:0 0 15px 0;">Select your preferred protocol to establish communication.</p>
+        <div class="iomt-grid-choices">
+          <div class="iomt-choice-card active" onclick="selectIoMTProtocol('ble', this)">
+            <i class="fa-solid fa-wifi" style="transform: rotate(45deg);"></i>
+            <span>Direct Bluetooth (BLE)</span>
+          </div>
+          <div class="iomt-choice-card" onclick="selectIoMTProtocol('cloud', this)">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <span>Cloud Sync Account</span>
+          </div>
+        </div>
+        <div style="margin-top:25px; display:flex; justify-content:space-between;">
+          <button class="btn btn-outline" onclick="nextIoMTStep(1)"><i class="fa-solid fa-chevron-left" style="margin-right:5px;"></i> Back</button>
+          <button class="btn btn-primary" onclick="nextIoMTStep(3)">Start Discovery <i class="fa-solid fa-circle-play" style="margin-left:5px;"></i></button>
+        </div>
+      </div>
+
+      <!-- Step 3: Discovery & Device Scanning -->
+      <div id="iomt-step-3" class="iomt-step-view hidden">
+        <h4 style="color:white; margin:0 0 10px 0;">Step 3: Discovering Local Devices</h4>
+        <p style="color:#7d9696; font-size:0.8rem; margin:0 0 10px 0;" id="radar-description">Searching for active Bluetooth Smart peripherals...</p>
+        
+        <!-- Radar Animation -->
+        <div class="radar-container" id="ble-radar-scan">
+          <div class="radar-sweep"></div>
+          <div class="radar-pulse"></div>
+        </div>
+
+        <!-- Discovered devices -->
+        <div id="ble-devices-list" class="hidden" style="max-height: 180px; overflow-y: auto; margin-top: 15px;">
+          <!-- Discovered BLE items injected here -->
+        </div>
+
+        <div style="margin-top:25px; display:flex; justify-content:space-between;">
+          <button class="btn btn-outline" onclick="nextIoMTStep(2)" id="scan-back-btn"><i class="fa-solid fa-chevron-left" style="margin-right:5px;"></i> Back</button>
+          <button class="btn btn-secondary" onclick="simulateBleDiscovery()" id="scan-retry-btn" style="padding:6px 16px;"><i class="fa-solid fa-arrows-rotate"></i> Re-Scan</button>
+        </div>
+      </div>
+
+      <!-- Step 4: Verification PIN -->
+      <div id="iomt-step-4" class="iomt-step-view hidden">
+        <h4 style="color:white; margin:0 0 10px 0;">Step 4: Cryptographic Pairing PIN</h4>
+        <p style="color:#7d9696; font-size:0.8rem; margin:0 0 15px 0;">Enter the 6-digit authentication pairing PIN displayed on your device screen.</p>
+        
+        <!-- 6 Input PIN boxes -->
+        <div class="pin-input-container">
+          <input type="text" maxlength="1" class="pin-digit" onkeyup="handlePinFocus(this, 1)" id="pin-1">
+          <input type="text" maxlength="1" class="pin-digit" onkeyup="handlePinFocus(this, 2)" id="pin-2">
+          <input type="text" maxlength="1" class="pin-digit" onkeyup="handlePinFocus(this, 3)" id="pin-3">
+          <input type="text" maxlength="1" class="pin-digit" onkeyup="handlePinFocus(this, 4)" id="pin-4">
+          <input type="text" maxlength="1" class="pin-digit" onkeyup="handlePinFocus(this, 5)" id="pin-5">
+          <input type="text" maxlength="1" class="pin-digit" onkeyup="handlePinFocus(this, 6)" id="pin-6">
+        </div>
+        <p style="text-align:center; font-size:0.75rem; color:var(--primary); background:rgba(0,242,254,0.06); padding:6px 12px; border-radius:6px; border:1px solid rgba(0,242,254,0.15);" id="pin-hint-text">
+          <i class="fa-solid fa-circle-info"></i> Simulation hint: Enter <strong style="letter-spacing:1px; color:#fff;">849201</strong> to pair
+        </p>
+
+        <div style="margin-top:25px; display:flex; justify-content:space-between;">
+          <button class="btn btn-outline" onclick="nextIoMTStep(3)"><i class="fa-solid fa-chevron-left" style="margin-right:5px;"></i> Back</button>
+          <button class="btn btn-primary" onclick="verifyIoMTPinning()">Pair & Verify <i class="fa-solid fa-lock" style="margin-left:5px;"></i></button>
+        </div>
+      </div>
+
+      <!-- Step 5: Pairing Completed Success -->
+      <div id="iomt-step-5" class="iomt-step-view hidden" style="text-align:center;">
+        <div style="font-size:3.5rem; color:var(--success); margin:15px 0 10px 0; filter:drop-shadow(0 0 15px rgba(16,185,129,0.3));">
+          <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <h4 style="color:white; margin:0 0 10px 0;">Device Successfully Linked!</h4>
+        <p style="color:#7d9696; font-size:0.8rem; margin:0 0 20px 0;">Cryptographic secure synchronization initialized with your Universal Health Card.</p>
+        
+        <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:15px; text-align:left; margin-bottom:20px; font-size:0.8rem;">
+          <div style="margin-bottom:6px; display:flex; justify-content:space-between;"><span style="color:#7d9696;">Connected Periph:</span><strong id="paired-device-name" style="color:white;">Apple Watch Ultra 2</strong></div>
+          <div style="margin-bottom:6px; display:flex; justify-content:space-between;"><span style="color:#7d9696;">Battery Status:</span><strong id="paired-device-battery" style="color:var(--success);"><i class="fa-solid fa-battery-three-quarters"></i> 92%</strong></div>
+          <div style="display:flex; justify-content:space-between;"><span style="color:#7d9696;">Pairing Security:</span><strong style="color:var(--primary); font-family:monospace;">AES-256 GCM SHIELD</strong></div>
+        </div>
+
+        <button class="btn btn-primary btn-block" onclick="completeIoMTConnection()">Sync Telemetry & Close <i class="fa-solid fa-arrows-rotate" style="margin-left:5px;"></i></button>
+      </div>
+
     </div>
   </div>
 

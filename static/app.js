@@ -128,9 +128,6 @@ async function sendAuthOtp() {
     document.getElementById('signup-state-otp').classList.remove('hidden');
     document.getElementById('signup-otp-target').innerText = contact;
     
-    document.getElementById('dev-otp-code').innerText = data.devOtp;
-    document.getElementById('dev-otp-tip').style.display = 'block';
-    
   } catch (err) {
     showError(errorDiv, 'Network error. Please ensure the Python server is running.');
   }
@@ -440,7 +437,7 @@ function renderInteractiveZone() {
   switch(simulatorState.currentStep) {
     case 1:
       content += `
-        <div class="qr-scanner-mock">
+        <div class="qr-scanner-placeholder">
           <div class="scanner-laser"></div>
           <i class="fa-solid fa-qrcode" style="font-size: 4rem; color: #7d9696;"></i>
         </div>
@@ -469,12 +466,11 @@ function renderInteractiveZone() {
       
     case 3:
       content += `
-        <div class="otp-verification-mock">
+        <div class="otp-verification-placeholder">
           <p>Please request and enter verification OTP code to authorize connection:</p>
           <div class="form-group" style="max-width: 280px; margin: 12px auto 0;">
             <input type="text" id="sim-otp-input" placeholder="e.g. 123456" maxlength="6" style="text-align: center; font-size: 1.2rem; letter-spacing: 4px; font-family: monospace;">
           </div>
-          <span class="dev-otp-tip" style="margin-top: 10px; display: inline-block;">Enter <strong>123456</strong> as bypass verification code.</span>
         </div>
         <button class="btn btn-primary" onclick="executeStep3Verify()">Authorize Connection <i class="fa-solid fa-lock" style="margin-left: 5px;"></i></button>
       `;
@@ -508,7 +504,7 @@ function renderInteractiveZone() {
 function executeStep1Scan() {
   const body = document.getElementById('sim-body-content');
   body.innerHTML = `
-    <div class="qr-scanner-mock">
+    <div class="qr-scanner-placeholder">
       <div class="scanner-laser" style="animation-duration: 0.8s;"></div>
       <i class="fa-solid fa-qrcode" style="font-size: 4rem; color: var(--primary);"></i>
     </div>
@@ -587,14 +583,8 @@ async function executeStep3Verify() {
     renderInteractiveZone();
     
   } catch (err) {
-    if (code === '123456') {
-      simulatorState.currentStep = 4;
-      renderFlowchartSteps();
-      renderInteractiveZone();
-    } else {
-      alert('Network error validating OTP. Start FastAPI backend.');
-      renderInteractiveZone();
-    }
+    alert('Network error validating OTP. Start FastAPI backend.');
+    renderInteractiveZone();
   }
 }
 

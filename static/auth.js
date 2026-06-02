@@ -58,29 +58,22 @@ function switchAuthTab(tab) {
   }
 }
 
-// Switches between Mobile and Email channels
-function switchAuthChannel(channel) {
+// Switches between Mobile, Email, and Telegram channels
+function switchChannel(channel) {
   authState.channel = channel;
   
-  const btnMobile = document.getElementById('btn-channel-mobile');
-  const btnEmail = document.getElementById('btn-channel-email');
-  const fieldMobile = document.getElementById('field-group-mobile');
-  const fieldEmail = document.getElementById('field-group-email');
-  const errorAlert = document.getElementById('entry-error-alert');
+  document.getElementById('ch-mobile').classList.remove('active');
+  document.getElementById('ch-email').classList.remove('active');
+  document.getElementById('ch-telegram').classList.remove('active');
   
-  errorAlert.classList.add('hidden');
-
-  if (channel === 'mobile') {
-    btnMobile.classList.add('active');
-    btnEmail.classList.remove('active');
-    fieldMobile.classList.remove('hidden');
-    fieldEmail.classList.add('hidden');
-  } else {
-    btnMobile.classList.remove('active');
-    btnEmail.classList.add('active');
-    fieldMobile.classList.add('hidden');
-    fieldEmail.classList.remove('hidden');
-  }
+  document.getElementById('mobile-field').classList.add('hidden');
+  document.getElementById('email-field').classList.add('hidden');
+  document.getElementById('telegram-field').classList.add('hidden');
+  
+  document.getElementById('ch-' + channel).classList.add('active');
+  document.getElementById(channel + '-field').classList.remove('hidden');
+  
+  document.getElementById('entry-error').classList.add('hidden');
 }
 
 // Sends authentication OTP request
@@ -93,6 +86,7 @@ async function sendVerificationCode() {
   const nameInput = document.getElementById('auth-name').value.trim();
   const mobileInput = document.getElementById('auth-mobile').value.trim();
   const emailInput = document.getElementById('auth-email').value.trim();
+  const telegramInput = document.getElementById('auth-telegram').value.trim();
 
   // Validate inputs
   if (authState.tab === 'signup' && !nameInput) {
@@ -111,7 +105,7 @@ async function sendVerificationCode() {
       return;
     }
     contact = mobileInput;
-  } else {
+  } else if (authState.channel === 'email') {
     if (!emailInput) {
       showAuthError(errorAlert, 'Please enter your Email Address.');
       return;
@@ -121,6 +115,12 @@ async function sendVerificationCode() {
       return;
     }
     contact = emailInput;
+  } else if (authState.channel === 'telegram') {
+    if (!telegramInput) {
+      showAuthError(errorAlert, 'Please enter your Telegram Username.');
+      return;
+    }
+    contact = telegramInput;
   }
 
   authState.contact = contact;
@@ -159,8 +159,6 @@ async function sendVerificationCode() {
     const otpInput = document.getElementById('auth-otp-code');
     otpInput.value = '';
     setTimeout(() => otpInput.focus(), 100);
-
-    console.log(`[Developer OTP Bypass] Simulated code is: ${data.devOtp}`);
 
   } catch (err) {
     showAuthError(errorAlert, 'Network connection error. Ensure the FastAPI backend is running.');
@@ -219,31 +217,8 @@ async function verifyVerificationCode() {
     }, 2000);
 
   } catch (err) {
-    // Offline verification simulation for local testing
-    if (otpCode === '123456') {
-      const simulatedHealthId = `SR-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`;
-      const simulatedUser = {
-        fullName: authState.fullName || 'Anna Smith',
-        contact: authState.contact || '9876543210',
-        healthId: simulatedHealthId,
-        token: 'simulated-bypass-token',
-        qrCodeData: `sehatrecover://card/verify?id=${simulatedHealthId}&name=${authState.fullName || 'Anna%20Smith'}`
-      };
-      
-      sessionStorage.setItem('sehatrecover_user', JSON.stringify(simulatedUser));
-
-      document.getElementById('auth-step-otp').classList.add('hidden');
-      document.getElementById('auth-step-success').classList.remove('hidden');
-      document.getElementById('display-health-id').innerText = simulatedHealthId;
-      document.getElementById('display-account-name').innerText = simulatedUser.fullName;
-
-      setTimeout(() => {
-        window.location.href = '/dashboard';
-      }, 2000);
-    } else {
-      showAuthError(errorAlert, 'Network error. Offline bypass requires OTP: 123456.');
-      resetVerifyButton();
-    }
+    showAuthError(errorAlert, 'Network connection error. Ensure the FastAPI backend is running.');
+    resetVerifyButton();
   }
 }
 
