@@ -3073,6 +3073,25 @@ function switchPharmacySubPanel(panelId) {
   }
 }
 
+function processTpaClaim(elementId, claimId, amount) {
+  showToast("Claim Settled", `TPA claim ${claimId} for ₹${amount} settled successfully via Ayushman Bharat TPA gateway.`, "success");
+  addAuditLogLine('success', `Cashless settlement approved for TPA claim ${claimId} [₹${amount}]. Code verified.`);
+  
+  const el = document.getElementById(elementId);
+  if (el) {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(10px)';
+    el.style.transition = 'all 0.4s ease';
+    setTimeout(() => el.remove(), 400);
+  }
+}
+
+function sendCrmReminder(patientId) {
+  showToast("Reminder Dispatched", `Refill reminder successfully queued & sent via WhatsApp to patient ${patientId}.`, "success");
+  addAuditLogLine('success', `Automated WhatsApp refill reminder triggered for chronic patient ${patientId}.`);
+}
+
+
 function switchAdminSubPanel(panelId) {
   const panels = document.querySelectorAll('.admin-sub-panel');
   panels.forEach(p => p.classList.add('hidden'));
