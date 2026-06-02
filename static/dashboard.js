@@ -1427,7 +1427,8 @@ async function loadBlockchainBlockRegistry() {
     if (data.chain && data.chain.length > 0) {
       data.chain.forEach(block => {
         const card = document.createElement('div');
-        card.className = `block-node-card ${block.index === 0 ? 'genesis-node' : ''}`;
+        const bIndex = block.block_index !== undefined ? block.block_index : block.index;
+        card.className = `block-node-card ${bIndex === 0 ? 'genesis-node' : ''}`;
         
         let blockDataText = block.data;
         try {
@@ -1436,25 +1437,38 @@ async function loadBlockchainBlockRegistry() {
           blockDataText = JSON.stringify(obj, null, 2);
         } catch(e) {}
 
+        let displayTime = "N/A";
+        if (block.timestamp) {
+          const timestampVal = parseFloat(block.timestamp);
+          if (!isNaN(timestampVal)) {
+            const dateObj = new Date(timestampVal < 10000000000 ? timestampVal * 1000 : timestampVal);
+            if (!isNaN(dateObj.getTime())) {
+              displayTime = dateObj.toISOString();
+            }
+          } else {
+            displayTime = String(block.timestamp);
+          }
+        }
+
         card.innerHTML = `
           <div class="block-node-header">
             <span>BLOCK HEIGHT</span>
-            <strong># ${block.index}</strong>
+            <strong># ${bIndex}</strong>
           </div>
           <div class="block-meta-row">
             <span>BLOCK HASH:</span>
-            <strong>${block.hash.slice(0, 20)}...</strong>
+            <strong>${block.hash ? block.hash.slice(0, 20) : 'N/A'}...</strong>
           </div>
           <div class="block-meta-row">
             <span>PARENT HASH:</span>
-            <strong>${block.previous_hash.slice(0, 20)}...</strong>
+            <strong>${block.previous_hash ? block.previous_hash.slice(0, 20) : 'N/A'}...</strong>
           </div>
           <div class="block-node-data">
             <pre style="margin:0; font-family:monospace; line-height:1.2; font-size:0.7rem;">${blockDataText}</pre>
           </div>
           <div class="block-meta-row" style="font-size:0.65rem; color:#7d9696; border-top:1px solid rgba(255,255,255,0.03); padding-top:4px;">
             <span>TIMESTAMP:</span>
-            <strong>${new Date(block.timestamp * 1000).toISOString()}</strong>
+            <strong>${displayTime}</strong>
           </div>
         `;
         container.appendChild(card);
