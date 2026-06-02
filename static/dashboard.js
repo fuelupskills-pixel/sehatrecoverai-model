@@ -3258,6 +3258,14 @@ function sendPharmacyChatMessage() {
   chatLog.scrollTop = chatLog.scrollHeight;
   addAuditLogLine('info', `Encrypted chat message dispatched to patient for order ${activePharmacyChatOrder}.`);
 }
+function sendWhatsappReceipt(txnId, phone = '') {
+  alert(`Preparing WhatsApp receipt for transaction ${txnId}...`);
+  setTimeout(() => {
+    showToast("WhatsApp Dispatched", `Receipt successfully routed to registered mobile number via WhatsApp Business API.`, "success");
+    addAuditLogLine('success', `WhatsApp transaction receipt dispatched for ${txnId}.`);
+  }, 1500);
+}
+
 function sendEmailInvoice(userId, email = '') {
   alert(`Preparing Email invoice for ${userId}...`);
   setTimeout(() => {

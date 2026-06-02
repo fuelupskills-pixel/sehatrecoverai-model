@@ -648,7 +648,10 @@ def send_otp(request: OTPSendRequest):
         message = f"Your SehatRecover Health Portal verification code is {code}. Do not share this with anyone."
         try:
             if channel == "telegram":
-                bot_token = os.environ.get("TELEGRAM_BOT_TOKEN") or "7536967756:AAGD253KssgM-3sFwU1qB7Xq0yUrdc6xR1g"
+                bot_token = os.environ.get("TELEGRAM_BOT_TOKEN")
+                if not bot_token:
+                    print("Telegram bot token not configured. Skipping message dispatch.")
+                    return
                 chat_id = contact.replace("@", "") 
                 url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
                 req = urllib.request.Request(url, data=json.dumps({"chat_id": chat_id, "text": message}).encode("utf-8"), headers={"Content-Type": "application/json"})
