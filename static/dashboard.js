@@ -4797,3 +4797,106 @@ function dispatchFullRequestOffer(e) {
   closeFullRequestModal();
 }
 
+// --- B2B EXCEL BULK CATALOG IMPORT & TEMPLATE EXPORT ---
+function downloadExcelTemplate(e) {
+  e.preventDefault();
+  if (typeof XLSX === 'undefined') {
+    showToast("Dependency Error", "Excel library is still loading. Please try again in a moment.", "error");
+    return;
+  }
+
+  const headers = [
+    ["Brand Name", "Formulation", "Batch Number", "Available Stock", "Base Price", "Discount Offer %", "Scheme Details"]
+  ];
+  
+  const sampleRows = [
+    ["Lipitor 10mg", "Tablet", "LP-905B", 200, 320, 10, "Buy 10 Get 1 Free"],
+    ["Zithromax 500mg", "Capsule", "ZM-112C", 150, 450, 15, "NABL Batch Approved"],
+    ["Benadryl Syrup", "Syrup", "BD-884Y", 100, 120, 5, "Flat 5% Off"],
+    ["Clarithromycin Injection", "Injection", "CL-104K", 80, 720, 20, "Buy 5 Get 1 Free"]
+  ];
+
+  const data = headers.concat(sampleRows);
+  
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "B2B Products");
+  
+  XLSX.writeFile(wb, "SehatRecover_B2B_Catalog_Template.xlsx");
+  showToast("Template Downloaded", "Sample B2B import Excel template downloaded.", "success");
+  addAuditLogLine("info", "Excel Manager: Exported B2B import template sheet.");
+}
+
+function importProductsFromExcel(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  
+  if (typeof XLSX === 'undefined') {
+    showToast("Dependency Error", "Excel library is not loaded yet.", "error");
+    return;
+  }
+  
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    try {
+      const data = new Uint8Array(evt.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      
+      const firstSheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheetName];
+      
+      const rows = XLSX.utils.sheet_to_json(worksheet);
+      if (rows.length === 0) {
+        showToast("Import Error", "Excel sheet is empty or columns are invalid.", "error");
+        return;
+      }
+      
+      const catalog = getWholesaleCatalog();
+      let importCount = 0;
+      
+      rows.forEach((row, index) => {
+        const brand = row["Brand Name"] || row["brand name"] || row["Brand"] || row["brand"];
+        const formulation = row["Formulation"] || row["formulation"] || "Tablet";
+        const batch = row["Batch Number"] || row["batch number"] || row["Batch"] || row["batch"] || ("B-" + Math.floor(Math.random() * 900000 + 100000));
+        const stock = parseInt(row["Available Stock"] || row["available stock"] || row["Stock"] || row["stock"] || "100", 10);
+        const price = parseFloat(row["Base Price"] || row["base price"] || row["Price"] || row["price"] || "150");
+        const discount = parseInt(row["Discount Offer %"] || row["discount offer %"] || row["Discount"] || row["discount"] || "0", 10);
+        const scheme = row["Scheme Details"] || row["scheme details"] || row["Scheme"] || row["scheme"] || "Standard Supply Pricing";
+        
+        if (brand && !isNaN(stock) && !isNaN(price)) {
+          catalog.push({
+            id: 'cat-xls-' + (Date.now() + index),
+            name: brand,
+            formulation: formulation,
+            batch: batch,
+            stock: stock,
+            price: price,
+            discount: discount,
+            scheme: scheme
+          });
+          importCount++;
+        }
+      });
+      
+      if (importCount > 0) {
+        localStorage.setItem('sehatrecover_wholesale_catalog', JSON.stringify(catalog));
+        showToast("Excel Import Success", `Successfully imported ${importCount} products to the B2B catalog.`, "success");
+        addAuditLogLine("success", `Excel Import: Bulk imported ${importCount} B2B products from sheet "${file.name}".`);
+        
+        log_blockchain_txn("B2B_EXCEL_PRODUCTS_IMPORTED", { fileName: file.name, count: importCount });
+        
+        populateWholesaleCatalogDropdown();
+      } else {
+        showToast("Import Failed", "No valid product rows were found in the Excel sheet.", "error");
+      }
+    } catch(err) {
+      console.error(err);
+      showToast("Parsing Error", "Failed to parse Excel file. Please use the valid B2B Template.", "error");
+    }
+    
+    e.target.value = '';
+  };
+  
+  reader.readAsArrayBuffer(file);
+}
+

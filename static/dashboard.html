@@ -15,6 +15,8 @@
   <link rel="stylesheet" href="/static/dashboard.css">
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- SheetJS Excel Library -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body class="dashboard-body">
 
@@ -2121,9 +2123,20 @@
                   <input type="text" id="intake-scheme" placeholder="e.g. Buy 10 get 1 Free, Zero Interest EMI" style="width:100%; padding:8px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; border-radius:6px;" required>
                 </div>
                 
-                <button type="submit" class="btn btn-primary" style="padding:10px; font-weight:600; cursor:pointer; background:#a855f7; border-color:#a855f7; margin-top:5px;">
+                <button type="submit" class="btn btn-primary" style="padding:10px; font-weight:600; cursor:pointer; background:#a855f7; border-color:#a855f7; margin-top:5px; width:100%;">
                   Add to Wholesaler Catalog <i class="fa-solid fa-plus"></i>
                 </button>
+
+                <!-- Bulk Excel Import Uploader Section -->
+                <div style="border-top:1px solid rgba(255,255,255,0.06); margin-top:15px; padding-top:15px; display:flex; flex-direction:column; gap:8px;">
+                  <input type="file" id="intake-excel-file" accept=".xlsx, .xls" style="display:none;" onchange="importProductsFromExcel(event)">
+                  <button type="button" class="btn btn-outline" style="border-color:#10b981; color:#10b981; padding:10px; font-weight:600; cursor:pointer; width:100%; display:flex; align-items:center; justify-content:center; gap:8px;" onclick="document.getElementById('intake-excel-file').click()">
+                    <i class="fa-solid fa-file-excel"></i> One-Click Excel Import
+                  </button>
+                  <a href="#" onclick="downloadExcelTemplate(event)" style="font-size:0.75rem; color:#7d9696; text-decoration:underline; display:block; text-align:center;">
+                    <i class="fa-solid fa-download"></i> Download B2B Import Template (.xlsx)
+                  </a>
+                </div>
               </form>
             </div>
           </div>
