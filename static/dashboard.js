@@ -34,6 +34,17 @@ let currentUser = {
   rewardPoints: 240 // Initial points balance
 };
 
+// --- GLOBAL ERROR BOUNDARY TOASTS ---
+window.onerror = function(message, source, lineno, colno, error) {
+  const errMsg = `${message} (at ${source}:${lineno}:${colno})`;
+  console.error("Global JS Error Captured:", errMsg, error);
+  // Ensure DOM is ready enough or schedule toast
+  setTimeout(() => {
+    showToast("Application Error", errMsg, "error");
+  }, 100);
+  return false;
+};
+
 // --- DYNAMIC TOAST SYSTEM OVERRIDE ---
 window.alert = function(message) {
   const msgStr = String(message || "");
@@ -1439,11 +1450,14 @@ async function loadBlockchainBlockRegistry() {
         const bIndex = block.block_index !== undefined ? block.block_index : block.index;
         card.className = `block-node-card ${bIndex === 0 ? 'genesis-node' : ''}`;
         
-        let blockDataText = block.data;
+        let blockDataText = block.data || '';
         try {
-          // Pretty format JSON payload if it represents an object
-          const obj = JSON.parse(block.data.replace(/'/g, '"'));
-          blockDataText = JSON.stringify(obj, null, 2);
+          if (typeof block.data === 'string') {
+            const obj = JSON.parse(block.data.replace(/'/g, '"'));
+            blockDataText = JSON.stringify(obj, null, 2);
+          } else if (typeof block.data === 'object' && block.data !== null) {
+            blockDataText = JSON.stringify(block.data, null, 2);
+          }
         } catch(e) {}
 
         let displayTime = "N/A";
@@ -3116,11 +3130,17 @@ function sendCrmReminder(patientId) {
 
 
 function switchAdminSubPanel(panelId) {
+  console.log("Switching admin subpanel to:", panelId);
   const panels = document.querySelectorAll('.admin-sub-panel');
   panels.forEach(p => p.classList.add('hidden'));
   
   const activePanel = document.getElementById(`admin-panel-${panelId}`);
-  if (activePanel) activePanel.classList.remove('hidden');
+  if (activePanel) {
+    activePanel.classList.remove('hidden');
+    console.log("Unhid panel:", `admin-panel-${panelId}`);
+  } else {
+    console.warn("Could not find panel element:", `admin-panel-${panelId}`);
+  }
 
   if (panelId === 'security') {
     if (typeof loadBlockchainBlockRegistry === 'function') {
@@ -4328,16 +4348,81 @@ async function updateLabRate(id) {
 
 // --- ADMIN CITY PARTNER COMMISSIONS CONTROLS ---
 function loadAdminPartnerComms() {
-  const stored = localStorage.getItem('sehatrecover_partner_commissions');
-  const comms = stored ? JSON.parse(stored) : { apexMargin: 8.50, apolloMargin: 10.00, lalFlat: 150.00 };
+  let comms = { apexMargin: 8.50, apolloMargin: 10.00, lalFlat: 150.00 };
+  try {
+    const stored = localStorage.getItem('sehatrecover_partner_commissions');
+    if (stored) {
+      comms = JSON.parse(stored);
+    }
+  } catch (err) {
+    console.error("Failed to parse partner commissions from localStorage:", err);
+  }
   
   const apexInput = document.getElementById('admin-apex-margin');
   const apolloInput = document.getElementById('admin-apollo-margin');
   const lalInput = document.getElementById('admin-lal-flat');
   
-  if (apexInput) apexInput.value = comms.apexMargin || 8.50;
-  if (apolloInput) apolloInput.value = comms.apolloMargin || 10.00;
-  if (lalInput) lalInput.value = comms.lalFlat || 150.00;
+  if (apexInput) apexInput.value = (comms && comms.apexMargin !== undefined) ? comms.apexMargin : 8.50;
+  if (apolloInput) apolloInput.value = (comms && comms.apolloMargin !== undefined) ? comms.apolloMargin : 10.00;
+  if (lalInput) lalInput.value = (comms && comms.lalFlat !== undefined) ? comms.lalFlat : 150.00;
+}
+
+function triggerAdminCommissionNotification(partner, oldVal, newVal) {
+  const storedLogs = localStorage.getItem('sehatrecover_partner_notifications') || '[]';
+  let logs = [];
+  try {
+    logs = JSON.parse(storedLogs);
+  } catch (e) {
+    logs = [];
+  }
+
+  const timestampStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  const whatsappLog = {
+    id: Date.now() + Math.random(),
+    type: 'whatsapp',
+    recipient: '+91 98765-01234',
+    message: `🔔 [COMMISSION RATE OVERRIDE] Your payout structure for ${partner} has been updated by admin. Old Rate: ${oldVal} ➡️ New Rate: ${newVal}. Payout calculations have refreshed.`,
+    time: 'Just now'
+  };
+
+  const emailLog = {
+    id: Date.now() + Math.random() + 1,
+    type: 'email',
+    recipient: 'compliance-audits@sehatrecover.com',
+    message: `[ADMIN COMPLIANCE AUDIT] Admin successfully altered contract rate for ${partner}. Old: ${oldVal} to New: ${newVal}.`,
+    time: 'Just now'
+  };
+  
+  const smsLog = {
+    id: Date.now() + Math.random() + 2,
+    type: 'sms',
+    recipient: '+91 98765-01234',
+    message: `💬 SehatRecover: Commission for ${partner} changed to ${newVal}.`,
+    time: 'Just now'
+  };
+
+  logs = [whatsappLog, emailLog, smsLog, ...logs];
+  localStorage.setItem('sehatrecover_partner_notifications', JSON.stringify(logs));
+  
+  // Also append to the delivery log in Omnichannel Comms if it is open
+  const commsLogs = document.getElementById('comms-delivery-logs');
+  if (commsLogs) {
+    const line1 = document.createElement('div');
+    line1.style = 'color:var(--success); border-left:3px solid var(--success); padding-left:10px; margin-bottom:5px;';
+    line1.innerText = `[${timestampStr}] WhatsApp: Sent to +91 98765-01234 - Rate Update ${partner} to ${newVal}`;
+    commsLogs.insertBefore(line1, commsLogs.firstChild);
+
+    const line2 = document.createElement('div');
+    line2.style = 'color:var(--info); border-left:3px solid var(--info); padding-left:10px; margin-bottom:5px;';
+    line2.innerText = `[${timestampStr}] Email: Sent to compliance-audits@sehatrecover.com - Rate mutated`;
+    commsLogs.insertBefore(line2, commsLogs.firstChild);
+
+    const line3 = document.createElement('div');
+    line3.style = 'color:var(--warning); border-left:3px solid var(--warning); padding-left:10px; margin-bottom:5px;';
+    line3.innerText = `[${timestampStr}] SMS: Sent to +91 98765-01234 - Rate Update ${newVal}`;
+    commsLogs.insertBefore(line3, commsLogs.firstChild);
+  }
 }
 
 async function saveAdminPartnerComms() {
@@ -4349,12 +4434,31 @@ async function saveAdminPartnerComms() {
     alert("Please enter valid positive numbers for rates.");
     return;
   }
+
+  let oldComms = { apexMargin: 8.50, apolloMargin: 10.00, lalFlat: 150.00 };
+  try {
+    const stored = localStorage.getItem('sehatrecover_partner_commissions');
+    if (stored) {
+      oldComms = JSON.parse(stored);
+    }
+  } catch (err) {}
   
   const comms = { apexMargin: apexVal, apolloMargin: apolloVal, lalFlat: lalVal };
   localStorage.setItem('sehatrecover_partner_commissions', JSON.stringify(comms));
   
   // Log blockchain txn for rate override
   await log_blockchain_txn('PARTNER_RATE_UPDATED', comms);
+
+  // Trigger dispatches
+  if (oldComms.apexMargin !== apexVal) {
+    triggerAdminCommissionNotification('Apex Wellness Pharmacy', `${oldComms.apexMargin.toFixed(2)}%`, `${apexVal.toFixed(2)}%`);
+  }
+  if (oldComms.apolloMargin !== apolloVal) {
+    triggerAdminCommissionNotification('Apollo Diagnostics Hub', `${oldComms.apolloMargin.toFixed(2)}%`, `${apolloVal.toFixed(2)}%`);
+  }
+  if (oldComms.lalFlat !== lalVal) {
+    triggerAdminCommissionNotification('Dr. Lal PathLabs', `Rs. ${oldComms.lalFlat.toFixed(0)}`, `Rs. ${lalVal.toFixed(0)}`);
+  }
   
   showToast("Commissions Updated", "City Partner commission override rates updated on the blockchain.", "success");
   addAuditLogLine('success', `City Partner commissions updated: Apex=${apexVal}%, Apollo=${apolloVal}%, Lal Flat=Rs.${lalVal}.`);
