@@ -11,7 +11,7 @@
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- Custom Stylesheets -->
-  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="/static/styles.css?v=4">
   <link rel="stylesheet" href="/static/dashboard.css">
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -996,6 +996,178 @@
           </div>
         </div>
 
+        <!-- SUB-PANEL: DIAGNOSTICS LAB -->
+        <div id="patient-panel-diagnostics" class="patient-sub-panel hidden">
+          <div class="view-header">
+            <h2>Diagnostics Lab & Home Sample Collection</h2>
+            <p>Book reseller lab packages or individual tests, process secure payments, and track sample collection agents in real time.</p>
+          </div>
+
+          <div class="view-grid">
+            <!-- Left Side: Dynamic Partner Lab Selector & Catalog -->
+            <div class="grid-card col-span-2">
+              <div class="card-title-header" style="margin-bottom:15px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                <h3>Diagnostics Lab Catalog</h3>
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <span style="font-size:0.8rem; color:#7d9696;"><i class="fa-solid fa-flask"></i> Select Lab:</span>
+                  <select id="dx-lab-selector" onchange="switchDXPartnerLab(this.value)" style="padding:6px 12px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:white; font-size:0.85rem; height:32px; outline:none; cursor:pointer;">
+                    <option value="Healthians">Healthians (Synced)</option>
+                    <option value="Dr. Lal PathLabs">Dr. Lal PathLabs (Synced)</option>
+                    <option value="Apollo Diagnostics">Apollo Diagnostics (Synced)</option>
+                  </select>
+                </div>
+              </div>
+              <p class="section-desc">Select a partner diagnostic lab to view available tests, reselling prices, and dynamic parameters. Home sample collection is included.</p>
+              
+              <!-- Dynamic Catalog Grid -->
+              <div id="dx-catalog-container" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:16px; margin-top:20px; margin-bottom:30px;">
+                <!-- Loaded dynamically -->
+              </div>
+
+              <!-- Date / Time Scheduler Widget -->
+              <div id="dx-scheduler-container" class="glass-panel hidden" style="background:rgba(0,204,180,0.05); border:1px solid var(--primary); border-radius:12px; padding:20px; margin-top:30px; position:relative;">
+                <button onclick="hideDxScheduler()" style="position:absolute; top:12px; right:15px; background:none; border:none; color:#7d9696; cursor:pointer; font-size:1rem;"><i class="fa-solid fa-xmark"></i></button>
+                <h4 style="margin:0 0 10px 0; color:var(--primary);"><i class="fa-solid fa-calendar-days"></i> Schedule Home Sample Collection</h4>
+                <p style="margin:0 0 15px 0; font-size:0.8rem; color:#7d9696;">Select your preferred date and time slot for agent dispatch. Collection agent will arrive with specialized cooling kits.</p>
+                
+                <div style="display:flex; flex-wrap:wrap; gap:15px;">
+                  <div style="flex:1; min-width:180px;">
+                    <label style="display:block; font-size:0.75rem; color:#7d9696; margin-bottom:6px; font-weight:600; text-transform:uppercase;">Collection Date</label>
+                    <input type="date" id="dx-sched-date" style="width:100%; padding:8px 12px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:white; font-size:0.85rem;">
+                  </div>
+                  <div style="flex:1; min-width:180px;">
+                    <label style="display:block; font-size:0.75rem; color:#7d9696; margin-bottom:6px; font-weight:600; text-transform:uppercase;">Time Slot</label>
+                    <select id="dx-sched-time" style="width:100%; padding:8px 12px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:white; font-size:0.85rem; height:36px;">
+                      <option value="07:00 AM - 09:00 AM">07:00 AM - 09:00 AM (Early)</option>
+                      <option value="09:00 AM - 11:00 AM">09:00 AM - 11:00 AM (Morning)</option>
+                      <option value="11:00 AM - 01:00 PM">11:00 AM - 01:00 PM (Midday)</option>
+                      <option value="02:00 PM - 04:00 PM">02:00 PM - 04:00 PM (Afternoon)</option>
+                      <option value="04:00 PM - 06:00 PM">04:00 PM - 06:00 PM (Evening)</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div style="margin-top:20px; display:flex; justify-content:flex-end; gap:10px;">
+                  <button class="btn btn-outline" onclick="hideDxScheduler()" style="font-size:0.85rem; cursor:pointer;">Cancel</button>
+                  <button class="btn btn-primary" onclick="proceedToDXCheckout()" style="font-size:0.85rem; cursor:pointer;">Pay & Book Collection <i class="fa-solid fa-arrow-right" style="margin-left:5px;"></i></button>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Right Side: Tracker HUD and Bookings Ledger -->
+            <div class="grid-card">
+              <!-- Live Collection Agent Tracker HUD -->
+              <div class="card-title-header" style="margin-bottom:15px;">
+                <h3>Live Agent Tracker</h3>
+                <span class="badge" id="dx-tracker-badge" style="background:rgba(255,0,0,0.15); color:#ff5252; font-weight:700; display:none;"><i class="fa-solid fa-signal animate-pulse"></i> LIVE</span>
+              </div>
+              <p class="section-desc">Track details and real-time status of your assigned medical collection agent.</p>
+              
+              <!-- Agent Tracker HUD Body -->
+              <div id="dx-tracker-hud-container" style="background:rgba(255,255,255,0.01); border:1px solid rgba(255,255,255,0.05); border-radius:12px; padding:20px; margin-top:12px; min-height:280px; display:flex; flex-direction:column; justify-content:center;">
+                <!-- Empty State -->
+                <div id="dx-tracker-empty" style="text-align:center; padding:40px 10px;">
+                  <i class="fa-solid fa-map-location-dot" style="font-size:3rem; color:rgba(255,255,255,0.04); margin-bottom:15px; display:block;"></i>
+                  <span style="color:#7d9696; font-size:0.85rem; line-height:1.4; display:block;">No active tracking. Choose a test/package and complete booking to assign an agent.</span>
+                </div>
+                
+                <!-- Tracking Active State (Initially Hidden) -->
+                <div id="dx-tracker-active" class="hidden">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:12px;">
+                    <div>
+                      <span id="dx-tracker-booking-id" style="font-family:monospace; color:var(--primary); font-weight:700; font-size:0.95rem;">DX-1234</span>
+                      <span id="dx-tracker-test-name" style="display:block; font-size:0.8rem; color:white; font-weight:600; margin-top:2px;">Basic Health Checkup</span>
+                    </div>
+                    <div style="text-align:right;">
+                      <span id="dx-tracker-eta" style="font-size:1.1rem; color:var(--accent); font-weight:700; display:block;">15 mins</span>
+                      <span style="font-size:0.65rem; color:#7d9696; text-transform:uppercase; font-weight:600;">Estimated Arrival</span>
+                    </div>
+                  </div>
+                  
+                  <!-- Progress Bar / Timeline -->
+                  <div class="tracker-timeline-dx" style="position:relative; display:flex; justify-content:space-between; margin:25px 0; padding:0 10px;">
+                    <div style="position:absolute; top:8px; left:20px; right:20px; height:3px; background:rgba(255,255,255,0.08); z-index:1;"></div>
+                    <div id="dx-timeline-bar" style="position:absolute; top:8px; left:20px; width:0%; height:3px; background:var(--primary); z-index:2; transition:width 0.4s ease;"></div>
+                    
+                    <div class="timeline-step-dx" id="dx-step-booked" style="position:relative; z-index:3; text-align:center; display:flex; flex-direction:column; align-items:center; gap:6px;">
+                      <div class="step-dot" style="width:20px; height:20px; border-radius:50%; background:#1a2b2c; border:2px solid rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; font-size:0.5rem; color:transparent; transition: all 0.3s;"><i class="fa-solid fa-check"></i></div>
+                      <span style="font-size:0.65rem; font-weight:600; color:#7d9696;">Booked</span>
+                    </div>
+                    
+                    <div class="timeline-step-dx" id="dx-step-dispatched" style="position:relative; z-index:3; text-align:center; display:flex; flex-direction:column; align-items:center; gap:6px;">
+                      <div class="step-dot" style="width:20px; height:20px; border-radius:50%; background:#1a2b2c; border:2px solid rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; font-size:0.5rem; color:transparent; transition: all 0.3s;"><i class="fa-solid fa-check"></i></div>
+                      <span style="font-size:0.65rem; font-weight:600; color:#7d9696;">Dispatched</span>
+                    </div>
+                    
+                    <div class="timeline-step-dx" id="dx-step-collected" style="position:relative; z-index:3; text-align:center; display:flex; flex-direction:column; align-items:center; gap:6px;">
+                      <div class="step-dot" style="width:20px; height:20px; border-radius:50%; background:#1a2b2c; border:2px solid rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; font-size:0.5rem; color:transparent; transition: all 0.3s;"><i class="fa-solid fa-check"></i></div>
+                      <span style="font-size:0.65rem; font-weight:600; color:#7d9696;">Collected</span>
+                    </div>
+                  </div>
+                  
+                  <!-- Agent Contact & Info Box -->
+                  <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04); border-radius:8px; padding:12px; display:flex; align-items:center; justify-content:space-between; margin-bottom:15px;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                      <div style="width:36px; height:36px; border-radius:50%; background:rgba(0,204,180,0.1); border:1px solid var(--primary); display:flex; align-items:center; justify-content:center; color:var(--primary); font-size:1.1rem;">
+                        <i class="fa-solid fa-user-nurse"></i>
+                      </div>
+                      <div>
+                        <strong id="dx-tracker-agent-name" style="color:white; font-size:0.85rem; display:block;">Vikram Rathore</strong>
+                        <span id="dx-tracker-agent-status" style="color:var(--primary); font-size:0.75rem; display:block;">Dispatched (Phlebotomist)</span>
+                      </div>
+                    </div>
+                    <a id="dx-tracker-agent-call" href="tel:+919876501234" class="btn btn-outline" style="border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; padding:0; border-color:var(--primary); color:var(--primary); font-size:0.85rem;">
+                      <i class="fa-solid fa-phone"></i>
+                    </a>
+                  </div>
+                  
+                  <!-- Live Animated Tracking Map Mockup -->
+                  <div style="height:110px; background:radial-gradient(circle at 30% 20%, #152223 0%, #0d1213 100%); border:1px solid rgba(255,255,255,0.03); border-radius:8px; overflow:hidden; position:relative; display:flex; align-items:center; justify-content:center;">
+                    <!-- Grid background -->
+                    <div style="position:absolute; inset:0; opacity:0.1; background-image:linear-gradient(rgba(255,255,255,0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.2) 1px, transparent 1px); background-size:15px 15px;"></div>
+                    
+                    <!-- Pulsing map location radar -->
+                    <div style="position:absolute; top:40%; left:30%; transform:translate(-50%, -50%); display:flex; align-items:center; justify-content:center;">
+                      <span class="pulse-ring" style="position:absolute; width:40px; height:40px; border-radius:50%; border:2px solid var(--primary); opacity:0.6; animation:dx-pulse 2s infinite ease-out;"></span>
+                      <div style="width:12px; height:12px; background:var(--primary); border-radius:50%; border:2px solid white; z-index:2;"></div>
+                    </div>
+                    
+                    <!-- Agent moving marker -->
+                    <div id="dx-tracker-map-agent" style="position:absolute; top:45%; left:60%; transform:translate(-50%, -50%); display:flex; flex-direction:column; align-items:center; transition: left 2s ease-in-out;">
+                      <i class="fa-solid fa-motorcycle" style="color:var(--accent); font-size:1.2rem; filter: drop-shadow(0 0 5px var(--accent));"></i>
+                      <span style="font-size:0.55rem; background:rgba(0,0,0,0.8); border:1px solid var(--accent); color:var(--accent); padding:1px 4px; border-radius:4px; margin-top:2px; font-weight:700; white-space:nowrap;">AGENT</span>
+                    </div>
+                    
+                    <!-- Destination marker -->
+                    <div style="position:absolute; top:40%; left:25%; transform:translate(-50%, -100%); display:flex; flex-direction:column; align-items:center;">
+                      <i class="fa-solid fa-house-chimney-medical" style="color:white; font-size:1.1rem; filter: drop-shadow(0 0 5px rgba(255,255,255,0.5));"></i>
+                      <span style="font-size:0.55rem; color:#7d9696; font-weight:600; margin-top:2px;">HOME</span>
+                    </div>
+                    
+                    <!-- Dotted path -->
+                    <svg style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:0;">
+                      <path id="dx-tracker-svg-path" d="M 180,50 Q 150,30 110,48 T 75,42" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="2" stroke-dasharray="4,4"/>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <!-- My Diagnostic Bookings Ledger -->
+              <div class="card-title-header" style="margin-top:25px; margin-bottom:12px; border-top:1px solid rgba(255,255,255,0.06); padding-top:20px;">
+                <h3>My Diagnostic Bookings</h3>
+                <span class="badge badge-python" id="dx-ledger-count">0 Bookings</span>
+              </div>
+              <p class="section-desc">View your previous checkup order hashes mined to the decentralised blockchain registry.</p>
+              
+              <!-- Ledger List -->
+              <div id="dx-ledger-container" style="max-height:260px; overflow-y:auto; display:flex; flex-direction:column; gap:10px; margin-top:12px; padding-right:5px;">
+                <!-- Dynamically loaded booking cards -->
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- SUB-PANEL: FITNESS HUB -->
         <div id="patient-panel-fitness" class="patient-sub-panel hidden">
           <div class="view-header">
@@ -1901,8 +2073,8 @@
                     <p style="font-size:0.8rem; color:#7d9696; margin:4px 0 0 0;">Toggle automated emergency ambulance routing.</p>
                   </div>
                   <label class="switch-toggle" style="position:relative; display:inline-block; width:50px; height:26px;">
-                    <input type="checkbox" checked style="opacity:0; width:0; height:0;">
-                    <span class="slider-toggle-round" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#ef4444; transition:.4s; border-radius:34px;"></span>
+                    <input type="checkbox" id="toggle-sos-network" checked onchange="toggleSystemControl('SOS Dispatch Network', this.checked)" style="opacity:0; width:0; height:0;">
+                    <span class="slider-toggle-round" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; transition:.4s; border-radius:34px;"></span>
                   </label>
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0, 204, 180, 0.05); border:1px solid rgba(0, 204, 180, 0.2); padding:15px; border-radius:8px;">
@@ -1911,8 +2083,8 @@
                     <p style="font-size:0.8rem; color:#7d9696; margin:4px 0 0 0;">Suspend patient logins for backend upgrades.</p>
                   </div>
                   <label class="switch-toggle" style="position:relative; display:inline-block; width:50px; height:26px;">
-                    <input type="checkbox" style="opacity:0; width:0; height:0;">
-                    <span class="slider-toggle-round" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#333; transition:.4s; border-radius:34px;"></span>
+                    <input type="checkbox" id="toggle-maintenance-mode" onchange="toggleSystemControl('Maintenance Mode', this.checked)" style="opacity:0; width:0; height:0;">
+                    <span class="slider-toggle-round" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; transition:.4s; border-radius:34px;"></span>
                   </label>
                 </div>
               </div>
@@ -1936,6 +2108,28 @@
                 </div>
               </div>
             </div>
+            <!-- Partner Lab Reselling Price Controls Card -->
+            <div class="grid-card col-span-2" style="margin-top:20px;">
+              <div class="card-title-header" style="margin-bottom:15px; display:flex; justify-content:space-between; align-items:center;">
+                <h3>Partner Lab Reselling Price Controls</h3>
+                <span class="badge badge-python"><i class="fa-solid fa-screwdriver-wrench"></i> Reselling Margins</span>
+              </div>
+              <p class="section-desc">Override patient-facing reselling rates. Base prices sync from partner lab APIs in real time.</p>
+              
+              <div class="prescription-list-table" style="margin-top:15px;">
+                <div class="table-header-vault" style="display:grid; grid-template-columns: 2fr 3fr 1.5fr 1.5fr 2fr; gap:10px; font-weight:600; padding:10px; border-bottom:1px solid rgba(255,255,255,0.05); color:#7d9696; font-size:0.8rem;">
+                  <span>Partner Lab</span>
+                  <span>Test / Package Title</span>
+                  <span>Base Price (API)</span>
+                  <span>Reseller Price</span>
+                  <span>Action</span>
+                </div>
+                <div id="admin-dx-rates-table-body" style="display:flex; flex-direction:column; gap:8px; margin-top:8px; max-height:300px; overflow-y:auto; padding-right:5px;">
+                  <!-- Dynamically loaded admin rate overrides -->
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
 
@@ -1958,7 +2152,7 @@
                     <span style="font-size:0.8rem; color:#7d9696; display:block; margin-top:4px;">Target: 1,200 users • Conversions: 4%</span>
                   </div>
                   <div style="display:flex; gap:10px;">
-                    <button class="btn btn-outline" style="font-size:0.8rem; padding:6px 12px;" onclick="simulateCustomCommDispatch({preventDefault:()=>{}})"><i class="fa-solid fa-play"></i> Run Campaign Blast</button>
+                    <button class="btn btn-outline" style="font-size:0.8rem; padding:6px 12px;" onclick="runCampaignBlast('Monsoon Health Checkup Offer', 1200)"><i class="fa-solid fa-play"></i> Run Campaign Blast</button>
                     <span class="badge badge-python" style="background:rgba(16, 185, 129, 0.1); color:#10b981; border:1px solid rgba(16, 185, 129, 0.2);">Active</span>
                   </div>
                 </div>
@@ -1969,8 +2163,8 @@
                     <span style="font-size:0.8rem; color:#7d9696; display:block; margin-top:4px;">Target: 340 High-risk users • Conversions: 12%</span>
                   </div>
                   <div style="display:flex; gap:10px;">
-                    <button class="btn btn-outline" style="font-size:0.8rem; padding:6px 12px;"><i class="fa-solid fa-pause"></i> Paused</button>
-                    <span class="badge badge-python" style="background:rgba(245, 158, 11, 0.1); color:#f59e0b; border:1px solid rgba(245, 158, 11, 0.2);">Draft</span>
+                    <button class="btn btn-outline" style="font-size:0.8rem; padding:6px 12px;" onclick="runCampaignBlast('Diabetic Care Program Upsell', 340)"><i class="fa-solid fa-play"></i> Run Campaign Blast</button>
+                    <span class="badge badge-python" style="background:rgba(245, 158, 11, 0.1); color:#f59e0b; border:1px solid rgba(245, 158, 11, 0.2);">Paused</span>
                   </div>
                 </div>
               </div>
@@ -2073,11 +2267,76 @@
             <div class="grid-card">
               <h3>Delivery Logs (Live)</h3>
               <p class="section-desc">Recent outgoing transactional messages.</p>
-              <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.05); border-radius:8px; padding:15px; display:flex; flex-direction:column; gap:10px; font-family:monospace; font-size:0.75rem; height:320px; overflow-y:auto;">
+              <div id="comms-delivery-logs" style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.05); border-radius:8px; padding:15px; display:flex; flex-direction:column; gap:10px; font-family:monospace; font-size:0.75rem; height:320px; overflow-y:auto;">
                 <div style="color:var(--success); border-left:3px solid var(--success); padding-left:10px;">[10:42 AM] WhatsApp: Delivered to +91 98XXX-XX234 (Txn Receipt)</div>
                 <div style="color:var(--info); border-left:3px solid var(--info); padding-left:10px;">[10:15 AM] Email: Delivered to rahul@example.com (Welcome Mail)</div>
                 <div style="color:var(--success); border-left:3px solid var(--success); padding-left:10px;">[09:30 AM] SMS: Delivered to +91 99XXX-XX111 (OTP Verification)</div>
                 <div style="color:var(--danger); border-left:3px solid var(--danger); padding-left:10px;">[09:12 AM] Email: Bounced - Invalid Address (user123@exmpl)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-PANEL: CITY PARTNERS ADMIN -->
+        <div id="admin-panel-partners" class="admin-sub-panel hidden">
+          <div class="view-header">
+            <h2>City Partners Management & Commissions</h2>
+            <p>Configure dynamic reselling percentage margins, flat payout fees, and view onboarded partner registration documents.</p>
+          </div>
+          <div class="view-grid">
+            <!-- Left Side: Commission Override Form -->
+            <div class="grid-card">
+              <h3>City Partner Commission Settings</h3>
+              <p class="section-desc">Override commission rates for pharmacies and labs in real time. Persists automatically.</p>
+              <form id="admin-partner-comm-form" style="display:flex; flex-direction:column; gap:15px; margin-top:15px;">
+                <div class="form-group">
+                  <label style="color:#7d9696; font-size:0.85rem; margin-bottom:5px; display:block;">Apex Wellness Pharmacy Margin (%)</label>
+                  <input type="number" step="0.01" id="admin-apex-margin" value="8.50" style="width:100%; padding:12px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; border-radius:8px;">
+                </div>
+                <div class="form-group">
+                  <label style="color:#7d9696; font-size:0.85rem; margin-bottom:5px; display:block;">Apollo Diagnostics Hub Margin (%)</label>
+                  <input type="number" step="0.01" id="admin-apollo-margin" value="10.00" style="width:100%; padding:12px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; border-radius:8px;">
+                </div>
+                <div class="form-group">
+                  <label style="color:#7d9696; font-size:0.85rem; margin-bottom:5px; display:block;">Dr. Lal PathLabs Flat Payout (Rs.)</label>
+                  <input type="number" id="admin-lal-flat" value="150" style="width:100%; padding:12px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; border-radius:8px;">
+                </div>
+                <button type="button" class="btn btn-primary" onclick="saveAdminPartnerComms()" style="padding:12px; font-weight:600; font-size:1rem; cursor:pointer;">
+                  Save Commission overrides <i class="fa-solid fa-floppy-disk"></i>
+                </button>
+              </form>
+            </div>
+            
+            <!-- Right Side: Onboarded CRM list -->
+            <div class="grid-card col-span-2">
+              <h3>Onboarded City Partner Directory</h3>
+              <p class="section-desc">CRM listing of onboarded partners and localized logistics agents.</p>
+              <div class="prescription-list-table" style="margin-top:15px;">
+                <div class="table-header-vault" style="display:grid; grid-template-columns: 2fr 1.5fr 2fr 1.5fr 1.5fr; gap:10px; font-weight:600; padding:10px; border-bottom:1px solid rgba(255,255,255,0.05); color:#7d9696; font-size:0.8rem;">
+                  <span>Partner / Provider</span>
+                  <span>Type</span>
+                  <span>Address</span>
+                  <span>Status</span>
+                  <span>Agent</span>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;" id="admin-partners-crm-list">
+                  <!-- Row 1 -->
+                  <div style="display:grid; grid-template-columns: 2fr 1.5fr 2fr 1.5fr 1.5fr; gap:10px; padding:12px 10px; background:rgba(255,255,255,0.01); border-radius:6px; align-items:center; font-size:0.85rem;">
+                    <span style="font-weight:600; color:white;">Apex Wellness Pharmacy</span>
+                    <span style="color:#7d9696;">Pharmacy</span>
+                    <span>Sector 45, Noida</span>
+                    <span style="color:var(--success); font-weight:600;">Verified</span>
+                    <span>Vikram Rathore</span>
+                  </div>
+                  <!-- Row 2 -->
+                  <div style="display:grid; grid-template-columns: 2fr 1.5fr 2fr 1.5fr 1.5fr; gap:10px; padding:12px 10px; background:rgba(255,255,255,0.01); border-radius:6px; align-items:center; font-size:0.85rem;">
+                    <span style="font-weight:600; color:white;">Apollo Diagnostics Hub</span>
+                    <span style="color:#7d9696;">Lab</span>
+                    <span>Delhi NCR</span>
+                    <span style="color:var(--success); font-weight:600;">Verified</span>
+                    <span>Amit Sharma</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

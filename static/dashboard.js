@@ -21,6 +21,10 @@ let activeFitnessBooking = {
 
 let toastInterval = null;
 let toastTimeRemaining = 60;
+
+// --- DIAGNOSTICS LAB & HOME SAMPLE COLLECTION STATES ---
+let diagnosticsTrackingInterval = null;
+let currentDXBooking = null;
 let currentUser = {
   healthId: 'SR-9982-1045-88',
   fullName: 'Anna Smith',
@@ -77,6 +81,7 @@ const ROLE_SIDEBAR_MENUS = {
     { id: 'vault', name: 'Records Vault', icon: 'fa-folder-open' },
     { id: 'blood', name: 'Request Blood', icon: 'fa-droplet' },
     { id: 'chat', name: 'Chat with Doctor', icon: 'fa-comments-medical' },
+    { id: 'diagnostics', name: 'Diagnostics Lab', icon: 'fa-flask' },
     { id: 'pharmacy', name: 'Online Pharmacy', icon: 'fa-prescription-bottle-medical' },
     { id: 'med-dir', name: 'Meds Directory', icon: 'fa-pills' },
     { id: 'fitness', name: 'Fitness Hub', icon: 'fa-heart-pulse' },
@@ -103,7 +108,8 @@ const ROLE_SIDEBAR_MENUS = {
     { id: 'crm', name: 'Marketing CRM', icon: 'fa-bullhorn' },
     { id: 'billing', name: 'Billing & Finance', icon: 'fa-file-invoice-dollar' },
     { id: 'comms', name: 'Omnichannel Comms', icon: 'fa-paper-plane' },
-    { id: 'wholesaler', name: 'Wholesaler Logistics', icon: 'fa-truck-fast' }
+    { id: 'wholesaler', name: 'Wholesaler Logistics', icon: 'fa-truck-fast' },
+    { id: 'partners', name: 'City Partners', icon: 'fa-users-gear' }
   ]
 };
 
@@ -320,6 +326,7 @@ function switchDashboardRole(role) {
 
 // Switches sub-panels for Patient dashboard role
 function switchPatientSubPanel(panelId) {
+  clearInterval(diagnosticsTrackingInterval);
   const panels = document.querySelectorAll('.patient-sub-panel');
   panels.forEach(p => p.classList.add('hidden'));
   
@@ -355,6 +362,8 @@ function switchPatientSubPanel(panelId) {
     loadChatHistory('Dr. Dev Kumar');
   } else if (panelId === 'med-dir') {
     loadMedicationDirectory();
+  } else if (panelId === 'diagnostics') {
+    loadDiagnosticsLab();
   }
   
   addAuditLogLine('info', `Patient navigating to: ${panelId.toUpperCase()} sub-view.`);
@@ -374,35 +383,35 @@ function startIoMTSync() {
     if (!pulseVal) return;
     
     if (!iomtState.connected) {
-      pulseVal.innerText = "--";
-      spo2Val.innerText = "--";
-      tempVal.innerText = "--";
-      bpVal.innerText = "--";
+      if (pulseVal) pulseVal.innerText = "--";
+      if (spo2Val) spo2Val.innerText = "--";
+      if (tempVal) tempVal.innerText = "--";
+      if (bpVal) bpVal.innerText = "--";
       return;
     }
     
     // Simulate heart rate slightly pulsing (70-78)
     const localPulse = Math.floor(70 + Math.random() * 9);
-    pulseVal.innerText = localPulse;
+    if (pulseVal) pulseVal.innerText = localPulse;
     const pulseStatus = document.getElementById('iomt-pulse-status');
     if (pulseStatus) pulseStatus.innerText = "Healthy Normal";
     
     // Simulate SpO2 stable (98-99)
     const localSpo2 = Math.floor(98 + Math.random() * 2);
-    spo2Val.innerText = localSpo2;
+    if (spo2Val) spo2Val.innerText = localSpo2;
     const spo2Status = document.getElementById('iomt-spo2-status');
     if (spo2Status) spo2Status.innerText = "Optimal SpO2";
     
     // Simulate Temperature (98.3-98.5)
     const localTemp = (98.3 + Math.random() * 0.3).toFixed(1);
-    tempVal.innerText = localTemp;
+    if (tempVal) tempVal.innerText = localTemp;
     const tempStatus = document.getElementById('iomt-temp-status');
     if (tempStatus) tempStatus.innerText = "Ideal Temp";
     
     // Apply normal BP values range
     const bpSystolic = Math.floor(118 + Math.random() * 5);
     const bpDiastolic = Math.floor(77 + Math.random() * 6);
-    bpVal.innerText = `${bpSystolic}/${bpDiastolic}`;
+    if (bpVal) bpVal.innerText = `${bpSystolic}/${bpDiastolic}`;
     const bpStatus = document.getElementById('iomt-bp-status');
     if (bpStatus) bpStatus.innerText = "Normal BP";
 
@@ -548,7 +557,7 @@ async function loadPatientPrescriptionsFeed() {
     if (!container) return;
     container.innerHTML = '';
     
-    const p_rx = data.prescriptions.filter(rx => rx.patientId === currentUser.healthId);
+    const p_rx = (data.prescriptions || []).filter(rx => rx.patientId === currentUser.healthId);
     
     if (p_rx && p_rx.length > 0) {
       p_rx.forEach(rx => {
@@ -1961,7 +1970,7 @@ async function loadPharmacyShopPrescriptions() {
     if (!container) return;
     container.innerHTML = '';
     
-    const activeRxs = data.prescriptions.filter(rx => rx.patientId === currentUser.healthId && rx.status === 'Active');
+    const activeRxs = (data.prescriptions || []).filter(rx => rx.patientId === currentUser.healthId && rx.status === 'Active');
     
     if (activeRxs.length > 0) {
       activeRxs.forEach(rx => {
@@ -3113,10 +3122,18 @@ function switchAdminSubPanel(panelId) {
   const activePanel = document.getElementById(`admin-panel-${panelId}`);
   if (activePanel) activePanel.classList.remove('hidden');
 
-  if (panelId === 'wholesaler') {
+  if (panelId === 'security') {
+    if (typeof loadBlockchainBlockRegistry === 'function') {
+      loadBlockchainBlockRegistry();
+    }
+  } else if (panelId === 'wholesaler') {
     if (typeof loadWholesaleOrdersAdmin === 'function') {
       loadWholesaleOrdersAdmin();
     }
+  } else if (panelId === 'controls') {
+    loadAdminLabRates();
+  } else if (panelId === 'partners') {
+    loadAdminPartnerComms();
   }
 }
 
@@ -3258,11 +3275,51 @@ function sendPharmacyChatMessage() {
   chatLog.scrollTop = chatLog.scrollHeight;
   addAuditLogLine('info', `Encrypted chat message dispatched to patient for order ${activePharmacyChatOrder}.`);
 }
+async function log_blockchain_txn(actionType, details) {
+  try {
+    const res = await fetch('/api/blockchain/log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ actionType, details })
+    });
+    if (res.ok) {
+      if (typeof loadBlockchainBlockRegistry === 'function') {
+        loadBlockchainBlockRegistry();
+      }
+    }
+  } catch (err) {
+    console.error("Failed to log blockchain transaction:", err);
+  }
+}
+
+function toggleSystemControl(controlName, isEnabled) {
+  const statusLower = isEnabled ? "enabled" : "disabled";
+  showToast("System Control Updated", `${controlName} is now ${statusLower}.`, isEnabled ? "success" : "warning");
+  addAuditLogLine(isEnabled ? 'success' : 'warning', `System control mutation: ${controlName} was ${statusLower} by administrator.`);
+  log_blockchain_txn("SYSTEM_CONTROL_MUTATED", { control: controlName, enabled: isEnabled });
+}
+
+function runCampaignBlast(campaignName, targetCount) {
+  showToast("Campaign Started", `Initiating outreach for '${campaignName}'...`, "info");
+  addAuditLogLine('info', `CRM Campaign: Starting blast for '${campaignName}' targeting ${targetCount} users.`);
+  
+  setTimeout(() => {
+    showToast("Campaign Blasting...", `Sending messages via multi-channel routes...`, "info");
+  }, 1200);
+  
+  setTimeout(() => {
+    showToast("Campaign Completed", `Successfully delivered campaign blast to ${targetCount} patients.`, "success");
+    addAuditLogLine('success', `CRM Campaign '${campaignName}' completed. All ${targetCount} patient notifications dispatched.`);
+    log_blockchain_txn("CRM_CAMPAIGN_BLASTED", { campaignName, targetCount, status: "SUCCESS" });
+  }, 2500);
+}
+
 function sendWhatsappReceipt(txnId, phone = '') {
   alert(`Preparing WhatsApp receipt for transaction ${txnId}...`);
   setTimeout(() => {
     showToast("WhatsApp Dispatched", `Receipt successfully routed to registered mobile number via WhatsApp Business API.`, "success");
     addAuditLogLine('success', `WhatsApp transaction receipt dispatched for ${txnId}.`);
+    log_blockchain_txn("WHATSAPP_RECEIPT_SENT", { txnId, phone });
   }, 1500);
 }
 
@@ -3271,15 +3328,16 @@ function sendEmailInvoice(userId, email = '') {
   setTimeout(() => {
     showToast("Email Dispatched", `Invoice successfully delivered to user's registered email via SendGrid.`, "success");
     addAuditLogLine('success', `Email invoice routed to ${userId}.`);
+    log_blockchain_txn("EMAIL_INVOICE_SENT", { userId, email });
   }, 1500);
 }
-
 
 function sendSmsAlert(msgType, phone = '') {
   alert(`Queueing SMS Alert (${msgType})...`);
   setTimeout(() => {
     showToast("SMS Alert Delivered", `Transactional SMS sent via Twilio gateway.`, "success");
     addAuditLogLine('success', `SMS alert (${msgType}) dispatched.`);
+    log_blockchain_txn("SMS_ALERT_SENT", { msgType, phone });
   }, 1000);
 }
 
@@ -3303,6 +3361,24 @@ function simulateCustomCommDispatch(event) {
     btn.disabled = false;
     showToast(`${channel.toUpperCase()} Dispatched`, `Message successfully sent to ${user} via ${channel}.`, "success");
     addAuditLogLine('success', `Manual Omnichannel dispatch via ${channel} to ${user}.`);
+    
+    // Add to dynamic Delivery Logs in Omnichannel tab
+    const logContainer = document.getElementById('comms-delivery-logs');
+    if (logContainer) {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      
+      const newLog = document.createElement('div');
+      let statusColor = 'var(--success)';
+      if (channel === 'Email') statusColor = 'var(--info)';
+      if (channel === 'SMS') statusColor = 'var(--accent)';
+      newLog.style = `color:${statusColor}; border-left:3px solid ${statusColor}; padding-left:10px; animation: fadeIn 0.4s;`;
+      newLog.textContent = `[${timeStr}] ${channel}: Delivered to ${user} (${message.substring(0, 30)}${message.length > 30 ? '...' : ''})`;
+      
+      logContainer.insertBefore(newLog, logContainer.firstChild);
+    }
+
+    log_blockchain_txn("OMNICHANNEL_MESSAGE_DISPATCHED", { channel, user, messageLength: message.length });
     document.getElementById('comms-message').value = '';
   }, 1500);
 }
@@ -3318,7 +3394,14 @@ function switchDoctorSubPanel(panelId) {
   const activePanel = document.getElementById(`doctor-panel-${panelId}`);
   if (activePanel) activePanel.classList.remove('hidden');
 
-  if (panelId === 'calendar') {
+  if (panelId === 'consult') {
+    if (typeof loadDoctorBloodRequestsQueue === 'function') {
+      loadDoctorBloodRequestsQueue();
+    }
+    if (typeof loadDoctorChatThreads === 'function') {
+      loadDoctorChatThreads();
+    }
+  } else if (panelId === 'calendar') {
     addAuditLogLine('info', `Doctor navigating to Appointments Calendar.`);
   }
 }
@@ -3885,4 +3968,394 @@ function checkIoMTConnectionOnLoad() {
     iomtState = JSON.parse(savedState);
   }
   syncIoMTUIState();
+}
+
+// ====================================================================
+// DIAGNOSTICS LAB & SAMPLE COLLECTION PORTAL — PATIENT SIDE
+// ====================================================================
+async function loadDiagnosticsLab() {
+  clearInterval(diagnosticsTrackingInterval);
+  try {
+    const response = await fetch(`/api/dashboard/diagnostics/bookings/${currentUser.healthId}`);
+    const data = await response.json();
+    
+    if (data.status === 'success') {
+      const bookings = data.bookings || [];
+      
+      // Update ledger count
+      document.getElementById('dx-ledger-count').innerText = `${bookings.length} Bookings`;
+      
+      const ledgerContainer = document.getElementById('dx-ledger-container');
+      ledgerContainer.innerHTML = '';
+      
+      if (bookings.length === 0) {
+        ledgerContainer.innerHTML = '<p style="color:#7d9696; text-align:center; padding:15px; font-size:0.85rem;">No diagnostic bookings found</p>';
+      } else {
+        bookings.forEach(b => {
+          const dateStr = b.date || '';
+          const timeStr = b.time || '';
+          
+          let statusBadgeColor = 'rgba(255,255,255,0.08)';
+          let statusTextColor = '#7d9696';
+          if (b.status === 'Booked') {
+            statusBadgeColor = 'rgba(0, 204, 180, 0.1)';
+            statusTextColor = 'var(--primary)';
+          } else if (b.status === 'Agent Dispatched') {
+            statusBadgeColor = 'rgba(0, 242, 254, 0.1)';
+            statusTextColor = '#00f2fe';
+          } else if (b.status === 'Sample Collected') {
+            statusBadgeColor = 'rgba(165, 243, 252, 0.15)';
+            statusTextColor = '#a5f3fc';
+          } else if (b.status === 'Completed') {
+            statusBadgeColor = 'rgba(0, 255, 0, 0.1)';
+            statusTextColor = '#00ff00';
+          }
+          
+          const card = document.createElement('div');
+          card.style = 'background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); border-radius:10px; padding:12px; display:flex; justify-content:space-between; align-items:center; transition: all 0.3s;';
+          card.innerHTML = `
+            <div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <strong style="color:white; font-size:0.85rem;">${b.testName}</strong>
+                <span style="font-size:0.65rem; background:${statusBadgeColor}; color:${statusTextColor}; padding:2px 6px; border-radius:4px; font-weight:600; text-transform:uppercase;">${b.status}</span>
+              </div>
+              <div style="font-size:0.75rem; color:#7d9696; margin-top:4px;">
+                <span>ID: <code style="color:var(--primary);">${b.id}</code></span> &bull; 
+                <span>Slot: ${dateStr} (${timeStr})</span>
+              </div>
+            </div>
+            <div style="text-align:right; display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
+              <span style="color:var(--accent); font-weight:700; font-size:0.85rem;">Rs. ${b.price}</span>
+              ${b.status !== 'Completed' ? `<button class="btn btn-outline" onclick="trackDXBooking('${b.id}')" style="font-size:0.7rem; padding:3px 8px; border-color:var(--primary); color:var(--primary); height:22px; cursor:pointer;">Track</button>` : ''}
+            </div>
+          `;
+          ledgerContainer.appendChild(card);
+        });
+      }
+
+      // Check if there is an active tracking selected or choose the first non-completed one
+      const activeBookings = bookings.filter(b => b.status !== 'Completed');
+      if (activeBookings.length > 0) {
+        const targetB = activeBookings[0];
+        updateDxTrackerHUD(targetB);
+        
+        // Start polling if status needs to transition
+        const needsPolling = activeBookings.some(b => b.status === 'Booked' || b.status === 'Agent Dispatched');
+        if (needsPolling) {
+          diagnosticsTrackingInterval = setInterval(loadDiagnosticsLab, 5000);
+        }
+      } else {
+        document.getElementById('dx-tracker-active').classList.add('hidden');
+        document.getElementById('dx-tracker-empty').style.display = 'block';
+        document.getElementById('dx-tracker-badge').style.display = 'none';
+      }
+    }
+
+    // Dynamic Catalog loading
+    const catalogResponse = await fetch('/api/dashboard/diagnostics/catalog');
+    const catalogData = await catalogResponse.json();
+    if (catalogData.status === 'success') {
+      activeDXCatalog = catalogData.catalog || [];
+      const selectedLab = document.getElementById('dx-lab-selector').value;
+      renderDxCatalog(selectedLab);
+    }
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function renderDxCatalog(labName) {
+  const container = document.getElementById('dx-catalog-container');
+  if (!container) return;
+  container.innerHTML = '';
+  
+  const filtered = activeDXCatalog.filter(c => c.labName === labName);
+  
+  if (filtered.length === 0) {
+    container.innerHTML = `<p style="color:#7d9696; grid-column: span 3; text-align:center; padding:20px;">No tests synced for lab provider ${labName}.</p>`;
+    return;
+  }
+  
+  filtered.forEach(c => {
+    // Generate param tags
+    const paramsList = (c.parameters || "").split(",").map(p => p.trim());
+    const paramTags = paramsList.map(p => `<span style="font-size:0.65rem; background:rgba(0,204,180,0.06); border:1px solid rgba(0,204,180,0.12); color:var(--primary); padding:2px 6px; border-radius:4px; margin-right:4px; margin-top:4px; display:inline-block; font-weight:600;">${p}</span>`).join("");
+    
+    const card = document.createElement('div');
+    card.className = 'dx-item-card glass-panel';
+    card.style = 'background:rgba(255,255,255,0.02); border:1px solid rgba(165,243,252,0.08); border-radius:12px; padding:18px; display:flex; flex-direction:column; justify-content:space-between; gap:12px; position:relative; overflow:hidden;';
+    card.innerHTML = `
+      <div style="position:absolute; top:10px; right:10px; font-size:1.5rem; opacity:0.1; color:var(--primary);"><i class="fa-solid fa-vial"></i></div>
+      <div>
+        <strong style="color:white; display:block; font-size:0.95rem;">${c.testName}</strong>
+        <span style="color:var(--primary); font-size:0.75rem; text-transform:uppercase; font-weight:600; display:block; margin-top:2px;">${c.labName}</span>
+        
+        <div style="margin-top:8px;">
+          <span style="color:#7d9696; font-size:0.7rem; display:block; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Testing Parameters (${paramsList.length})</span>
+          <div style="display:flex; flex-wrap:wrap; margin-top:2px;">
+            ${paramTags}
+          </div>
+        </div>
+      </div>
+      
+      <div style="border-top:1px solid rgba(255,255,255,0.05); padding-top:10px; display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+        <div>
+          <span style="color:#7d9696; font-size:0.7rem; display:block;">Reselling Cost</span>
+          <strong style="color:var(--accent); font-size:1.1rem;">Rs. ${c.customPrice}</strong>
+        </div>
+        <button class="btn btn-primary" onclick="initiateDXBooking('${c.testName}', ${c.customPrice}, '${c.labName}')" style="font-size:0.8rem; padding:6px 12px; cursor:pointer;">Book Now</button>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function switchDXPartnerLab(labName) {
+  renderDxCatalog(labName);
+}
+
+async function trackDXBooking(bookingId) {
+  try {
+    const response = await fetch(`/api/dashboard/diagnostics/bookings/${currentUser.healthId}`);
+    const data = await response.json();
+    if (data.status === 'success') {
+      const bookings = data.bookings || [];
+      const targetB = bookings.find(b => b.id === bookingId);
+      if (targetB) {
+        updateDxTrackerHUD(targetB);
+        addAuditLogLine('info', `Tracking agent for booking ${bookingId}`);
+      }
+    }
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function updateDxTrackerHUD(b) {
+  document.getElementById('dx-tracker-active').classList.remove('hidden');
+  document.getElementById('dx-tracker-empty').style.display = 'none';
+  document.getElementById('dx-tracker-badge').style.display = 'inline-block';
+  
+  document.getElementById('dx-tracker-booking-id').innerText = b.id;
+  document.getElementById('dx-tracker-test-name').innerText = b.testName;
+  document.getElementById('dx-tracker-agent-name').innerText = b.agentName;
+  
+  const etaText = b.agentEta > 0 ? `${b.agentEta} mins` : 'Arrived';
+  document.getElementById('dx-tracker-eta').innerText = etaText;
+  
+  document.getElementById('dx-tracker-agent-call').setAttribute('href', `tel:${b.agentContact}`);
+  
+  let statusText = 'Assigned';
+  if (b.status === 'Agent Dispatched') {
+    statusText = 'En Route (Dispatched)';
+  } else if (b.status === 'Sample Collected') {
+    statusText = 'Sample Collected';
+  }
+  document.getElementById('dx-tracker-agent-status').innerText = `${statusText} (Phlebotomist)`;
+  
+  const stepBooked = document.getElementById('dx-step-booked');
+  const stepDispatched = document.getElementById('dx-step-dispatched');
+  const stepCollected = document.getElementById('dx-step-collected');
+  const timelineBar = document.getElementById('dx-timeline-bar');
+  const mapAgent = document.getElementById('dx-tracker-map-agent');
+  
+  stepBooked.classList.remove('active', 'completed');
+  stepDispatched.classList.remove('active', 'completed');
+  stepCollected.classList.remove('active', 'completed');
+  
+  if (b.status === 'Booked') {
+    stepBooked.classList.add('active');
+    timelineBar.style.width = '0%';
+    mapAgent.style.left = '75%';
+  } else if (b.status === 'Agent Dispatched') {
+    stepBooked.classList.add('completed');
+    stepDispatched.classList.add('active');
+    timelineBar.style.width = '50%';
+    const etaRatio = Math.min(15, b.agentEta) / 15.0; 
+    const leftPos = 30 + (etaRatio * 45); 
+    mapAgent.style.left = `${leftPos}%`;
+  } else if (b.status === 'Sample Collected') {
+    stepBooked.classList.add('completed');
+    stepDispatched.classList.add('completed');
+    stepCollected.classList.add('active');
+    timelineBar.style.width = '100%';
+    mapAgent.style.left = '30%'; 
+  }
+}
+
+function initiateDXBooking(testName, price, provider) {
+  currentDXBooking = {
+    testName: testName,
+    price: price,
+    provider: provider
+  };
+  
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  let mm = today.getMonth() + 1;
+  let dd = today.getDate();
+  if (dd < 10) dd = '0' + dd;
+  if (mm < 10) mm = '0' + mm;
+  
+  document.getElementById('dx-sched-date').value = `${yyyy}-${mm}-${dd}`;
+  document.getElementById('dx-sched-date').min = `${yyyy}-${mm}-${dd}`;
+  
+  document.getElementById('dx-scheduler-container').classList.remove('hidden');
+  document.getElementById('dx-scheduler-container').scrollIntoView({ behavior: 'smooth' });
+}
+
+function hideDxScheduler() {
+  document.getElementById('dx-scheduler-container').classList.add('hidden');
+  currentDXBooking = null;
+}
+
+function proceedToDXCheckout() {
+  if (!currentDXBooking) return;
+  
+  const dateVal = document.getElementById('dx-sched-date').value;
+  const timeVal = document.getElementById('dx-sched-time').value;
+  
+  if (!dateVal) {
+    alert("Please select a date for sample collection.");
+    return;
+  }
+  
+  const receiptRows = [
+    { label: `${currentDXBooking.testName} Package`, val: `Rs. ${currentDXBooking.price}` },
+    { label: `Provider: ${currentDXBooking.provider}`, val: 'Active Reseller' },
+    { label: `Collection Slot: ${dateVal} @ ${timeVal}`, val: 'Confirmed' }
+  ];
+  
+  checkoutTransactionContext = {
+    type: 'diagnostics',
+    payableAmount: currentDXBooking.price,
+    onSuccess: async () => {
+      try {
+        const response = await fetch('/api/dashboard/diagnostics/book', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            patientId: currentUser.healthId,
+            testName: currentDXBooking.testName,
+            price: currentDXBooking.price,
+            provider: currentDXBooking.provider,
+            date: dateVal,
+            time: timeVal
+          })
+        });
+        
+        if (response.ok) {
+          hideDxScheduler();
+          alert("Diagnostics package booked successfully! Assigning collection agent...");
+          loadDiagnosticsLab();
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  };
+  
+  openPaidCheckoutModal(`Book ${currentDXBooking.testName}`, receiptRows, currentDXBooking.price);
+}
+
+// --- ADMIN LAB RATES CONTROLS ---
+async function loadAdminLabRates() {
+  try {
+    const response = await fetch('/api/dashboard/diagnostics/catalog');
+    const data = await response.json();
+    if (data.status === 'success') {
+      const catalog = data.catalog || [];
+      const tbody = document.getElementById('admin-dx-rates-table-body');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      
+      if (catalog.length === 0) {
+        tbody.innerHTML = '<p style="color:#7d9696; text-align:center; padding:15px; font-size:0.85rem;">No partner lab test records found</p>';
+      } else {
+        catalog.forEach(c => {
+          const row = document.createElement('div');
+          row.style = 'display:grid; grid-template-columns: 2fr 3fr 1.5fr 1.5fr 2fr; gap:10px; padding:12px 10px; background:rgba(255,255,255,0.01); border-radius:6px; align-items:center; font-size:0.85rem;';
+          row.innerHTML = `
+            <span style="font-weight:600; color:var(--primary);">${c.labName}</span>
+            <span style="color:white; font-weight:500;">${c.testName}</span>
+            <span style="color:#7d9696;">Rs. ${c.basePrice}</span>
+            <div>
+              <input type="number" id="override-price-${c.id}" value="${c.customPrice}" style="width:70px; padding:4px 8px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:white; font-size:0.85rem; font-weight:600;">
+            </div>
+            <div>
+              <button class="btn btn-primary" onclick="updateLabRate('${c.id}')" style="padding:4px 8px; font-size:0.75rem; cursor:pointer;"><i class="fa-solid fa-floppy-disk"></i> Save Rate</button>
+            </div>
+          `;
+          tbody.appendChild(row);
+        });
+      }
+    }
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+async function updateLabRate(id) {
+  const input = document.getElementById(`override-price-${id}`);
+  if (!input) return;
+  const newPrice = parseFloat(input.value);
+  
+  if (isNaN(newPrice) || newPrice <= 0) {
+    alert("Please enter a valid positive price.");
+    return;
+  }
+  
+  try {
+    const response = await fetch('/api/dashboard/diagnostics/rate/update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: id,
+        customPrice: newPrice
+      })
+    });
+    
+    if (response.ok) {
+      alert("Lab reselling rate overridden successfully! Mined block audit logs.");
+      loadAdminLabRates();
+    } else {
+      alert("Failed to override lab rate.");
+    }
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+// --- ADMIN CITY PARTNER COMMISSIONS CONTROLS ---
+function loadAdminPartnerComms() {
+  const stored = localStorage.getItem('sehatrecover_partner_commissions');
+  const comms = stored ? JSON.parse(stored) : { apexMargin: 8.50, apolloMargin: 10.00, lalFlat: 150.00 };
+  
+  const apexInput = document.getElementById('admin-apex-margin');
+  const apolloInput = document.getElementById('admin-apollo-margin');
+  const lalInput = document.getElementById('admin-lal-flat');
+  
+  if (apexInput) apexInput.value = comms.apexMargin || 8.50;
+  if (apolloInput) apolloInput.value = comms.apolloMargin || 10.00;
+  if (lalInput) lalInput.value = comms.lalFlat || 150.00;
+}
+
+async function saveAdminPartnerComms() {
+  const apexVal = parseFloat(document.getElementById('admin-apex-margin').value);
+  const apolloVal = parseFloat(document.getElementById('admin-apollo-margin').value);
+  const lalVal = parseFloat(document.getElementById('admin-lal-flat').value);
+  
+  if (isNaN(apexVal) || isNaN(apolloVal) || isNaN(lalVal) || apexVal < 0 || apolloVal < 0 || lalVal < 0) {
+    alert("Please enter valid positive numbers for rates.");
+    return;
+  }
+  
+  const comms = { apexMargin: apexVal, apolloMargin: apolloVal, lalFlat: lalVal };
+  localStorage.setItem('sehatrecover_partner_commissions', JSON.stringify(comms));
+  
+  // Log blockchain txn for rate override
+  await log_blockchain_txn('PARTNER_RATE_UPDATED', comms);
+  
+  showToast("Commissions Updated", "City Partner commission override rates updated on the blockchain.", "success");
+  addAuditLogLine('success', `City Partner commissions updated: Apex=${apexVal}%, Apollo=${apolloVal}%, Lal Flat=Rs.${lalVal}.`);
 }

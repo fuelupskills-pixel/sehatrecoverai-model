@@ -575,7 +575,7 @@ p {
 }
 
 .card-front {
-  background: linear-gradient(135deg, hsl(186, 80%, 25%) 0%, hsl(270, 70%, 30%) 100%);
+  background: linear-gradient(135deg, hsl(183, 100%, 22%) 0%, hsl(280, 78%, 25%) 100%);
   backdrop-filter: blur(25px);
   -webkit-backdrop-filter: blur(25px);
   color: var(--white);
@@ -584,7 +584,7 @@ p {
 }
 
 .card-back {
-  background: linear-gradient(135deg, hsl(175, 75%, 15%) 0%, hsl(175, 70%, 10%) 100%);
+  background: linear-gradient(135deg, hsl(183, 100%, 14%) 0%, hsl(280, 78%, 16%) 100%);
   color: var(--white);
   transform: rotateY(180deg);
 }
@@ -1719,9 +1719,9 @@ p {
 
 /* Card ABHA integration layout */
 .card-abha-badge {
-  background: linear-gradient(135deg, #ff9933 0%, #ffffff 50%, #128807 100%);
-  border: 1px solid rgba(18, 28, 28, 0.15);
-  color: #121c1c;
+  background: var(--primary);
+  color: var(--dark);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   font-size: 0.65rem;
   font-weight: 800;
   padding: 3px 8px;
@@ -1732,45 +1732,23 @@ p {
   gap: 4px;
 }
 
-/* State-specific scheme card themes and badges */
-.scheme-mjpjay .card-front {
-  background: linear-gradient(135deg, #e65c00 0%, #ff8000 50%, #993d00 100%);
-}
-.scheme-mjpjay .card-abha-badge {
-  background: #ff8000;
-  color: #fff;
-}
-
-.scheme-aarogyasri .card-front {
-  background: linear-gradient(135deg, #d4ac0d 0%, #f1c40f 50%, #7e5109 100%);
-}
-.scheme-aarogyasri .card-abha-badge {
-  background: #f1c40f;
-  color: #121c1c;
-}
-
-.scheme-cmchis .card-front {
-  background: linear-gradient(135deg, #c0392b 0%, #e74c3c 50%, #641e16 100%);
-}
-.scheme-cmchis .card-abha-badge {
-  background: #e74c3c;
-  color: #fff;
-}
-
-.scheme-chiranjeevi .card-front {
-  background: linear-gradient(135deg, #2471a3 0%, #3498db 50%, #154360 100%);
-}
-.scheme-chiranjeevi .card-abha-badge {
-  background: #3498db;
-  color: #fff;
-}
-
+/* State-specific scheme card themes and badges (Unified brand theme) */
+.scheme-mjpjay .card-front,
+.scheme-aarogyasri .card-front,
+.scheme-cmchis .card-front,
+.scheme-chiranjeevi .card-front,
 .scheme-bsky .card-front {
-  background: linear-gradient(135deg, #1e8449 0%, #27ae60 50%, #114f2c 100%);
+  background: linear-gradient(135deg, hsl(183, 100%, 22%) 0%, hsl(280, 78%, 25%) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
+
+.scheme-mjpjay .card-abha-badge,
+.scheme-aarogyasri .card-abha-badge,
+.scheme-cmchis .card-abha-badge,
+.scheme-chiranjeevi .card-abha-badge,
 .scheme-bsky .card-abha-badge {
-  background: #27ae60;
-  color: #fff;
+  background: var(--primary);
+  color: var(--dark);
 }
 
 

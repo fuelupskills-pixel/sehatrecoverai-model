@@ -2684,3 +2684,68 @@
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
+/* --- Diagnostics Lab CSS --- */
+.dx-item-card {
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.dx-item-card:hover {
+  transform: translateY(-3px) scale(1.02);
+  border-color: var(--primary) !important;
+  box-shadow: 0 8px 25px -5px rgba(0, 204, 180, 0.2);
+}
+
+/* Timeline step styling */
+.tracker-timeline-dx .step-dot {
+  background: #1a2b2c !important;
+  border: 2px solid rgba(255, 255, 255, 0.2) !important;
+  color: transparent !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.timeline-step-dx.active .step-dot {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: #030712 !important;
+  box-shadow: 0 0 12px var(--primary);
+}
+
+.timeline-step-dx.completed .step-dot {
+  background: rgba(0, 204, 180, 0.2) !important;
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
+}
+
+.timeline-step-dx.active span {
+  color: var(--primary) !important;
+  font-weight: 700 !important;
+}
+
+.timeline-step-dx.completed span {
+  color: white !important;
+}
+
+/* Keyframes for the map radar pulse */
+@keyframes dx-pulse {
+  0% { transform: scale(0.8); opacity: 0.8; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+.pulse-ring {
+  animation: dx-pulse 2s infinite ease-out;
+}
+
+/* Scrollbar styling for dx-ledger */
+#dx-ledger-container::-webkit-scrollbar {
+  width: 4px;
+}
+#dx-ledger-container::-webkit-scrollbar-thumb {
+  background: rgba(165, 243, 252, 0.1);
+}
+#dx-ledger-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(165, 243, 252, 0.3);
+}

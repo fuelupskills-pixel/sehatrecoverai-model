@@ -320,6 +320,33 @@ def setup_sqlite_database():
         date TEXT
     )""")
     
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS diagnostics_bookings (
+        id TEXT PRIMARY KEY,
+        patientId TEXT,
+        testName TEXT,
+        provider TEXT,
+        price REAL,
+        status TEXT,
+        date TEXT,
+        time TEXT,
+        agentName TEXT,
+        agentContact TEXT,
+        agentEta INTEGER,
+        timestamp REAL
+    )""")
+    
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS partner_lab_rates (
+        id TEXT PRIMARY KEY,
+        labName TEXT,
+        testCode TEXT,
+        testName TEXT,
+        basePrice REAL,
+        customPrice REAL,
+        parameters TEXT
+    )""")
+    
     # Dynamic DB Migrations for Bookings (Add video call, voice call, and reminder configurations)
     for col_name, col_type in [
         ("videoUrl", "TEXT"),
@@ -417,6 +444,56 @@ def setup_sqlite_database():
         log_blockchain_txn("CLAIM_SETTLED", {"claimId": "CLM-9011", "patientId": "SR-9982-1045-88", "amount": "Rs.450"})
         log_blockchain_txn("CLAIM_SETTLED", {"claimId": "CLM-8891", "patientId": "SR-9982-1045-88", "amount": "Rs.1,200"})
         
+        # Seed default diagnostics bookings
+        cursor.execute("INSERT INTO diagnostics_bookings VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                       ("DX-101", "SR-9982-1045-88", "Diabetes Screening (HbA1c + Fasting Blood Sugar)", "Max Labs", 299.0, "Report Dispatched", "2026-06-02", "08:30 AM", "Vikram Rathore", "+91 98765-01234", 0, time.time() - 86400))
+        cursor.execute("INSERT INTO diagnostics_bookings VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                       ("DX-102", "SR-9982-1045-88", "Basic Health Screening Package", "Metropolis Healthcare", 999.0, "Agent Dispatched", "2026-06-03", "09:00 AM", "Amit Sharma", "+91 96543-98765", 15, time.time() - 3600))
+
+    # Seed wholesale orders if table is empty (independent of other tables)
+    conn = get_db_conn()
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM wholesale_orders")
+    if cursor.fetchone()[0] == 0:
+        print("[DATABASE INIT] Inserting default wholesale orders...")
+        wholesale_orders = [
+            ("ORD-WS-101", "PHARM-9982-APOLLO", "Amoxicillin 500mg", "Capsules", 100, 12000.0, "Processing", time.strftime("%Y-%m-%d"), time.time() - 7200),
+            ("ORD-WS-102", "PHARM-1045-METRO", "Metformin 500mg", "Tablets", 250, 30000.0, "Dispatched", time.strftime("%Y-%m-%d"), time.time() - 3600),
+            ("ORD-WS-103", "9876543210", "Atorvastatin 10mg", "Tablets", 50, 6000.0, "Delivered", time.strftime("%Y-%m-%d"), time.time() - 86400)
+        ]
+        cursor.executemany("INSERT INTO wholesale_orders VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", wholesale_orders)
+        conn.commit()
+
+    # Seed diagnostics bookings if table is empty (independent of other tables)
+    cursor.execute("SELECT COUNT(*) FROM diagnostics_bookings")
+    if cursor.fetchone()[0] == 0:
+        print("[DATABASE INIT] Inserting default diagnostics bookings...")
+        cursor.execute("INSERT INTO diagnostics_bookings VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                       ("DX-101", "SR-9982-1045-88", "Diabetes Screening (HbA1c + Fasting Blood Sugar)", "Max Labs", 299.0, "Completed", "2026-06-02", "08:30 AM", "Vikram Rathore", "+91 98765-01234", 0, time.time() - 86400))
+        cursor.execute("INSERT INTO diagnostics_bookings VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                       ("DX-102", "SR-9982-1045-88", "Basic Health Screening Package", "Metropolis Healthcare", 999.0, "Sample Collected", "2026-06-03", "09:00 AM", "Amit Sharma", "+91 96543-98765", 0, time.time() - 3600))
+        conn.commit()
+
+    # Seed partner lab rates if table is empty
+    cursor.execute("SELECT COUNT(*) FROM partner_lab_rates")
+    if cursor.fetchone()[0] == 0:
+        print("[DATABASE INIT] Inserting default partner lab rates...")
+        rates = [
+            ("healthians_cbc", "Healthians", "CBC", "Complete Blood Count (CBC)", 250.0, 299.0, "Hemoglobin, Platelets, WBC Count, Red Blood Cells"),
+            ("healthians_hba1c", "Healthians", "HBA1C", "Diabetes HbA1c", 280.0, 350.0, "Glycated Hemoglobin, Average Blood Glucose"),
+            ("healthians_thyroid", "Healthians", "THYROID", "Thyroid Profile (T3, T4, TSH)", 300.0, 400.0, "T3 (Triiodothyronine), T4 (Thyroxine), TSH (Thyroid Stimulating Hormone)"),
+            
+            ("lallabs_cbc", "Dr. Lal PathLabs", "CBC", "Complete Blood Count (CBC)", 290.0, 390.0, "Hemoglobin, Packed Cell Volume, Platelets, MCH, MCV, MCHC"),
+            ("lallabs_hba1c", "Dr. Lal PathLabs", "HBA1C", "Diabetes HbA1c", 310.0, 380.0, "HbA1c Percentage, Estimated Average Glucose"),
+            ("lallabs_thyroid", "Dr. Lal PathLabs", "THYROID", "Thyroid Profile (T3, T4, TSH)", 350.0, 450.0, "Total T3, Total T4, TSH Ultrasensitive"),
+            
+            ("apollo_cbc", "Apollo Diagnostics", "CBC", "Complete Blood Count (CBC)", 270.0, 349.0, "Hb, TLC, DLC, Platelet Count, Peripheral Smear"),
+            ("apollo_hba1c", "Apollo Diagnostics", "HBA1C", "Diabetes HbA1c", 290.0, 360.0, "HbA1c (Glycosylated Hb), Average Blood Sugar"),
+            ("apollo_thyroid", "Apollo Diagnostics", "THYROID", "Thyroid Profile (T3, T4, TSH)", 320.0, 420.0, "Free T3, Free T4, TSH")
+        ]
+        cursor.executemany("INSERT INTO partner_lab_rates VALUES (?, ?, ?, ?, ?, ?, ?)", rates)
+        conn.commit()
+        
     conn.close()
 
 # --- PYDANTIC REQUEST MODELS ---
@@ -459,6 +536,18 @@ class DocumentCreate(BaseModel):
     category: str
     fileSize: str
     folder: str = "diagnostics"
+
+class DiagnosticBookingCreate(BaseModel):
+    patientId: str
+    testName: str
+    price: float
+    provider: str
+    date: str
+    time: str
+
+class LabRateUpdate(BaseModel):
+    id: str
+    customPrice: float
 
 class ActivityBookRequest(BaseModel):
     patientId: str
@@ -1631,6 +1720,111 @@ def get_ambulance_status(patient_id: str):
         "progress": progress
     }
 
+# --- DIAGNOSTICS LAB & PACKAGES BOOKING ---
+@app.post("/api/dashboard/diagnostics/book")
+def book_diagnostic_test(req: DiagnosticBookingCreate):
+    booking_id = f"DX-{random.randint(1000, 9999)}"
+    
+    # Assign a collection agent from a pool
+    agents = [
+        {"name": "Vikram Rathore", "contact": "+91 98765-01234"},
+        {"name": "Amit Sharma", "contact": "+91 96543-98765"},
+        {"name": "Rohan Sharma", "contact": "+91 91234-56789"}
+    ]
+    agent = random.choice(agents)
+    
+    conn = get_db_conn()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO diagnostics_bookings (id, patientId, testName, provider, price, status, date, time, agentName, agentContact, agentEta, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (booking_id, req.patientId, req.testName, req.provider, req.price, "Booked", req.date, req.time, agent["name"], agent["contact"], 15, time.time())
+    )
+    conn.commit()
+    conn.close()
+    
+    log_blockchain_txn("DIAGNOSTIC_TEST_BOOKED", {
+        "bookingId": booking_id,
+        "patientId": req.patientId,
+        "testName": req.testName,
+        "provider": req.provider,
+        "price": req.price,
+        "agent": agent["name"]
+    })
+    
+    return {"status": "success", "bookingId": booking_id}
+
+@app.get("/api/dashboard/diagnostics/bookings/{patient_id}")
+def get_diagnostics_bookings(patient_id: str):
+    conn = get_db_conn()
+    cursor = conn.cursor()
+    
+    # Update agent ETA dynamically based on booking elapsed time
+    cursor.execute("SELECT * FROM diagnostics_bookings WHERE patientId = ? ORDER BY timestamp DESC", (patient_id,))
+    bookings = [dict(r) for r in cursor.fetchall()]
+    
+    for b in bookings:
+        if b["status"] in ["Booked", "Agent Dispatched"]:
+            elapsed = time.time() - b["timestamp"]
+            # After 45 seconds, the agent status advances to "Sample Collected"
+            if elapsed >= 45:
+                cursor.execute("UPDATE diagnostics_bookings SET status = 'Sample Collected', agentEta = 0 WHERE id = ?", (b["id"],))
+                b["status"] = "Sample Collected"
+                b["agentEta"] = 0
+            # After 20 seconds, the status is "Agent Dispatched" with a lower ETA
+            elif elapsed >= 20:
+                new_eta = max(1, 15 - int(elapsed / 2))
+                cursor.execute("UPDATE diagnostics_bookings SET status = 'Agent Dispatched', agentEta = ? WHERE id = ?", (new_eta, b["id"]))
+                b["status"] = "Agent Dispatched"
+                b["agentEta"] = new_eta
+            else:
+                new_eta = max(1, 15 - int(elapsed / 2))
+                b["agentEta"] = new_eta
+                cursor.execute("UPDATE diagnostics_bookings SET agentEta = ? WHERE id = ?", (new_eta, b["id"]))
+                
+    conn.commit()
+    conn.close()
+    
+    return {"status": "success", "bookings": bookings}
+
+@app.get("/api/dashboard/diagnostics/catalog")
+def get_diagnostics_catalog():
+    conn = get_db_conn()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM partner_lab_rates")
+    rows = [dict(r) for r in cursor.fetchall()]
+    conn.close()
+    return {"status": "success", "catalog": rows}
+
+@app.post("/api/dashboard/diagnostics/rate/update")
+def update_diagnostics_rate(req: LabRateUpdate):
+    conn = get_db_conn()
+    cursor = conn.cursor()
+    
+    # Check if the rate exists
+    cursor.execute("SELECT * FROM partner_lab_rates WHERE id = ?", (req.id,))
+    row = cursor.fetchone()
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Partner lab test not found")
+        
+    cursor.execute(
+        "UPDATE partner_lab_rates SET customPrice = ? WHERE id = ?",
+        (req.customPrice, req.id)
+    )
+    conn.commit()
+    conn.close()
+    
+    # Log to blockchain compliance ledger
+    log_blockchain_txn("LAB_RATE_UPDATED", {
+        "id": req.id,
+        "labName": row["labName"],
+        "testName": row["testName"],
+        "basePrice": row["basePrice"],
+        "customPrice": req.customPrice
+    })
+    
+    return {"status": "success"}
+
 # --- AUXILIARY AI DOCTOR RESPONSE HELPER ---
 def generate_ai_doctor_reply(user_msg: str, doctor_name: str) -> str:
     msg_lower = user_msg.lower()
@@ -1980,6 +2174,15 @@ def update_wholesale_order_status(order_id: str, req: WholesaleOrderStatusUpdate
     
     log_blockchain_txn("WHOLESALE_STATUS_UPDATE", {"orderId": order_id, "status": req.status})
     return {"status": "success", "orderId": order_id}
+
+class BlockchainLogRequest(BaseModel):
+    actionType: str
+    details: dict
+
+@app.post("/api/blockchain/log")
+def log_blockchain_frontend_txn(req: BlockchainLogRequest):
+    block = log_blockchain_txn(req.actionType, req.details)
+    return {"status": "success", "block_index": block.index, "hash": block.hash}
 
 # --- PAGE SERVING ROUTES ---
 @app.get("/")

@@ -19,3 +19,8 @@ scratch/check_single_quotes.py
 scratch/fix_app_js.py
 scratch/fix_quotes.py
 scratch/find_huge_matches.py
+
+# Next.js build folder
+.next/
+dist/
+build/
