@@ -188,6 +188,10 @@ function initDashboard() {
   updateFitnessProgressRing();
   initHealthMetricsChart();
   
+  // Dynamic Wholesaler and Supplier B2B Initialization
+  if (typeof populateWholesaleCatalogDropdown === 'function') populateWholesaleCatalogDropdown();
+  if (typeof loadPharmacySuppliers === 'function') loadPharmacySuppliers();
+
   // Schedule simulated Google-like Notification Alert in 10 seconds
   simulatedNotificationTimer = setTimeout(() => {
     showGoogleToastNotification();
@@ -3107,6 +3111,9 @@ function switchPharmacySubPanel(panelId) {
     if (typeof loadWholesaleOrdersPharmacy === 'function') {
         loadWholesaleOrdersPharmacy();
     }
+    if (typeof populateWholesaleCatalogDropdown === 'function') {
+        populateWholesaleCatalogDropdown();
+    }
   }
 }
 
@@ -3149,6 +3156,9 @@ function switchAdminSubPanel(panelId) {
   } else if (panelId === 'wholesaler') {
     if (typeof loadWholesaleOrdersAdmin === 'function') {
       loadWholesaleOrdersAdmin();
+    }
+    if (typeof loadPharmacySuppliers === 'function') {
+      loadPharmacySuppliers();
     }
   } else if (panelId === 'controls') {
     loadAdminLabRates();
@@ -3545,8 +3555,18 @@ function syncToOutlookCalendar(title, date, time, details) {
 
 async function submitWholesaleOrder(e) {
   e.preventDefault();
-  const itemName = document.getElementById('ws-item-name').value;
-  const formulation = document.getElementById('ws-formulation').value;
+  const catalogSelect = document.getElementById('ws-catalog-select');
+  if (!catalogSelect || !catalogSelect.value) {
+    showToast("Select Product", "Please select a product from the supplier catalog.", "error");
+    return;
+  }
+  const productId = catalogSelect.value;
+  const catalog = getWholesaleCatalog();
+  const product = catalog.find(item => item.id === productId);
+  if (!product) return;
+
+  const itemName = product.name;
+  const formulation = product.formulation;
   const quantity = parseInt(document.getElementById('ws-quantity').value, 10);
   
   const minMoq = getCustomMOQ(currentUser);
@@ -3555,7 +3575,9 @@ async function submitWholesaleOrder(e) {
     return;
   }
   
-  const totalAmount = quantity * 120;
+  const baseTotal = quantity * product.price;
+  const discountAmount = (baseTotal * product.discount) / 100;
+  const totalAmount = baseTotal - discountAmount;
   
   try {
     const res = await fetch('/api/wholesale/order', {
@@ -3574,6 +3596,12 @@ async function submitWholesaleOrder(e) {
       showToast("Order Placed", `Wholesale order ${data.orderId} placed successfully.`, "success");
       addAuditLogLine("success", `Wholesale supply request for ${itemName} generated via Admin channel.`);
       e.target.reset();
+      
+      const detailsBox = document.getElementById('ws-product-details-display');
+      if (detailsBox) detailsBox.classList.add('hidden');
+      const formDisplay = document.getElementById('ws-formulation-display');
+      if (formDisplay) formDisplay.value = '';
+      
       loadWholesaleOrdersPharmacy();
     } else {
       showToast("Order Failed", data.detail || "Error placing order.", "error");
@@ -4463,3 +4491,309 @@ async function saveAdminPartnerComms() {
   showToast("Commissions Updated", "City Partner commission override rates updated on the blockchain.", "success");
   addAuditLogLine('success', `City Partner commissions updated: Apex=${apexVal}%, Apollo=${apolloVal}%, Lal Flat=Rs.${lalVal}.`);
 }
+
+// --- B2B PHARMACY SUPPLIER NODE CUSTOMIZATION & MANUALLY FED CATALOG ---
+const DEFAULT_WHOLESALE_CATALOG = [
+  { id: 'cat-1', name: 'Paracetamol 500mg', formulation: 'Tablet', price: 120, discount: 10, scheme: 'Buy 10 get 1 Free' },
+  { id: 'cat-2', name: 'Augmentin 625 Duo', formulation: 'Tablet', price: 450, discount: 15, scheme: 'NABL Certified Batch' },
+  { id: 'cat-3', name: 'Corex DX Syrup', formulation: 'Syrup', price: 95, discount: 5, scheme: 'Flat 5% Off' },
+  { id: 'cat-4', name: 'Amoxicillin 500mg', formulation: 'Capsule', price: 180, discount: 12, scheme: 'Buy 50 get 5 Free' }
+];
+
+const DEFAULT_PHARMACY_SUPPLIERS = [
+  { id: 'sup-1', name: 'Noida Care Pharmacy', location: 'Noida, Sector 45', margin: 12, leadTime: '1 Day', active: true },
+  { id: 'sup-2', name: 'Delhi Meds Pharmacy', location: 'Delhi, Connaught Place', margin: 15, leadTime: '2 Days', active: false },
+  { id: 'sup-3', name: 'Gurugram Wellness Dispensation', location: 'Gurugram, Phase 3', margin: 10, leadTime: '1 Day', active: true }
+];
+
+function getWholesaleCatalog() {
+  let catalog = [];
+  try {
+    const stored = localStorage.getItem('sehatrecover_wholesale_catalog');
+    if (stored) {
+      catalog = JSON.parse(stored);
+    }
+  } catch (e) {}
+  if (!catalog || catalog.length === 0) {
+    catalog = [...DEFAULT_WHOLESALE_CATALOG];
+    localStorage.setItem('sehatrecover_wholesale_catalog', JSON.stringify(catalog));
+  }
+  return catalog;
+}
+
+function getPharmacySuppliers() {
+  let suppliers = [];
+  try {
+    const stored = localStorage.getItem('sehatrecover_pharmacy_suppliers');
+    if (stored) {
+      suppliers = JSON.parse(stored);
+    }
+  } catch (e) {}
+  if (!suppliers || suppliers.length === 0) {
+    suppliers = [...DEFAULT_PHARMACY_SUPPLIERS];
+    localStorage.setItem('sehatrecover_pharmacy_suppliers', JSON.stringify(suppliers));
+  }
+  return suppliers;
+}
+
+function loadPharmacySuppliers() {
+  const container = document.getElementById('pharmacy-suppliers-list');
+  if (!container) return;
+  container.innerHTML = '';
+  
+  const suppliers = getPharmacySuppliers();
+  suppliers.forEach(sup => {
+    const card = document.createElement('div');
+    card.style = 'background:rgba(255,255,255,0.01); border:1px solid rgba(255,255,255,0.05); padding:12px; border-radius:8px; display:flex; justify-content:space-between; align-items:center; font-size:0.85rem;';
+    
+    card.innerHTML = `
+      <div>
+        <strong style="color:white; display:block;">${sup.name}</strong>
+        <span style="color:#7d9696; font-size:0.75rem;"><i class="fa-solid fa-location-dot"></i> ${sup.location}</span>
+        <div style="margin-top:6px; display:flex; gap:10px; font-size:0.75rem;">
+          <span style="color:var(--primary);">Margin: ${sup.margin}%</span>
+          <span style="color:#a5f3fc;">Lead: ${sup.leadTime}</span>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:6px; align-items:flex-end;">
+        <label class="switch-toggle" style="position:relative; display:inline-block; width:40px; height:20px;">
+          <input type="checkbox" ${sup.active ? 'checked' : ''} onchange="togglePharmacySupplier('${sup.id}', this.checked)" style="opacity:0; width:0; height:0;">
+          <span class="slider-toggle-round" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; transition:.4s; border-radius:34px; background:${sup.active ? 'var(--primary)' : 'rgba(255,255,255,0.1)'}"></span>
+        </label>
+        <span style="font-size:0.7rem; color:${sup.active ? 'var(--primary)' : '#7d9696'}; font-weight:bold;">${sup.active ? 'Active B2B Node' : 'Inactive'}</span>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function togglePharmacySupplier(id, checked) {
+  const suppliers = getPharmacySuppliers();
+  const index = suppliers.findIndex(s => s.id === id);
+  if (index !== -1) {
+    suppliers[index].active = checked;
+    localStorage.setItem('sehatrecover_pharmacy_suppliers', JSON.stringify(suppliers));
+    loadPharmacySuppliers();
+    
+    const nodeName = suppliers[index].name;
+    const action = checked ? "authorized as active supplier node" : "deauthorized from supply network";
+    showToast("Supplier Configuration Mutated", `${nodeName} has been ${action}.`, "success");
+    addAuditLogLine("warning", `Logistics Hub: Pharmacy supplier node ${nodeName} status changed to ${checked ? 'ACTIVE' : 'INACTIVE'}.`);
+    
+    log_blockchain_txn("SUPPLIER_NODE_MUTATED", { node: nodeName, active: checked });
+  }
+}
+
+function submitAdminProductIntake(e) {
+  e.preventDefault();
+  const brand = document.getElementById('intake-brand-name').value;
+  const formulation = document.getElementById('intake-formulation').value;
+  const batch = document.getElementById('intake-batch-no').value;
+  const stock = parseInt(document.getElementById('intake-stock').value, 10);
+  const price = parseFloat(document.getElementById('intake-price').value);
+  const discount = parseInt(document.getElementById('intake-discount').value || '0', 10);
+  const scheme = document.getElementById('intake-scheme').value;
+  
+  if (!brand || !batch || isNaN(stock) || isNaN(price) || stock < 1 || price < 1) {
+    alert("Please fill in all product details accurately.");
+    return;
+  }
+  
+  const catalog = getWholesaleCatalog();
+  const newProduct = {
+    id: 'cat-' + (Date.now()),
+    name: brand,
+    formulation: formulation,
+    batch: batch,
+    stock: stock,
+    price: price,
+    discount: discount,
+    scheme: scheme
+  };
+  
+  catalog.push(newProduct);
+  localStorage.setItem('sehatrecover_wholesale_catalog', JSON.stringify(catalog));
+  
+  showToast("Product Registered", `New batch intake completed for ${brand}. Registered on B2B catalog.`, "success");
+  addAuditLogLine("success", `Intake Supply Chain: Added product ${brand} [Batch: ${batch}] to Wholesaler catalog. Base Price: Rs.${price}.`);
+  
+  log_blockchain_txn("B2B_PRODUCT_REGISTERED", newProduct);
+  
+  e.target.reset();
+  populateWholesaleCatalogDropdown();
+}
+
+function populateWholesaleCatalogDropdown() {
+  const select = document.getElementById('ws-catalog-select');
+  if (!select) return;
+  select.innerHTML = '<option value="" disabled selected>-- Select a Restock Product --</option>';
+  
+  const catalog = getWholesaleCatalog();
+  catalog.forEach(item => {
+    const opt = document.createElement('option');
+    opt.value = item.id;
+    opt.innerText = `${item.name} (${item.formulation}) - Rs.${item.price}/box`;
+    select.appendChild(opt);
+  });
+  
+  const detailsBox = document.getElementById('ws-product-details-display');
+  if (detailsBox) detailsBox.classList.add('hidden');
+  
+  const formDisplay = document.getElementById('ws-formulation-display');
+  if (formDisplay) formDisplay.value = '';
+}
+
+function onWholesaleCatalogSelect(id) {
+  const catalog = getWholesaleCatalog();
+  const product = catalog.find(item => item.id === id);
+  if (!product) return;
+  
+  const formDisplay = document.getElementById('ws-formulation-display');
+  if (formDisplay) formDisplay.value = product.formulation;
+  
+  const detailsBox = document.getElementById('ws-product-details-display');
+  if (detailsBox) detailsBox.classList.remove('hidden');
+  
+  const priceDisplay = document.getElementById('ws-disp-price');
+  if (priceDisplay) priceDisplay.innerText = `Rs. ${product.price}`;
+  
+  const discDisplay = document.getElementById('ws-disp-discount');
+  if (discDisplay) discDisplay.innerText = `${product.discount}% Off`;
+  
+  const schemeDisplay = document.getElementById('ws-disp-scheme');
+  if (schemeDisplay) schemeDisplay.innerText = product.scheme;
+  
+  recalcWholesaleOrderTotal();
+}
+
+function recalcWholesaleOrderTotal() {
+  const select = document.getElementById('ws-catalog-select');
+  if (!select) return;
+  const id = select.value;
+  
+  const catalog = getWholesaleCatalog();
+  const product = catalog.find(item => item.id === id);
+  if (!product) return;
+  
+  const qtyInput = document.getElementById('ws-quantity');
+  if (!qtyInput) return;
+  const quantity = parseInt(qtyInput.value || '0', 10);
+  
+  const baseTotal = quantity * product.price;
+  const discountAmount = (baseTotal * product.discount) / 100;
+  const finalTotal = baseTotal - discountAmount;
+  
+  const totalDisplay = document.getElementById('ws-disp-total');
+  if (totalDisplay) totalDisplay.innerText = `Rs. ${finalTotal.toFixed(0)}`;
+}
+
+// --- DIRECT OUTREACH CUSTOMER OFFER DIALOG (FULL REQUEST FLOW) ---
+let currentCrmPatient = null;
+
+function openFullRequestModal(patientId, name, meds, days) {
+  currentCrmPatient = { patientId, name, meds, days };
+  
+  const modal = document.getElementById('full-request-modal');
+  if (modal) modal.classList.remove('hidden');
+  
+  const idEl = document.getElementById('frm-patient-id');
+  const nameEl = document.getElementById('frm-patient-name');
+  const medsEl = document.getElementById('frm-patient-meds');
+  const daysEl = document.getElementById('frm-patient-days');
+  
+  if (idEl) idEl.innerText = patientId;
+  if (nameEl) nameEl.innerText = name;
+  if (medsEl) medsEl.innerText = meds;
+  if (daysEl) daysEl.innerText = days;
+}
+
+function closeFullRequestModal() {
+  const modal = document.getElementById('full-request-modal');
+  if (modal) modal.classList.add('hidden');
+  currentCrmPatient = null;
+}
+
+function dispatchFullRequestOffer(e) {
+  e.preventDefault();
+  if (!currentCrmPatient) return;
+  
+  const discount = parseInt(document.getElementById('frm-offer-discount').value, 10);
+  const scheme = document.getElementById('frm-offer-scheme').value;
+  const refillType = document.getElementById('frm-offer-refill').value;
+  
+  const patientId = currentCrmPatient.patientId;
+  const name = currentCrmPatient.name;
+  
+  const timestampStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  
+  const whatsappMsg = `🔔 [DIRECT REFILL OFFER] Hello ${name}, your stock for ${currentCrmPatient.meds} is predicted to last only ${currentCrmPatient.days}. Under the "${scheme}", we have generated a special offer for a ${refillType} with an exclusive ${discount}% discount. Tap to confirm and schedule cashless home delivery.`;
+  const smsMsg = `💬 SehatRecover Direct: 2 Days left of your stock. Get a ${discount}% discount on a ${refillType} under ${scheme}. Refill ID: RF-${Date.now().toString().slice(-4)}`;
+  const emailMsg = `[OFFICIAL QUOTE: Chronic Care Refill Plan] Dear ${name}, this quote provides details of your pre-authorized benefits under ${scheme} for a ${refillType}. Total discount applied: ${discount}%.`;
+  
+  const storedLogs = localStorage.getItem('sehatrecover_partner_notifications') || '[]';
+  let logs = [];
+  try {
+    logs = JSON.parse(storedLogs);
+  } catch (e) {
+    logs = [];
+  }
+  
+  const whatsappLog = {
+    id: Date.now() + Math.random(),
+    type: 'whatsapp',
+    recipient: '+91 98XXX-XX123',
+    message: whatsappMsg,
+    time: 'Just now'
+  };
+
+  const emailLog = {
+    id: Date.now() + Math.random() + 1,
+    type: 'email',
+    recipient: `${name.toLowerCase().replace(' ', '')}@example.com`,
+    message: emailMsg,
+    time: 'Just now'
+  };
+  
+  const smsLog = {
+    id: Date.now() + Math.random() + 2,
+    type: 'sms',
+    recipient: '+91 98XXX-XX123',
+    message: smsMsg,
+    time: 'Just now'
+  };
+
+  logs = [whatsappLog, emailLog, smsLog, ...logs];
+  localStorage.setItem('sehatrecover_partner_notifications', JSON.stringify(logs));
+  
+  const commsLogs = document.getElementById('comms-delivery-logs');
+  if (commsLogs) {
+    const line1 = document.createElement('div');
+    line1.style = 'color:var(--success); border-left:3px solid var(--success); padding-left:10px; margin-bottom:5px;';
+    line1.innerText = `[${timestampStr}] WhatsApp: Direct Refill offer sent to ${name} (+91 98XXX-XX123). Refill: ${refillType}, Discount: ${discount}%.`;
+    commsLogs.insertBefore(line1, commsLogs.firstChild);
+
+    const line2 = document.createElement('div');
+    line2.style = 'color:var(--info); border-left:3px solid var(--info); padding-left:10px; margin-bottom:5px;';
+    line2.innerText = `[${timestampStr}] Email: Quote sent to ${name} under ${scheme}.`;
+    commsLogs.insertBefore(line2, commsLogs.firstChild);
+
+    const line3 = document.createElement('div');
+    line3.style = 'color:var(--warning); border-left:3px solid var(--warning); padding-left:10px; margin-bottom:5px;';
+    line3.innerText = `[${timestampStr}] SMS: Alert dispatched to ${name}. Discount: ${discount}%.`;
+    commsLogs.insertBefore(line3, commsLogs.firstChild);
+  }
+  
+  log_blockchain_txn("DIRECT_CUSTOMER_OUTREACH_OFFER", {
+    patientId: patientId,
+    patientName: name,
+    discount: discount,
+    scheme: scheme,
+    refillType: refillType
+  });
+  
+  showToast("Omnichannel Offer Sent", `Successfully pinged ${name} with stock offer details.`, "success");
+  addAuditLogLine("success", `CRM Outreach: Direct stock offer of ${discount}% discount under ${scheme} dispatched to patient ${name} (${patientId}).`);
+  
+  closeFullRequestModal();
+}
+

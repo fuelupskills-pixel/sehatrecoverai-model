@@ -1822,23 +1822,30 @@
               <form onsubmit="submitWholesaleOrder(event)">
                 <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:15px; margin-top:15px;">
                   <div>
-                    <label style="font-size:0.75rem; color:#7d9696;">Item Name <span style="color:#ef4444;">*</span></label>
-                    <input type="text" id="ws-item-name" required placeholder="e.g. Paracetamol 500mg" style="width:100%; margin-top:4px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; padding:8px; border-radius:4px;">
+                    <label style="font-size:0.75rem; color:#7d9696;">Select Supplier Product <span style="color:#ef4444;">*</span></label>
+                    <select id="ws-catalog-select" onchange="onWholesaleCatalogSelect(this.value)" required style="width:100%; margin-top:4px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; padding:8px; border-radius:4px;"></select>
                   </div>
                   <div>
-                    <label style="font-size:0.75rem; color:#7d9696;">Formulation <span style="color:#ef4444;">*</span></label>
-                    <select id="ws-formulation" required style="width:100%; margin-top:4px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; padding:8px; border-radius:4px;">
-                      <option value="Tablet">Tablet / Pill</option>
-                      <option value="Capsule">Capsule</option>
-                      <option value="Syrup">Syrup / Suspension</option>
-                      <option value="Injection">Injection / Vial</option>
-                    </select>
+                    <label style="font-size:0.75rem; color:#7d9696;">Formulation</label>
+                    <input type="text" id="ws-formulation-display" readonly style="width:100%; margin-top:4px; background:rgba(255,255,255,0.05); border:1px solid rgba(165,243,252,0.1); color:#7d9696; padding:8px; border-radius:4px;">
                   </div>
                   <div>
-                    <label style="font-size:0.75rem; color:#7d9696;">Quantity (Boxes - 10x10 packing) <span style="color:#ef4444;">*</span></label>
-                    <input type="number" id="ws-quantity" required min="1" placeholder="Enter custom MOQ" style="width:100%; margin-top:4px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; padding:8px; border-radius:4px;">
+                    <label style="font-size:0.75rem; color:#7d9696;">Quantity (Boxes) <span style="color:#ef4444;">*</span></label>
+                    <input type="number" id="ws-quantity" required min="1" oninput="recalcWholesaleOrderTotal()" placeholder="Enter quantity" style="width:100%; margin-top:4px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; padding:8px; border-radius:4px;">
                   </div>
                 </div>
+
+                <!-- Scheme & Pricing Info Display -->
+                <div id="ws-product-details-display" class="hidden" style="margin-top:15px; padding:12px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); border-radius:6px; font-size:0.85rem; display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
+                  <div><span style="color:#7d9696;">Unit Price:</span> <strong style="color:white;" id="ws-disp-price">Rs. 0</strong></div>
+                  <div><span style="color:#7d9696;">Discount Offer:</span> <strong style="color:var(--success);" id="ws-disp-discount">0% Off</strong></div>
+                  <div><span style="color:#7d9696;">Scheme details:</span> <strong style="color:#a5f3fc;" id="ws-disp-scheme">N/A</strong></div>
+                  <div style="grid-column:span 3; border-top:1px solid rgba(255,255,255,0.05); padding-top:8px; display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-weight:600; color:#7d9696;">Estimated Total Amount:</span>
+                    <strong style="color:var(--primary); font-size:1.1rem;" id="ws-disp-total">Rs. 0</strong>
+                  </div>
+                </div>
+
                 <div style="margin-top:20px; text-align:right;">
                   <button type="submit" class="btn btn-primary" style="padding:8px 24px; background:#10b981; border-color:#10b981;"><i class="fa-solid fa-paper-plane"></i> Place Supply Order</button>
                 </div>
@@ -1989,6 +1996,7 @@
                   <div style="display:flex; gap:5px; flex-wrap:wrap;">
                     <button class="btn btn-primary" style="padding:4px 8px; font-size:0.75rem;" onclick="sendCrmReminder('SH-498-XYZ')"><i class="fa-brands fa-whatsapp"></i> Reminder</button>
                     <button class="btn btn-outline" style="padding:4px 8px; font-size:0.75rem; color:#3b82f6; border-color:rgba(59,130,246,0.5);" onclick="pharmacyIvrCall('SH-498-XYZ', 'CRM Refill Followup')"><i class="fa-solid fa-phone"></i> Call</button>
+                    <button class="btn btn-outline" style="padding:4px 8px; font-size:0.75rem; color:#10b981; border-color:rgba(16,185,129,0.5);" onclick="openFullRequestModal('SH-498-XYZ', 'Anna Smith', 'Metformin 500mg, Atorvastatin 20mg', '2 Days')"><i class="fa-solid fa-bell"></i> Full Request</button>
                   </div>
                 </div>
               </div>
@@ -2053,6 +2061,70 @@
                   <!-- Loaded dynamically -->
                 </div>
               </div>
+            </div>
+
+            <!-- Pharmacy as Supplier Customization Panel -->
+            <div class="grid-card" style="border-left:4px solid var(--primary); background:rgba(0,204,180,0.02);">
+              <h3 style="color:var(--primary); margin-top:0;"><i class="fa-solid fa-building-circle-check"></i> Pharmacy Supplier Nodes</h3>
+              <p class="section-desc">Authorize and configure retail pharmacies to act as B2B local supply nodes.</p>
+              <div style="display:flex; flex-direction:column; gap:10px; margin-top:15px;" id="pharmacy-suppliers-list">
+                <!-- Loaded dynamically in JS -->
+              </div>
+            </div>
+
+            <!-- Intake New Supplier Product Form -->
+            <div class="grid-card" style="border-left:4px solid #a855f7; background:rgba(168,85,247,0.02);">
+              <h3 style="color:#a855f7; margin-top:0;"><i class="fa-solid fa-circle-plus"></i> Manual B2B Product Intake</h3>
+              <p class="section-desc">Feed new stock batch details directly into the supply chain catalog.</p>
+              
+              <form id="admin-product-intake-form" onsubmit="submitAdminProductIntake(event)" style="display:flex; flex-direction:column; gap:12px; margin-top:15px;">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                  <div class="form-group">
+                    <label style="color:#7d9696; font-size:0.8rem; display:block; margin-bottom:4px;">Brand Name</label>
+                    <input type="text" id="intake-brand-name" placeholder="e.g. Lipitor 10mg" style="width:100%; padding:8px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; border-radius:6px;" required>
+                  </div>
+                  <div class="form-group">
+                    <label style="color:#7d9696; font-size:0.8rem; display:block; margin-bottom:4px;">Formulation</label>
+                    <select id="intake-formulation" style="width:100%; padding:8px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; border-radius:6px;">
+                      <option value="Tablet">Tablet</option>
+                      <option value="Capsule">Capsule</option>
+                      <option value="Syrup">Syrup</option>
+                      <option value="Injection">Injection</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                  <div class="form-group">
+                    <label style="color:#7d9696; font-size:0.8rem; display:block; margin-bottom:4px;">Batch Number</label>
+                    <input type="text" id="intake-batch-no" placeholder="e.g. LP-902X" style="width:100%; padding:8px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; border-radius:6px;" required>
+                  </div>
+                  <div class="form-group">
+                    <label style="color:#7d9696; font-size:0.8rem; display:block; margin-bottom:4px;">Stock (Boxes)</label>
+                    <input type="number" id="intake-stock" min="1" placeholder="e.g. 500" style="width:100%; padding:8px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; border-radius:6px;" required>
+                  </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                  <div class="form-group">
+                    <label style="color:#7d9696; font-size:0.8rem; display:block; margin-bottom:4px;">Base Price (Rs.)</label>
+                    <input type="number" id="intake-price" min="1" placeholder="e.g. 280" style="width:100%; padding:8px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; border-radius:6px;" required>
+                  </div>
+                  <div class="form-group">
+                    <label style="color:#7d9696; font-size:0.8rem; display:block; margin-bottom:4px;">Discount Offer (%)</label>
+                    <input type="number" id="intake-discount" min="0" max="100" value="10" style="width:100%; padding:8px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; border-radius:6px;">
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label style="color:#7d9696; font-size:0.8rem; display:block; margin-bottom:4px;">Scheme Details</label>
+                  <input type="text" id="intake-scheme" placeholder="e.g. Buy 10 get 1 Free, Zero Interest EMI" style="width:100%; padding:8px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; border-radius:6px;" required>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="padding:10px; font-weight:600; cursor:pointer; background:#a855f7; border-color:#a855f7; margin-top:5px;">
+                  Add to Wholesaler Catalog <i class="fa-solid fa-plus"></i>
+                </button>
+              </form>
             </div>
           </div>
         </div>
@@ -2166,6 +2238,36 @@
                   <div style="display:flex; gap:10px;">
                     <button class="btn btn-outline" style="font-size:0.8rem; padding:6px 12px;" onclick="runCampaignBlast('Diabetic Care Program Upsell', 340)"><i class="fa-solid fa-play"></i> Run Campaign Blast</button>
                     <span class="badge badge-python" style="background:rgba(245, 158, 11, 0.1); color:#f59e0b; border:1px solid rgba(245, 158, 11, 0.2);">Paused</span>
+                  </div>
+                </div>
+            </div>
+
+            <div class="grid-card col-span-2" style="margin-top:20px; border-left:4px solid #10b981; background:rgba(16,185,129,0.01);">
+              <h3>Direct Customer Outreach & Stock Campaigns</h3>
+              <p class="section-desc">Pings individual patients with targeted discounts and scheme benefits based on stock levels.</p>
+              
+              <div class="prescription-list-table" style="margin-top:15px;">
+                <div class="table-header-vault" style="display:grid; grid-template-columns: 1fr 1.5fr 1fr 1fr 1fr; gap:10px; font-weight:600; padding:10px; border-bottom:1px solid rgba(255,255,255,0.05); color:#7d9696; font-size:0.8rem;">
+                  <span>Patient ID</span>
+                  <span>Meds In Need</span>
+                  <span>Days Left</span>
+                  <span>Outreach Channel</span>
+                  <span>Action</span>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
+                  <div style="display:grid; grid-template-columns: 1fr 1.5fr 1fr 1fr 1fr; gap:10px; padding:12px 10px; background:rgba(255,255,255,0.01); border-radius:6px; align-items:center; font-size:0.85rem;">
+                    <strong style="color:var(--primary);">SH-498-XYZ</strong>
+                    <span>Metformin 500mg, Atorvastatin 20mg</span>
+                    <strong style="color:#ef4444;">2 Days Left</strong>
+                    <span style="color:#7d9696;">WhatsApp & SMS</span>
+                    <button class="btn btn-primary" style="padding:6px 12px; font-size:0.75rem; background:#10b981; border-color:#10b981; cursor:pointer;" onclick="openFullRequestModal('SH-498-XYZ', 'Anna Smith', 'Metformin 500mg, Atorvastatin 20mg', '2 Days')"><i class="fa-solid fa-bell"></i> Full Request</button>
+                  </div>
+                  <div style="display:grid; grid-template-columns: 1fr 1.5fr 1fr 1fr 1fr; gap:10px; padding:12px 10px; background:rgba(255,255,255,0.01); border-radius:6px; align-items:center; font-size:0.85rem;">
+                    <strong style="color:var(--primary);">SH-102-ABC</strong>
+                    <span>Insulin Glargine, Telmisartan 40mg</span>
+                    <strong style="color:#f59e0b;">5 Days Left</strong>
+                    <span style="color:#7d9696;">Email & WhatsApp</span>
+                    <button class="btn btn-primary" style="padding:6px 12px; font-size:0.75rem; background:#10b981; border-color:#10b981; cursor:pointer;" onclick="openFullRequestModal('SH-102-ABC', 'Ramesh Patel', 'Insulin Glargine, Telmisartan 40mg', '5 Days')"><i class="fa-solid fa-bell"></i> Full Request</button>
                   </div>
                 </div>
               </div>
@@ -2348,6 +2450,55 @@
     </section>
 
   </main>
+
+  <!-- Direct Patient Stock & Scheme Offer Dispatcher (Full Request Modal) -->
+  <div id="full-request-modal" class="modal-overlay hidden" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; z-index:21000;">
+    <div class="modal-card grid-card" style="width:100%; max-width:500px; margin:20px; padding:25px; border:1px solid rgba(16,185,129,0.3); box-shadow:0 24px 60px rgba(0,0,0,0.8); animation:modalZoom 0.3s cubic-bezier(0.175,0.885,0.32,1.275);">
+      <div class="card-title-header" style="margin-bottom:15px; border-bottom:1px solid rgba(255,255,255,0.06); padding-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="margin:0; color:#10b981;"><i class="fa-solid fa-paper-plane"></i> Direct Stock & Discount Dispatcher</h3>
+        <button class="btn-link" onclick="closeFullRequestModal()" style="color:var(--danger); font-size:1.1rem; background:none; border:none; cursor:pointer;"><i class="fa-solid fa-times"></i></button>
+      </div>
+
+      <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); padding:15px; border-radius:8px; margin-bottom:20px;">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:0.85rem;">
+          <div><span style="color:#7d9696;">Patient ID:</span> <strong id="frm-patient-id" style="color:white;"></strong></div>
+          <div><span style="color:#7d9696;">Name:</span> <strong id="frm-patient-name" style="color:white;"></strong></div>
+          <div style="grid-column:span 2;"><span style="color:#7d9696;">Maintenance Meds:</span> <strong id="frm-patient-meds" style="color:#a5f3fc;"></strong></div>
+          <div><span style="color:#7d9696;">Days Left:</span> <strong id="frm-patient-days" style="color:#ef4444;"></strong></div>
+        </div>
+      </div>
+
+      <form onsubmit="dispatchFullRequestOffer(event)">
+        <div style="display:flex; flex-direction:column; gap:15px;">
+          <div class="form-group">
+            <label style="color:#7d9696; font-size:0.85rem; margin-bottom:5px; display:block;">Discount Percentage (%)</label>
+            <input type="number" id="frm-offer-discount" min="0" max="100" value="15" style="width:100%; padding:10px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; border-radius:8px;" required>
+          </div>
+          <div class="form-group">
+            <label style="color:#7d9696; font-size:0.85rem; margin-bottom:5px; display:block;">Select Health Scheme Benefit</label>
+            <select id="frm-offer-scheme" style="width:100%; padding:10px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; border-radius:8px;">
+              <option value="Chronic Care Loyalty Program">Chronic Care Loyalty Program (1.5x Reward Points)</option>
+              <option value="PMJAY Cashless Co-pay">PMJAY Cashless Co-pay (Fully Cashless)</option>
+              <option value="Senior Citizen Subsidy">Senior Citizen Subsidy (Additional 5% subsidy)</option>
+              <option value="SehatRecover Direct Care">SehatRecover Direct Care (Special Wellness Scheme)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label style="color:#7d9696; font-size:0.85rem; margin-bottom:5px; display:block;">Refill Quantity Offer</label>
+            <select id="frm-offer-refill" style="width:100%; padding:10px; background:rgba(0,0,0,0.2); border:1px solid rgba(165,243,252,0.15); color:white; border-radius:8px;">
+              <option value="30-Day Pack">30-Day Pack</option>
+              <option value="60-Day Pack">60-Day Pack</option>
+              <option value="90-Day Pack">90-Day Pack</option>
+            </select>
+          </div>
+          
+          <button type="submit" class="btn btn-primary" style="padding:12px; font-weight:600; font-size:1rem; cursor:pointer; background:#10b981; border-color:#10b981; margin-top:10px;">
+            Dispatch Omnichannel Offer Alert <i class="fa-solid fa-paper-plane"></i>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <!-- Pharmacy Secure Chat Modal Overlay -->
   <div id="pharmacy-chat-modal" class="modal-overlay hidden" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; z-index:28000;">
